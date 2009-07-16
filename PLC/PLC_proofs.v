@@ -83,6 +83,21 @@ Qed.
 
 
 (* Lemmas about canonize *)
+Lemma can_deterministic : forall e e1 e2,
+  e⋆ = e1 -> e⋆ = e2 -> e1 = e2.
+Proof.
+intros e e1 e2 H. generalize dependent e2. induction H; intros.
+inversion H; reflexivity.
+inversion H1; subst; f_equal; pick fresh x;
+  apply open_term_wrt_term_inj with (x1 := x); auto.
+inversion H2; subst.
+  erewrite IHcan1; eauto; erewrite IHcan2; eauto.
+  destruct H; eauto.
+inversion H2; subst.
+  destruct H5; eauto.
+  pick fresh x; erewrite H0; eauto; erewrite IHcan; eauto.
+Qed.
+
 Lemma can_fv : forall e1 e2, e1⋆ = e2 -> fv_term e2 [<=] fv_term e1.
 Proof.
 intros e1 e2 H; induction H; simpl; try fsetdec.
