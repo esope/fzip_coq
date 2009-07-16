@@ -91,7 +91,7 @@ force:
 %_ott.v: %.ott
 	$(OTT) -coq $*_ott.v $*.ott
 
-%_inf.v: %.ott $(LNGEN) Makefile
+%_inf.v: %_ott.v $(LNGEN) Makefile
 	$(LNGEN) $(LNGENFLAGS) --coq $*_inf.v --coq-ott $*_ott --coq-loadpath metatheory $*.ott
 
 $(DOCDIR):
