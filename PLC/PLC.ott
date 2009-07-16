@@ -9,6 +9,10 @@ term, e, f, g :: term_ ::=
   | ( e )          :: S :: paren {{ coq ([[e]]) }}
   | { e2 / x } e1  :: M :: subst {{ coq (open_term_wrt_term [[x e1]] [[e2]]) }}
 
+formula :: formula_ ::=
+  | judgement     :: :: judgement
+  | e is not abs  :: :: is_not_abs {{ coq (~ exists e', ([[e]]) = term_abs e') }}
+
 substitutions
   single e x :: subst
 
@@ -22,7 +26,7 @@ Jval :: '' ::=
 
 defn
 pre_val e
-:: :: pval :: pval by
+:: :: pval :: pval_ by
 
 --------- :: var
 pre_val x
@@ -34,7 +38,7 @@ pre_val (e1 e2)
 
 defn
 val e
-:: :: val :: val by
+:: :: val :: val_ by
 
 pre_val e
 --------- :: pval
@@ -51,7 +55,7 @@ Jred0 :: '' ::=
 
 defn
 e1 --> e2
-:: :: red0 :: red0 by
+:: :: red0 :: red0_ by
 
 -------------------------- :: beta
 (\x.e1) e2 --> {e2 / x} e1
@@ -63,7 +67,7 @@ Jred1 :: '' ::=
 
 defn
 e1 ---> e2
-:: :: red1 :: red1 by
+:: :: red1 :: red1_ by
 
 e --> e'
 ---------- :: empty
@@ -88,7 +92,7 @@ Jpara :: '' ::=
 
 defn
 e1 ==> e2
-:: :: para_red :: para_red by
+:: :: para_red :: para_red_ by
 
 ------- :: var
 x ==> x
@@ -106,3 +110,30 @@ e1 e2 ==> e1' e2'
    e2 ==> e2'
 ----------------------------- :: app2
 (\x.e1) e2 ==> { e2' /x } e1'
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jcan :: '' ::=
+
+defn
+e1 can e2
+:: :: can :: can_ by
+
+------- :: var
+x can x
+
+   e can e'
+-------------- :: abs
+\x.e can \x.e'
+
+  e1 is not abs
+   e1 can e1'
+   e2 can e2'
+----------------- :: app1
+e1 e2 can e1' e2'
+
+   e1 can e1'
+   e2 can e2'
+----------------------------- :: app2
+(\x.e1) e2 can { e2' /x } e1'

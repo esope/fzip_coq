@@ -69,59 +69,76 @@ end.
 
 (* defns Jval *)
 Inductive pval : term -> Prop :=    (* defn pval *)
- | pvalvar : forall (x:termvar),
+ | pval_var : forall (x:termvar),
      pval (term_var_f x)
- | pvalapp : forall (e1 e2:term),
+ | pval_app : forall (e1 e2:term),
      pval e1 ->
      val e2 ->
      pval  ( (term_app e1 e2) ) 
 with val : term -> Prop :=    (* defn val *)
- | valpval : forall (e:term),
+ | val_pval : forall (e:term),
      pval e ->
      val e
- | valabs : forall (L:vars) (e:term),
+ | val_abs : forall (L:vars) (e:term),
       ( forall x , x \notin  L  -> val  ( open_term_wrt_term e (term_var_f x) )  )  ->
      val  ( (term_abs e) ) .
 
 (* defns Jred0 *)
 Inductive red0 : term -> term -> Prop :=    (* defn red0 *)
- | red0beta : forall (e1 e2:term),
+ | red0_beta : forall (e1 e2:term),
      lc_term (term_abs e1) ->
      lc_term e2 ->
      red0 (term_app  ( (term_abs e1) )  e2)  (open_term_wrt_term  e1   e2 ) .
 
 (* defns Jred1 *)
 Inductive red1 : term -> term -> Prop :=    (* defn red1 *)
- | red1empty : forall (e e':term),
+ | red1_empty : forall (e e':term),
      red0 e e' ->
      red1 e e'
- | red1appL : forall (e1 e2 e1':term),
+ | red1_appL : forall (e1 e2 e1':term),
      lc_term e2 ->
      red1 e1 e1' ->
      red1 (term_app e1 e2) (term_app e1' e2)
- | red1appR : forall (e1 e2 e2':term),
+ | red1_appR : forall (e1 e2 e2':term),
      lc_term e1 ->
      red1 e2 e2' ->
      red1 (term_app e1 e2) (term_app e1 e2')
- | red1abs : forall (L:vars) (e e':term),
+ | red1_abs : forall (L:vars) (e e':term),
       ( forall x , x \notin  L  -> red1  ( open_term_wrt_term e (term_var_f x) )   ( open_term_wrt_term e' (term_var_f x) )  )  ->
      red1 (term_abs e) (term_abs e').
 
 (* defns Jpara *)
 Inductive para_red : term -> term -> Prop :=    (* defn para_red *)
- | para_redvar : forall (x:termvar),
+ | para_red_var : forall (x:termvar),
      para_red (term_var_f x) (term_var_f x)
- | para_redabs : forall (L:vars) (e e':term),
+ | para_red_abs : forall (L:vars) (e e':term),
       ( forall x , x \notin  L  -> para_red  ( open_term_wrt_term e (term_var_f x) )   ( open_term_wrt_term e' (term_var_f x) )  )  ->
      para_red (term_abs e) (term_abs e')
- | para_redapp1 : forall (e1 e2 e1' e2':term),
+ | para_red_app1 : forall (e1 e2 e1' e2':term),
      para_red e1 e1' ->
      para_red e2 e2' ->
      para_red (term_app e1 e2) (term_app e1' e2')
- | para_redapp2 : forall (L:vars) (e1 e2 e2' e1':term),
+ | para_red_app2 : forall (L:vars) (e1 e2 e2' e1':term),
       ( forall x , x \notin  L  -> para_red  ( open_term_wrt_term e1 (term_var_f x) )  e1' )  ->
      para_red e2 e2' ->
      para_red (term_app  ( (term_abs e1) )  e2)  (open_term_wrt_term  e1'   e2' ) .
+
+(* defns Jcan *)
+Inductive can : term -> term -> Prop :=    (* defn can *)
+ | can_var : forall (x:termvar),
+     can (term_var_f x) (term_var_f x)
+ | can_abs : forall (L:vars) (e e':term),
+      ( forall x , x \notin  L  -> can  ( open_term_wrt_term e (term_var_f x) )   ( open_term_wrt_term e' (term_var_f x) )  )  ->
+     can (term_abs e) (term_abs e')
+ | can_app1 : forall (e1 e2 e1' e2':term),
+      (~ exists e', ( e1 ) = term_abs e')  ->
+     can e1 e1' ->
+     can e2 e2' ->
+     can (term_app e1 e2) (term_app e1' e2')
+ | can_app2 : forall (L:vars) (e1 e2 e2' e1':term),
+      ( forall x , x \notin  L  -> can  ( open_term_wrt_term e1 (term_var_f x) )  e1' )  ->
+     can e2 e2' ->
+     can (term_app  ( (term_abs e1) )  e2)  (open_term_wrt_term  e1'   e2' ) .
 
 (** infrastructure *)
 
@@ -136,7 +153,7 @@ Ltac gather_atoms ::=
   let D1 := gather_atoms_with (fun x => fv_term x) in
   constr:(A \u B \u D1).
 
-Hint Constructors pval val red0 red1 para_red lc_term.
+Hint Constructors pval val red0 red1 para_red can lc_term.
 
 
 
