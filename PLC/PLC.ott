@@ -1,0 +1,108 @@
+metavar termvar, x, y, z ::= {{ repr-locally-nameless }}
+
+grammar
+
+term, e, f, g :: term_ ::=
+  | x              ::   :: var
+  | \ x . e        ::   :: abs  (+ bind x in e +)
+  | e1 e2          ::   :: app
+  | ( e )          :: S :: paren {{ coq ([[e]]) }}
+  | { e2 / x } e1  :: M :: subst {{ coq (open_term_wrt_term [[x e1]] [[e2]]) }}
+
+substitutions
+  single e x :: subst
+
+freevars
+  e x :: fv
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jval :: '' ::=
+
+defn
+pre_val e
+:: :: pval :: pval by
+
+--------- :: var
+pre_val x
+
+pre_val e1
+val e2
+--------------- :: app
+pre_val (e1 e2)
+
+defn
+val e
+:: :: val :: val by
+
+pre_val e
+--------- :: pval
+ val e
+
+ val e
+---------- :: abs
+val (\x.e)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jred0 :: '' ::=
+
+defn
+e1 --> e2
+:: :: red0 :: red0 by
+
+-------------------------- :: beta
+(\x.e1) e2 --> {e2 / x} e1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jred1 :: '' ::=
+
+defn
+e1 ---> e2
+:: :: red1 :: red1 by
+
+e --> e'
+---------- :: empty
+e ---> e'
+
+   e1 ---> e1'
+----------------- :: appL
+e1 e2 ---> e1' e2
+
+   e2 ---> e2'
+----------------- :: appR
+e1 e2 ---> e1 e2'
+
+   e ---> e'
+--------------- :: abs
+\x.e ---> \x.e'
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jpara :: '' ::=
+
+defn
+e1 ==> e2
+:: :: para_red :: para_red by
+
+------- :: var
+x ==> x
+
+   e ==> e'
+-------------- :: abs
+\x.e ==> \x.e'
+
+   e1 ==> e1'
+   e2 ==> e2'
+----------------- :: app1
+e1 e2 ==> e1' e2'
+
+   e1 ==> e1'
+   e2 ==> e2'
+----------------------------- :: app2
+(\x.e1) e2 ==> { e2' /x } e1'
