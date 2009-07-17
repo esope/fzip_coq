@@ -1,0 +1,4 @@
+122c122
+<       ( forall x , x \notin  L  -> para_red  ( open_term_wrt_term e1 (term_var_f x) )  e1' )  ->
+---
+>       ( forall x , x \notin  L  -> para_red  ( open_term_wrt_term e1 (term_var_f x) )  (open_term_wrt_term e1' (term_var_f x) ))  ->

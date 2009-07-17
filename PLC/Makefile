@@ -90,6 +90,7 @@ force:
 
 %_ott.v: %.ott
 	$(OTT) -coq $*_ott.v $*.ott
+	for i in `ls $*_ott.patch.?? | sort`; do patch $*_ott.v $$i; done
 
 %_inf.v: %_ott.v $(LNGEN) Makefile
 	$(LNGEN) $(LNGENFLAGS) --coq $*_inf.v --coq-ott $*_ott --coq-loadpath metatheory $*.ott
