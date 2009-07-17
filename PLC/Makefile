@@ -47,6 +47,7 @@ LNGEN_FILES = \
 ## List of other files that should be compiled.
 
 FILES = \
+	Relations_aux \
 	PLC_proofs \
 
 ## Lists calculated from the above.

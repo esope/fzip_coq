@@ -1,6 +1,7 @@
 Add LoadPath "metatheory".
 Require Export Coq.Program.Equality.
 Require Export PLC_inf.
+Require Export Relations_aux.
 
 (* Notations *)
 Notation "[ e2 / x ] e1" := (subst_term e2 x e1) (at level 25).
