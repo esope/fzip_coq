@@ -119,7 +119,7 @@ Inductive para_red : term -> term -> Prop :=    (* defn para_red *)
      para_red e2 e2' ->
      para_red (term_app e1 e2) (term_app e1' e2')
  | para_red_app2 : forall (L:vars) (e1 e2 e2' e1':term),
-      ( forall x , x \notin  L  -> para_red  ( open_term_wrt_term e1 (term_var_f x) )  e1' )  ->
+      ( forall x , x \notin  L  -> para_red  ( open_term_wrt_term e1 (term_var_f x) )  (open_term_wrt_term e1' (term_var_f x) ))  ->
      para_red e2 e2' ->
      para_red (term_app  ( (term_abs e1) )  e2)  (open_term_wrt_term  e1'   e2' ) .
 
@@ -131,12 +131,12 @@ Inductive can : term -> term -> Prop :=    (* defn can *)
       ( forall x , x \notin  L  -> can  ( open_term_wrt_term e (term_var_f x) )   ( open_term_wrt_term e' (term_var_f x) )  )  ->
      can (term_abs e) (term_abs e')
  | can_app1 : forall (e1 e2 e1' e2':term),
-      (~ exists e', ( e1 ) = term_abs e')  ->
+      (forall e', ( e1 ) <> term_abs e')  ->
      can e1 e1' ->
      can e2 e2' ->
      can (term_app e1 e2) (term_app e1' e2')
  | can_app2 : forall (L:vars) (e1 e2 e2' e1':term),
-      ( forall x , x \notin  L  -> can  ( open_term_wrt_term e1 (term_var_f x) )  e1' )  ->
+      ( forall x , x \notin  L  -> can  ( open_term_wrt_term e1 (term_var_f x) )  ( open_term_wrt_term e1' (term_var_f x) ))  ->
      can e2 e2' ->
      can (term_app  ( (term_abs e1) )  e2)  (open_term_wrt_term  e1'   e2' ) .
 

@@ -11,7 +11,7 @@ term, e, f, g :: term_ ::=
 
 formula :: formula_ ::=
   | judgement     :: :: judgement
-  | e is not abs  :: :: is_not_abs {{ coq (~ exists e', ([[e]]) = term_abs e') }}
+  | e is not abs  :: :: is_not_abs {{ coq (forall e', ([[e]]) <> term_abs e') }}
 
 substitutions
   single e x :: subst
