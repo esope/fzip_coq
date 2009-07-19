@@ -1,14 +1,17 @@
 Add LoadPath "metatheory".
 Require Export Coq.Program.Equality.
 Require Export PLC_inf.
-Require Export Relations_aux.
+Require Export Relations.
 
 (* Notations *)
-Notation "[ e2 / x ] e1" := (subst_term e2 x e1) (at level 25).
-Notation "e1 '→' e2" := (red1 e1 e2) (at level 20).
-(* Notation "e1 '→⋆' e2" := (clos_refl_trans _ red1 e1 e2) (at level 20). *)
-Notation "e1 '⇒' e2" := (para_red e1 e2) (at level 20).
-Notation "e1 '⋆' = e2" := (can e1 e2) (at level 20).
+Notation "[ e2 / x ] e1" := (subst_term e2 x e1) (at level 67).
+Notation "[ y → x ] e" := (subst_term (term_var_f y) x e) (at level 67).
+Notation "e1 ^^ e2" := (open_term_wrt_term e1 e2) (at level 67).
+Notation "e ^ x" := (e ^^ (term_var_f x)).
+Notation "e1 '→' e2" := (red1 e1 e2) (at level 68).
+Notation "e1 '→⋆' e2" := (clos_refl_trans _ red1 e1 e2) (at level 68).
+Notation "e1 '⇒' e2" := (para_red e1 e2) (at level 68).
+Notation "e1 '⋆' = e2" := (can e1 e2) (at level 68).
 
 (* Tactics *)
 Tactic Notation "absurdity" "with" tactic(tac) :=
@@ -24,6 +27,12 @@ with   val_mut_ind_aux  := Induction for val  Sort Prop.
 Combined Scheme pval_val_mut_ind from pval_mut_ind_aux, val_mut_ind_aux.
 
 (* Administrative lemmas *)
+Lemma var_subst : forall e x, subst_term e x (term_var_f x) = e.
+Proof.
+intros e x; simpl; destruct (x == x); congruence.
+Qed.
+Hint Rewrite var_subst : lngen.
+
 Lemma pval_val_regular :
   (forall p, pval p -> lc_term p) /\ (forall v, val v -> lc_term v).
 Proof.
@@ -63,6 +72,19 @@ intros e1 e2 H; induction H; eauto.
 Qed.
 Hint Resolve red1_regular1 red1_regular2.
 
+Lemma red_star_regular1 : forall e1 e2, e1 →⋆ e2 ->
+  lc_term e2 -> lc_term e1.
+Proof.
+intros e1 e2 H Hlc; induction H; eauto.
+Qed.
+
+Lemma red_star_regular2 : forall e1 e2, e1 →⋆ e2 ->
+  lc_term e1 -> lc_term e2.
+Proof.
+intros e1 e2 H Hlc; induction H; eauto.
+Qed.
+Hint Resolve red_star_regular1 red_star_regular2.
+
 Lemma para_red_regular1 : forall e1 e2, e1 ⇒ e2 -> lc_term e1.
 Proof.
 intros e1 e2 H; induction H; eauto.
@@ -88,7 +110,7 @@ Hint Resolve can_regular1 can_regular2.
 
 Lemma can_renaming : forall e1 e2 x y,
   e1 ⋆ = e2 ->
-  (subst_term (term_var_f y)  x e1) ⋆ = (subst_term (term_var_f y) x e2).
+  (subst_term (term_var_f y) x e1) ⋆ = (subst_term (term_var_f y) x e2).
 Proof.
 assert (forall n e1, size_term e1 <= n -> forall e2 (x y: termvar),
   can e1 e2 -> can (subst_term (term_var_f y) x e1) (subst_term (term_var_f y) x e2)) as Th.
@@ -112,6 +134,41 @@ Case "app2".
 
 intros e1 e2 x y H; apply Th with (n := size_term e1); auto.
 Qed.
+
+(* Renaming lemmas *)
+Lemma red0_renaming : forall x y e e', red0 e e' ->
+  red0 (subst_term (term_var_f y) x e) (subst_term (term_var_f y) x e').
+Proof.
+intros x y e e' H.
+inversion H; subst.
+simpl. rewrite subst_term_open_term_wrt_term; auto. apply red0_beta; auto with lngen.
+assert (lc_term (subst_term (term_var_f y) x (term_abs e1))) by auto with lngen; auto.
+Qed.
+Hint Resolve red0_renaming.
+
+Lemma red1_renaming : forall x y e e', e → e' ->
+  (subst_term (term_var_f y) x e) → (subst_term (term_var_f y) x e').
+Proof.
+intros x y e e' H.
+induction H; subst; simpl; auto.
+apply red1_appL; auto with lngen.
+apply red1_appR; auto with lngen.
+apply red1_abs with (L := L `union` {{x}}); intros z Hz.
+replace (term_var_f z) with (subst_term (term_var_f y) x (term_var_f z)) by auto with lngen.
+repeat rewrite <- subst_term_open_term_wrt_term; eauto.
+Qed.
+Hint Resolve red1_renaming.
+
+Lemma red_star_renaming : forall x y e e', e →⋆ e' ->
+  (subst_term (term_var_f y) x e) →⋆ (subst_term (term_var_f y) x e').
+Proof.
+intros x y e e' H.
+induction H.
+apply rt_step; auto.
+apply rt_refl.
+eapply rt_trans; eauto.
+Qed.
+Hint Resolve red_star_renaming.  
 
 (* Lemmas about values *)
 Lemma value_is_normal_aux :
@@ -159,7 +216,7 @@ Case "abs". pick fresh x; destruct (H0 x) as [e2 H2].
 Case "app". destruct IHHlc1 as [e1' H1]. destruct IHHlc2 as [e2' H2].
 destruct Hlc1; try solve [exists (term_app e1' e2'); apply can_app1; auto; congruence].
 SCase "abs".
-inversion H1; subst. exists (open_term_wrt_term e' e2'). apply can_app2 with (L := L); auto.
+inversion H1; subst. exists (e' ^^ e2'). apply can_app2 with (L := L); auto.
 Qed.
 
 (*
@@ -168,20 +225,20 @@ Proof.
 intros e1 e2 H; induction H; simpl; try fsetdec.
 Case "app1".
   pick fresh x.
-  assert (fv_term (open_term_wrt_term e' (term_var_f x)) [<=]
-    fv_term (open_term_wrt_term e (term_var_f x))) by auto.
-  assert (fv_term (open_term_wrt_term e (term_var_f x)) [<=]
+  assert (fv_term (e' ^ x) [<=]
+    fv_term (e ^ x)) by auto.
+  assert (fv_term (e ^ x) [<=]
     fv_term (term_var_f x) `union` fv_term e) by auto with lngen.
-  assert (fv_term e' [<=] fv_term (open_term_wrt_term e' (term_var_f x)))
+  assert (fv_term e' [<=] fv_term (e' ^ x))
     by auto with lngen.
   simpl in *; fsetdec.
 Case "app2".
-  assert (fv_term (open_term_wrt_term e1' e2')
+  assert (fv_term (e1' ^^ e2')
     [<=] union (fv_term e2') (fv_term e1')) by auto with lngen.
   intros y Hy. pick fresh x.
-  assert (fv_term e1' [<=] fv_term (open_term_wrt_term e1' (term_var_f x))) as H3 by auto with lngen.
-  assert (fv_term (open_term_wrt_term e1 (term_var_f x)) [<=] fv_term (term_var_f x) `union` fv_term e1) as H4 by auto with lngen.
-  assert (fv_term (open_term_wrt_term e1' (term_var_f x)) [<=] fv_term (open_term_wrt_term e1 (term_var_f x))) as H5 by auto.
+  assert (fv_term e1' [<=] fv_term (e1' ^ x)) as H3 by auto with lngen.
+  assert (fv_term (e1 ^ x) [<=] fv_term (term_var_f x) `union` fv_term e1) as H4 by auto with lngen.
+  assert (fv_term (e1' ^ x) [<=] fv_term (e1 ^ x)) as H5 by auto.
   assert (fv_term e1' [<=] fv_term (term_var_f x) `union` fv_term e1) as H6 by fsetdec; clear H3 H4 H5.
   assert (y `in` fv_term (term_var_f x) `union` fv_term e1 `union` fv_term e2) as H3 by fsetdec; clear H6.
   simpl in *; fsetdec.
@@ -190,16 +247,61 @@ Hint Resolve can_fv.
 *)
 
 (* Lemmas about red_star *)
-(*
+Lemma red_star_context_appL : forall e1 e1' e2,
+  lc_term e2 -> e1 →⋆ e1' ->
+  term_app e1 e2 →⋆ term_app e1' e2.
+Proof.
+intros e1 e1' e2 Hlc Hred.
+induction Hred.
+apply rt_step; auto.
+apply rt_refl.
+eapply rt_trans; eauto.
+Qed.
+
+Lemma red_star_context_appR : forall e1 e2 e2',
+  lc_term e1 -> e2 →⋆ e2' ->
+  term_app e1 e2 →⋆ term_app e1 e2'.
+Proof.
+intros e1 e2 e2' Hlc Hred.
+induction Hred.
+apply rt_step; auto.
+apply rt_refl.
+eapply rt_trans; eauto.
+Qed.
+
 Lemma red_star_context_app : forall e1 e1' e2 e2',
-  lc_term e1 -> lc_term e2 ->
-  e1 →⋆ e1' -> e2 →⋆ e2' ->
+  lc_term e1 -> lc_term e2 -> e1 →⋆ e1' -> e2 →⋆ e2' ->
   term_app e1 e2 →⋆ term_app e1' e2'.
 Proof.
-(* TODO *)
-Admitted.
-*)
+intros e1 e1' e2 e2' Hlc1 Hlc2 Hred1 Hred2.
+eapply rt_trans; eauto using red_star_context_appL, red_star_context_appR.
+Qed.
 
+Lemma red_star_context_abs : forall L e e',
+  (forall x, x `notin` L -> e ^ x →⋆ e' ^ x) ->
+  term_abs e →⋆ term_abs e'.
+Proof.
+intros L e e' H. pick fresh x.
+remember (e ^ x) as e1.
+remember (e' ^ x) as e1'.
+assert (e1 →⋆ e1') as Hred by solve [subst; apply H; auto]. clear H.
+generalize dependent x. generalize dependent e'. generalize dependent e.
+induction Hred; intros; subst.
+Case "step".
+apply rt_step.
+apply red1_abs with (L := L `union` fv_term e `union` fv_term e'); intros.
+rewrite <- var_subst with (e := term_var_f x) (x := x0).
+replace e with (subst_term (term_var_f x) x0 e) by auto with lngen.
+replace e' with (subst_term (term_var_f x) x0 e') by auto with lngen.
+repeat rewrite <- subst_term_open_term_wrt_term; eauto.
+Case "refl".
+assert (e = e'). eapply open_term_wrt_term_inj; eauto. subst. apply rt_refl.
+Case "trans".
+apply rt_trans with (y := term_abs (close_term_wrt_term x0 y)).
+apply IHHred1 with (x := x0); autorewrite with lngen; auto.
+apply IHHred2 with (x := x0); autorewrite with lngen; auto.
+Qed.
+Hint Resolve red_star_context_appL red_star_context_appR red_star_context_app red_star_context_abs.
 
 (* Lemmas about para_red *)
 Lemma para_red_refl : forall e, lc_term e -> e ⇒ e.
@@ -277,55 +379,82 @@ destruct (can_total e) as [e' H']; eauto.
 eauto using para_red_canonize.
 Qed.
 
-(*
 Lemma para_red_red_star : forall e1 e2, e1 ⇒ e2 -> e1 →⋆ e2.
 Proof.
 intros e1 e2 H.
 assert (lc_term e1) as Hlc by eauto.
 generalize dependent e2.
-induction Hlc; intros e0 Hpara; inversion Hpara; subst.
+induction Hlc; intros e0 Hpara; inversion Hpara; subst; eauto.
 apply rt_refl.
-pick fresh x for (L `union` fv_term e `union` fv_term e').
-  assert (open_term_wrt_term e (term_var_f x) ⇒ open_term_wrt_term e' (term_var_f x)) by auto.
-  assert (open_term_wrt_term e (term_var_f x) →⋆ open_term_wrt_term e' (term_var_f x)) by auto.
-(* TODO *)
-
-  assert (red_star (open_ex x e) (open_ex x e20)) as Hpara' by auto.
-  replace (term_abs e) with (inject (CAbs x CEmpty) (open_ex x e)).
-  replace (term_abs e20) with (inject (CAbs x CEmpty) (open_ex x e20)).
-  apply red_star_context_closed; auto.
-  simpl; rewrite close_ex_open_ex; auto.
-  simpl; rewrite close_ex_open_ex; auto.
-assert (red_star e e20) as He by auto. assert (red_star e1 u') as He1 by auto.
-  clear IHHlc1 IHHlc2 H1 H3 Hpara.
-  inversion He; subst.
-    replace (term_app e20 e1) with (inject (CAppR e20 CEmpty) e1) by reflexivity.
-    replace (term_app e20 u') with (inject (CAppR e20 CEmpty) u') by reflexivity.
-    apply red_star_context_closed; auto.
-  inversion He1; subst.
-    replace (term_app e u') with (inject (CAppL CEmpty u') e) by reflexivity.
-    replace (term_app e20 u') with (inject (CAppL CEmpty u') e20) by reflexivity.
-    apply red_star_context_closed; auto.
-  apply red_star_trans with (t2 := term_app e20 e1).
-    replace (term_app e e1) with (inject (CAppL CEmpty e1) e) by reflexivity.
-    replace (term_app e20 e1) with (inject (CAppL CEmpty e1) e20) by reflexivity.
-    apply red_star_context_closed; auto.
-    replace (term_app e20 e1) with (inject (CAppR e20 CEmpty) e1) by reflexivity.
-    replace (term_app e20 u') with (inject (CAppR e20 CEmpty) u') by reflexivity.
-    apply red_star_context_closed; auto.
-assert (red_star (term_abs e1) (term_abs e20)) as Ht.
-    apply IHHlc1. apply ParaAbs with (S := S `union` fv_term e1 `union` fv_term e1 `union` fv_term u' `union` fv_term e20). auto.
-  assert (red_star e1 u') as He1 by auto.
-  apply red_star_trans with (t2 := term_app (term_abs e20) e1).
-    replace (term_app (term_abs e1) e1) with (inject (CAppL CEmpty e1) (term_abs e1)) by reflexivity.
-    replace (term_app (term_abs e20) e1) with (inject (CAppL CEmpty e1) (term_abs e20)) by reflexivity.
-    apply red_star_context_closed; auto.
-  apply red_star_trans with (t2 := term_app (term_abs e20) u').
-    replace (term_app (term_abs e20) e1) with (inject (CAppR (term_abs e20) CEmpty) e1) by reflexivity.
-    replace (term_app (term_abs e20) u') with (inject (CAppR (term_abs e20) CEmpty) u') by reflexivity.
-    apply red_star_context_closed; auto.
-    replace (term_app (term_abs e20) u') with (inject CEmpty (term_app (term_abs e20) u')) by reflexivity.
-    replace (open_ex u' e20) with (inject CEmpty (open_ex u' e20)) by reflexivity.
-    apply RedSome. apply RedOne. constructor. constructor.
+apply rt_trans with (y := term_app (term_abs e1') e2'); eauto.
+apply rt_step; apply red1_empty; apply red0_beta; eauto.
 Qed.
-*)
+
+Reserved Notation "e1 '⇒[' n ] e2" (at level 68).
+Inductive para_red_plus : nat -> term -> term -> Prop :=
+| parap_step : forall t t', para_red t t' -> t ⇒[1] t'
+| parap_trans : forall n1 n2 t t' t'',
+  t ⇒[n1] t' -> t' ⇒[n2] t'' -> t ⇒[1 + n1 + n2] t''
+where "e1 '⇒[' n ] e2" := (para_red_plus n e1 e2).
+
+Lemma red_star_para_red_plus_equiv : forall t t',
+  (lc_term t /\ t →⋆ t') <-> exists n, t ⇒[n] t'.
+Proof.
+intros t t'; split; intro H.
+destruct H. induction H0.
+  eauto using parap_step, red1_para_red.
+  eauto using parap_step, para_red_refl.
+  edestruct IHclos_refl_trans1 as [n1 H1]; eauto.
+  edestruct IHclos_refl_trans2 as [n2 H2]; eauto.
+  eauto using parap_trans.
+destruct H as [n H]. induction H; split; eauto.
+  auto using para_red_red_star.
+  destruct IHpara_red_plus1; auto.
+  destruct IHpara_red_plus1; destruct IHpara_red_plus2; eauto using rt_trans.
+Qed.
+
+Lemma CR_para : forall n1 n2 t t1 t2,
+  t ⇒[n1] t1 -> t ⇒[n2] t2 ->
+  exists t', t1 ⇒[n2] t' /\ t2 ⇒[n1] t'.
+Proof.
+assert (forall n n1 n2, n1 + n2 <= n -> forall t t1 t2,
+  t ⇒[n1] t1 -> t ⇒[n2] t2 ->
+  exists t' : term, t1 ⇒[n2] t' /\ t2 ⇒[n1] t') as Th.
+intro n; induction n; intros.
+(* n = 0 *)
+assert (n1 = 0) by omega; subst; inversion H0.
+(* n >= 1 *)
+destruct H0.
+destruct H1.
+destruct (para_red_diamond t t' t'0 H0 H1) as [t1 [H2 H3]].
+  eauto using parap_step.
+assert (exists u, t' ⇒[n1] u /\ t'0 ⇒[1] u) as Hu.
+  apply IHn with (t := t); auto using parap_step. omega.
+  destruct Hu as [u [Hu1 Hu2]].
+  assert (exists v, t'' ⇒[1] v /\ u ⇒[n2] v) as Hv.
+    apply IHn with (t := t'0); auto using parap_step. omega.
+    destruct Hv as [v [Hv1 Hv2]].
+  eauto using parap_trans.
+assert (exists u, t' ⇒[n2] u /\ t2 ⇒[n1] u) as Hu.
+  apply IHn with (t := t); auto using parap_step. omega.
+  destruct Hu as [u [Hu1 Hu2]].
+  assert (exists v, t'' ⇒[n2] v /\ u ⇒[n0] v) as Hv.
+    apply IHn with (t := t'); auto using parap_step. omega.
+    destruct Hv as [v [Hv1 Hv2]].
+  eauto using parap_trans.
+intros; apply Th with (n := n1 + n2) (t := t); auto.
+Qed.
+
+Lemma church_rosser : forall  t t1 t2,
+  lc_term t -> t →⋆ t1 -> t →⋆ t2 ->
+  exists t', t1 →⋆ t' /\ t2 →⋆ t'.
+Proof.
+intros t t1 t2 Hlc H1 H2.
+assert (exists n1, t ⇒[n1] t1) as H3. rewrite <- red_star_para_red_plus_equiv; auto.
+assert (exists n2, t ⇒[n2] t2) as H4. rewrite <- red_star_para_red_plus_equiv; auto.
+clear H1 H2. destruct H3 as [n1 H1]. destruct H4 as [n2 H2].
+destruct (CR_para _ _ _ _ _ H1 H2) as [t' [H1' H2']].
+assert (exists n, para_red_plus n t1 t') as H3 by eauto. rewrite <- red_star_para_red_plus_equiv in H3.
+assert (exists n, para_red_plus n t2 t') as H4 by eauto. rewrite <- red_star_para_red_plus_equiv in H4.
+exists t'; tauto.
+Qed.
