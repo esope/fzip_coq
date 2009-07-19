@@ -1,4 +1,3 @@
 PLC_inf.vo: PLC_inf.v metatheory/Metatheory.vo metatheory/LibLNgen.vo PLC_ott.vo
 PLC_ott.vo: PLC_ott.v metatheory/Metatheory.vo
-Relations_aux.vo: Relations_aux.v
-PLC_proofs.vo: PLC_proofs.v PLC_inf.vo Relations_aux.vo
+PLC_proofs.vo: PLC_proofs.v PLC_inf.vo
