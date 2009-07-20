@@ -1,0 +1,122 @@
+metavar termvar, x, y, z ::= {{ repr-locally-nameless }}
+
+grammar
+
+typ, t :: typ_ ::=
+  | base           ::   :: base
+  | t1 -> t2       ::   :: arrow
+  | ( t )          :: S :: paren {{ coq [[t]] }}
+
+term, e, f, g :: term_ ::=
+  | x              ::   :: var
+  | \ ( x : t ) e  ::   :: abs  (+ bind x in e +)
+  | e1 e2          ::   :: app
+  | ( e )          :: S :: paren {{ coq ([[e]]) }}
+  | { e2 / x } e1  :: M :: subst {{ coq (open_term_wrt_term [[x e1]] [[e2]]) }}
+
+substitutions
+  single e x :: subst
+
+freevars
+  e x :: fv
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+grammar
+
+typing_env, G :: '' ::=          {{ coq list (atom*typ) }}
+  | empty          ::   :: empty {{ coq nil }}
+  | G , x : t      ::   :: cons  {{ coq ([[x]]~[[t]] ++ [[G]]) }}
+
+formula :: formula_ ::=
+  | judgement      ::   :: judgement
+  | uniq G         ::   :: uniq       {{ coq uniq ([[G]]) }}
+  | x : t in G     ::   :: binds      {{ coq binds ([[x]]) ([[t]]) ([[G]]) }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jval :: '' ::=
+
+defn
+pre_val e
+:: :: pval :: pval_ by
+
+--------- :: var
+pre_val x
+
+pre_val e1
+val e2
+--------------- :: app
+pre_val (e1 e2)
+
+defn
+val e
+:: :: val :: val_ by
+
+pre_val e
+--------- :: pval
+ val e
+
+ val e
+------------- :: abs
+val (\(x:t)e)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+  Jwfterm :: '' ::=
+
+defn
+    G |- e : t :: :: wfterm :: wfterm_ by
+
+    uniq G
+    x:t in G
+    ---------- :: val
+    G |- x : t
+
+    G |- e1 : t2->t1
+    G |- e2 : t2
+    ---------------- :: app
+    G |- e1 e2 : t1
+
+    G, x:t1 |- e : t2
+    ---------------------- :: abs
+    G |- \(x:t1)e : t1->t2
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jred0 :: '' ::=
+
+defn
+e1 --> e2
+:: :: red0 :: red0_ by
+
+----------------------------- :: beta
+(\(x:t)e1) e2 --> {e2 / x} e1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jred1 :: '' ::=
+
+defn
+e1 ---> e2
+:: :: red1 :: red1_ by
+
+e --> e'
+---------- :: empty
+e ---> e'
+
+   e1 ---> e1'
+----------------- :: appL
+e1 e2 ---> e1' e2
+
+   e2 ---> e2'
+----------------- :: appR
+e1 e2 ---> e1 e2'
+
+   e ---> e'
+--------------------- :: abs
+\(x:t)e ---> \(x:t)e'
