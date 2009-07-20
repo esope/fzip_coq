@@ -60,6 +60,14 @@ intros Γ e τ H; induction H; auto.
 Qed.
 Hint Resolve wfterm_regular.
 
+Lemma wfterm_env_uniq : forall Γ e τ,
+  wfterm Γ e τ → uniq Γ.
+Proof.
+intros Γ e τ H. induction H; auto.
+pick fresh x. assert (uniq ([(x, t1)] ++ G)) as H1 by auto. inversion H1; auto.
+Qed.
+Hint Resolve wfterm_env_uniq.
+
 (* Lemmas about values *)
 Lemma value_is_normal_aux :
   (forall v, pval v → ~ exists e, v ⇝ e) ∧
