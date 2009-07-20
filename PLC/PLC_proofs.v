@@ -1,4 +1,5 @@
 Add LoadPath "metatheory".
+Require Export Utf8.
 Require Export Coq.Program.Equality.
 Require Export PLC_inf.
 Require Export Relations.
@@ -8,8 +9,8 @@ Notation "[ e2 / x ] e1" := (subst_term e2 x e1) (at level 67).
 Notation "[ y → x ] e" := (subst_term (term_var_f y) x e) (at level 67).
 Notation "e1 ^^ e2" := (open_term_wrt_term e1 e2) (at level 67).
 Notation "e ^ x" := (e ^^ (term_var_f x)).
-Notation "e1 '→' e2" := (red1 e1 e2) (at level 68).
-Notation "e1 '→⋆' e2" := (clos_refl_trans _ red1 e1 e2) (at level 68).
+Notation "e1 '⇝' e2" := (red1 e1 e2) (at level 68).
+Notation "e1 '⇝⋆' e2" := (clos_refl_trans _ red1 e1 e2) (at level 68).
 Notation "e1 '⇒' e2" := (para_red e1 e2) (at level 68).
 Notation "e1 '⋆' = e2" := (can e1 e2) (at level 68).
 
@@ -34,74 +35,74 @@ Qed.
 Hint Rewrite var_subst : lngen.
 
 Lemma pval_val_regular :
-  (forall p, pval p -> lc_term p) /\ (forall v, val v -> lc_term v).
+  (forall p, pval p → lc_term p) ∧ (forall v, val v → lc_term v).
 Proof.
 apply pval_val_mut_ind; eauto.
 Qed.
 
-Lemma pval_regular : forall p, pval p -> lc_term p.
+Lemma pval_regular : forall p, pval p → lc_term p.
 Proof.
 intros; destruct pval_val_regular as [H1 _]; auto.
 Qed.
 
-Lemma val_regular : forall v, val v -> lc_term v.
+Lemma val_regular : forall v, val v → lc_term v.
 Proof.
 intros; destruct pval_val_regular as [_ H2]; auto.
 Qed.
 Hint Resolve pval_regular val_regular.
 
-Lemma red0_regular1 : forall e1 e2, red0 e1 e2 -> lc_term e1.
+Lemma red0_regular1 : forall e1 e2, red0 e1 e2 → lc_term e1.
 Proof.
 intros e1 e2 H; destruct H; auto.
 Qed.
 
-Lemma red0_regular2 : forall e1 e2, red0 e1 e2 -> lc_term e2.
+Lemma red0_regular2 : forall e1 e2, red0 e1 e2 → lc_term e2.
 Proof.
 intros e1 e2 H; destruct H; auto with lngen.
 Qed.
 Hint Resolve red0_regular1 red0_regular2.
 
-Lemma red1_regular1 : forall e1 e2, e1 → e2 -> lc_term e1.
+Lemma red1_regular1 : forall e1 e2, e1 ⇝ e2 → lc_term e1.
 Proof.
 intros e1 e2 H; induction H; eauto.
 Qed.
 
-Lemma red1_regular2 : forall e1 e2, e1 → e2 -> lc_term e2.
+Lemma red1_regular2 : forall e1 e2, e1 ⇝ e2 → lc_term e2.
 Proof.
 intros e1 e2 H; induction H; eauto.
 Qed.
 Hint Resolve red1_regular1 red1_regular2.
 
-Lemma red_star_regular1 : forall e1 e2, e1 →⋆ e2 ->
-  lc_term e2 -> lc_term e1.
+Lemma red_star_regular1 : forall e1 e2, e1 ⇝⋆ e2 →
+  lc_term e2 → lc_term e1.
 Proof.
 intros e1 e2 H Hlc; induction H; eauto.
 Qed.
 
-Lemma red_star_regular2 : forall e1 e2, e1 →⋆ e2 ->
-  lc_term e1 -> lc_term e2.
+Lemma red_star_regular2 : forall e1 e2, e1 ⇝⋆ e2 →
+  lc_term e1 → lc_term e2.
 Proof.
 intros e1 e2 H Hlc; induction H; eauto.
 Qed.
 Hint Resolve red_star_regular1 red_star_regular2.
 
-Lemma para_red_regular1 : forall e1 e2, e1 ⇒ e2 -> lc_term e1.
+Lemma para_red_regular1 : forall e1 e2, e1 ⇒ e2 → lc_term e1.
 Proof.
 intros e1 e2 H; induction H; eauto.
 Qed.
 
-Lemma para_red_regular2 : forall e1 e2, e1 ⇒ e2 -> lc_term e2.
+Lemma para_red_regular2 : forall e1 e2, e1 ⇒ e2 → lc_term e2.
 Proof.
 intros e1 e2 H; induction H; eauto.
 Qed.
 Hint Resolve para_red_regular1 para_red_regular2.
 
-Lemma can_regular1 : forall e1 e2, e1⋆ = e2 -> lc_term e1.
+Lemma can_regular1 : forall e1 e2, e1⋆ = e2 → lc_term e1.
 Proof.
 intros e1 e2 H; induction H; auto.
 Qed.
 
-Lemma can_regular2 : forall e1 e2, e1⋆ = e2 -> lc_term e2.
+Lemma can_regular2 : forall e1 e2, e1⋆ = e2 → lc_term e2.
 Proof.
 intros e1 e2 H; induction H; auto.
 pick fresh x; auto with lngen.
@@ -109,11 +110,11 @@ Qed.
 Hint Resolve can_regular1 can_regular2.
 
 Lemma can_renaming : forall e1 e2 x y,
-  e1 ⋆ = e2 ->
+  e1 ⋆ = e2 →
   (subst_term (term_var_f y) x e1) ⋆ = (subst_term (term_var_f y) x e2).
 Proof.
-assert (forall n e1, size_term e1 <= n -> forall e2 (x y: termvar),
-  can e1 e2 -> can (subst_term (term_var_f y) x e1) (subst_term (term_var_f y) x e2)) as Th.
+assert (forall n e1, size_term e1 <= n → forall e2 (x y: termvar),
+  can e1 e2 → can (subst_term (term_var_f y) x e1) (subst_term (term_var_f y) x e2)) as Th.
 intro n; induction n; intros e1 Hsize e2 x y H.
 size_term_absurd e1.
 destruct H; simpl in *.
@@ -136,7 +137,7 @@ intros e1 e2 x y H; apply Th with (n := size_term e1); auto.
 Qed.
 
 (* Renaming lemmas *)
-Lemma red0_renaming : forall x y e e', red0 e e' ->
+Lemma red0_renaming : forall x y e e', red0 e e' →
   red0 (subst_term (term_var_f y) x e) (subst_term (term_var_f y) x e').
 Proof.
 intros x y e e' H.
@@ -146,8 +147,8 @@ assert (lc_term (subst_term (term_var_f y) x (term_abs e1))) by auto with lngen;
 Qed.
 Hint Resolve red0_renaming.
 
-Lemma red1_renaming : forall x y e e', e → e' ->
-  (subst_term (term_var_f y) x e) → (subst_term (term_var_f y) x e').
+Lemma red1_renaming : forall x y e e', e ⇝ e' →
+  (subst_term (term_var_f y) x e) ⇝ (subst_term (term_var_f y) x e').
 Proof.
 intros x y e e' H.
 induction H; subst; simpl; auto.
@@ -159,8 +160,8 @@ repeat rewrite <- subst_term_open_term_wrt_term; eauto.
 Qed.
 Hint Resolve red1_renaming.
 
-Lemma red_star_renaming : forall x y e e', e →⋆ e' ->
-  (subst_term (term_var_f y) x e) →⋆ (subst_term (term_var_f y) x e').
+Lemma red_star_renaming : forall x y e e', e ⇝⋆ e' →
+  (subst_term (term_var_f y) x e) ⇝⋆ (subst_term (term_var_f y) x e').
 Proof.
 intros x y e e' H.
 induction H.
@@ -172,8 +173,8 @@ Hint Resolve red_star_renaming.
 
 (* Lemmas about values *)
 Lemma value_is_normal_aux :
-  (forall v, pval v -> ~ exists e, v → e) /\
-  (forall v, val v -> ~ exists e, v → e).
+  (forall v, pval v → ~ exists e, v ⇝ e) ∧
+  (forall v, val v → ~ exists e, v ⇝ e).
 Proof.
 apply pval_val_mut_ind; intros; intros [e0 Hred]; inversion Hred; subst; eauto.
 inversion H.
@@ -182,14 +183,14 @@ inversion H0.
 pick fresh x. eapply H; eauto.
 Qed.
 
-Lemma value_is_normal : forall v, val v -> ~ exists e, v → e.
+Lemma value_is_normal : forall v, val v → ~ exists e, v ⇝ e.
 Proof.
 destruct value_is_normal_aux as [_ Th]. intuition auto.
 Qed.
 
 (* Lemmas about canonize *)
 Lemma can_deterministic : forall e e1 e2,
-  e⋆ = e1 -> e⋆ = e2 -> e1 = e2.
+  e⋆ = e1 → e⋆ = e2 → e1 = e2.
 Proof.
 intros e e1 e2 H. generalize dependent e2. induction H; intros.
 inversion H; reflexivity.
@@ -204,7 +205,7 @@ inversion H2; subst.
   pick fresh x; eauto using open_term_wrt_term_inj.
 Qed.
 
-Lemma can_total : forall e1, lc_term e1 -> exists e2, e1⋆ = e2.
+Lemma can_total : forall e1, lc_term e1 → exists e2, e1⋆ = e2.
 Proof.
 intros e1 Hlc; induction Hlc; eauto.
 Case "abs". pick fresh x; destruct (H0 x) as [e2 H2].
@@ -220,7 +221,7 @@ inversion H1; subst. exists (e' ^^ e2'). apply can_app2 with (L := L); auto.
 Qed.
 
 (*
-Lemma can_fv : forall e1 e2, e1⋆ = e2 -> fv_term e2 [<=] fv_term e1.
+Lemma can_fv : forall e1 e2, e1⋆ = e2 → fv_term e2 [<=] fv_term e1.
 Proof.
 intros e1 e2 H; induction H; simpl; try fsetdec.
 Case "app1".
@@ -248,8 +249,8 @@ Hint Resolve can_fv.
 
 (* Lemmas about red_star *)
 Lemma red_star_context_appL : forall e1 e1' e2,
-  lc_term e2 -> e1 →⋆ e1' ->
-  term_app e1 e2 →⋆ term_app e1' e2.
+  lc_term e2 → e1 ⇝⋆ e1' →
+  term_app e1 e2 ⇝⋆ term_app e1' e2.
 Proof.
 intros e1 e1' e2 Hlc Hred.
 induction Hred.
@@ -259,8 +260,8 @@ eapply rt_trans; eauto.
 Qed.
 
 Lemma red_star_context_appR : forall e1 e2 e2',
-  lc_term e1 -> e2 →⋆ e2' ->
-  term_app e1 e2 →⋆ term_app e1 e2'.
+  lc_term e1 → e2 ⇝⋆ e2' →
+  term_app e1 e2 ⇝⋆ term_app e1 e2'.
 Proof.
 intros e1 e2 e2' Hlc Hred.
 induction Hred.
@@ -270,21 +271,21 @@ eapply rt_trans; eauto.
 Qed.
 
 Lemma red_star_context_app : forall e1 e1' e2 e2',
-  lc_term e1 -> lc_term e2 -> e1 →⋆ e1' -> e2 →⋆ e2' ->
-  term_app e1 e2 →⋆ term_app e1' e2'.
+  lc_term e1 → lc_term e2 → e1 ⇝⋆ e1' → e2 ⇝⋆ e2' →
+  term_app e1 e2 ⇝⋆ term_app e1' e2'.
 Proof.
 intros e1 e1' e2 e2' Hlc1 Hlc2 Hred1 Hred2.
 eapply rt_trans; eauto using red_star_context_appL, red_star_context_appR.
 Qed.
 
 Lemma red_star_context_abs : forall L e e',
-  (forall x, x `notin` L -> e ^ x →⋆ e' ^ x) ->
-  term_abs e →⋆ term_abs e'.
+  (forall x, x `notin` L → e ^ x ⇝⋆ e' ^ x) →
+  term_abs e ⇝⋆ term_abs e'.
 Proof.
 intros L e e' H. pick fresh x.
 remember (e ^ x) as e1.
 remember (e' ^ x) as e1'.
-assert (e1 →⋆ e1') as Hred by solve [subst; apply H; auto]. clear H.
+assert (e1 ⇝⋆ e1') as Hred by solve [subst; apply H; auto]. clear H.
 generalize dependent x. generalize dependent e'. generalize dependent e.
 induction Hred; intros; subst.
 Case "step".
@@ -304,28 +305,28 @@ Qed.
 Hint Resolve red_star_context_appL red_star_context_appR red_star_context_app red_star_context_abs.
 
 (* Lemmas about para_red *)
-Lemma para_red_refl : forall e, lc_term e -> e ⇒ e.
+Lemma para_red_refl : forall e, lc_term e → e ⇒ e.
 Proof.
 intros e H. induction H; try solve [constructor; auto].
 apply para_red_abs with (L := fv_term e); auto.
 Qed.
 Hint Resolve para_red_refl.
 
-Lemma red0_para_red : forall e1 e2, red0 e1 e2 -> e1 ⇒ e2.
+Lemma red0_para_red : forall e1 e2, red0 e1 e2 → e1 ⇒ e2.
 Proof.
 intros e1 e2 H. inversion H; subst.
 apply para_red_app2 with (L := fv_term e0); eauto.
 Qed.
 Hint Resolve red0_para_red.
 
-Lemma red1_para_red : forall e1 e2, e1 → e2 -> e1 ⇒ e2.
+Lemma red1_para_red : forall e1 e2, e1 ⇝ e2 → e1 ⇒ e2.
 Proof.
 intros e1 e2 H. induction H; auto.
 apply para_red_abs with (L := L); auto.
 Qed.
 
 Lemma para_red_subst : forall e1 e1' e2 e2' x,
-  e1 ⇒ e1' -> e2 ⇒ e2' ->
+  e1 ⇒ e1' → e2 ⇒ e2' →
   (subst_term e2 x e1) ⇒ (subst_term e2' x e1').
 Proof.
 intros e1 e1' e2 e2' x H.
@@ -352,7 +353,7 @@ rewrite subst_term_open_term_wrt_term; eauto.
 Qed.
 
 Lemma para_red_canonize : forall e1 e2 e1',
-  e1 ⇒ e2 -> e1 ⋆ = e1' -> e2 ⇒ e1'.
+  e1 ⇒ e2 → e1 ⋆ = e1' → e2 ⇒ e1'.
 Proof.
 intros e1 e2 e1' Hpara Hcan. generalize dependent e1'.
 induction Hpara; intros v Hcan.
@@ -372,14 +373,14 @@ inversion Hcan; subst.
 Qed.
 
 Lemma para_red_diamond : forall e e1 e2,
-  e ⇒ e1 -> e ⇒ e2 -> exists e', e1 ⇒ e' /\ e2 ⇒ e'.
+  e ⇒ e1 → e ⇒ e2 → exists e', e1 ⇒ e' ∧ e2 ⇒ e'.
 Proof.
 intros e e1 e2 H1 H2.
 destruct (can_total e) as [e' H']; eauto.
 eauto using para_red_canonize.
 Qed.
 
-Lemma para_red_red_star : forall e1 e2, e1 ⇒ e2 -> e1 →⋆ e2.
+Lemma para_red_red_star : forall e1 e2, e1 ⇒ e2 → e1 ⇝⋆ e2.
 Proof.
 intros e1 e2 H.
 assert (lc_term e1) as Hlc by eauto.
@@ -391,14 +392,14 @@ apply rt_step; apply red1_empty; apply red0_beta; eauto.
 Qed.
 
 Reserved Notation "e1 '⇒[' n ] e2" (at level 68).
-Inductive para_red_plus : nat -> term -> term -> Prop :=
-| parap_step : forall t t', para_red t t' -> t ⇒[1] t'
+Inductive para_red_plus : nat → term → term → Prop :=
+| parap_step : forall t t', para_red t t' → t ⇒[1] t'
 | parap_trans : forall n1 n2 t t' t'',
-  t ⇒[n1] t' -> t' ⇒[n2] t'' -> t ⇒[1 + n1 + n2] t''
+  t ⇒[n1] t' → t' ⇒[n2] t'' → t ⇒[1 + n1 + n2] t''
 where "e1 '⇒[' n ] e2" := (para_red_plus n e1 e2).
 
 Lemma red_star_para_red_plus_equiv : forall t t',
-  (lc_term t /\ t →⋆ t') <-> exists n, t ⇒[n] t'.
+  (lc_term t ∧ t ⇝⋆ t') ↔ exists n, t ⇒[n] t'.
 Proof.
 intros t t'; split; intro H.
 destruct H. induction H0.
@@ -414,12 +415,12 @@ destruct H as [n H]. induction H; split; eauto.
 Qed.
 
 Lemma CR_para : forall n1 n2 t t1 t2,
-  t ⇒[n1] t1 -> t ⇒[n2] t2 ->
-  exists t', t1 ⇒[n2] t' /\ t2 ⇒[n1] t'.
+  t ⇒[n1] t1 → t ⇒[n2] t2 →
+  exists t', t1 ⇒[n2] t' ∧ t2 ⇒[n1] t'.
 Proof.
-assert (forall n n1 n2, n1 + n2 <= n -> forall t t1 t2,
-  t ⇒[n1] t1 -> t ⇒[n2] t2 ->
-  exists t' : term, t1 ⇒[n2] t' /\ t2 ⇒[n1] t') as Th.
+assert (forall n n1 n2, n1 + n2 <= n → forall t t1 t2,
+  t ⇒[n1] t1 → t ⇒[n2] t2 →
+  exists t' : term, t1 ⇒[n2] t' ∧ t2 ⇒[n1] t') as Th.
 intro n; induction n; intros.
 (* n = 0 *)
 assert (n1 = 0) by omega; subst; inversion H0.
@@ -428,17 +429,17 @@ destruct H0.
 destruct H1.
 destruct (para_red_diamond t t' t'0 H0 H1) as [t1 [H2 H3]].
   eauto using parap_step.
-assert (exists u, t' ⇒[n1] u /\ t'0 ⇒[1] u) as Hu.
+assert (exists u, t' ⇒[n1] u ∧ t'0 ⇒[1] u) as Hu.
   apply IHn with (t := t); auto using parap_step. omega.
   destruct Hu as [u [Hu1 Hu2]].
-  assert (exists v, t'' ⇒[1] v /\ u ⇒[n2] v) as Hv.
+  assert (exists v, t'' ⇒[1] v ∧ u ⇒[n2] v) as Hv.
     apply IHn with (t := t'0); auto using parap_step. omega.
     destruct Hv as [v [Hv1 Hv2]].
   eauto using parap_trans.
-assert (exists u, t' ⇒[n2] u /\ t2 ⇒[n1] u) as Hu.
+assert (exists u, t' ⇒[n2] u ∧ t2 ⇒[n1] u) as Hu.
   apply IHn with (t := t); auto using parap_step. omega.
   destruct Hu as [u [Hu1 Hu2]].
-  assert (exists v, t'' ⇒[n2] v /\ u ⇒[n0] v) as Hv.
+  assert (exists v, t'' ⇒[n2] v ∧ u ⇒[n0] v) as Hv.
     apply IHn with (t := t'); auto using parap_step. omega.
     destruct Hv as [v [Hv1 Hv2]].
   eauto using parap_trans.
@@ -446,8 +447,8 @@ intros; apply Th with (n := n1 + n2) (t := t); auto.
 Qed.
 
 Lemma church_rosser : forall  t t1 t2,
-  lc_term t -> t →⋆ t1 -> t →⋆ t2 ->
-  exists t', t1 →⋆ t' /\ t2 →⋆ t'.
+  lc_term t → t ⇝⋆ t1 → t ⇝⋆ t2 →
+  exists t', t1 ⇝⋆ t' ∧ t2 ⇝⋆ t'.
 Proof.
 intros t t1 t2 Hlc H1 H2.
 assert (exists n1, t ⇒[n1] t1) as H3. rewrite <- red_star_para_red_plus_equiv; auto.
