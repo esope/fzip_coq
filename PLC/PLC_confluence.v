@@ -1,31 +1,5 @@
 Add LoadPath "metatheory".
-Require Export Utf8.
-Require Export Coq.Program.Equality.
-Require Export PLC_inf.
-Require Export Relations.
-
-(* Notations *)
-Notation "[ e2 / x ] e1" := (subst_term e2 x e1) (at level 67).
-Notation "[ y → x ] e" := (subst_term (term_var_f y) x e) (at level 67).
-Notation "e1 ^^ e2" := (open_term_wrt_term e1 e2) (at level 67).
-Notation "e ^ x" := (e ^^ (term_var_f x)).
-Notation "e1 '⇝' e2" := (red1 e1 e2) (at level 68).
-Notation "e1 '⇝⋆' e2" := (clos_refl_trans _ red1 e1 e2) (at level 68).
-Notation "e1 '⇒' e2" := (para_red e1 e2) (at level 68).
-Notation "e1 '⋆' = e2" := (can e1 e2) (at level 68).
-
-(* Tactics *)
-Tactic Notation "absurdity" "with" tactic(tac) :=
-  assert False by tac; contradiction.
-Ltac absurdity := absurdity with auto.
-Ltac size_absurd size t :=
-  assert (1 <= size t) by auto with lngen; absurdity with omega.
-Ltac size_term_absurd t := size_absurd size_term t.
-
-(* Mutual induction principles *)
-Scheme pval_mut_ind_aux := Induction for pval Sort Prop
-with   val_mut_ind_aux  := Induction for val  Sort Prop.
-Combined Scheme pval_val_mut_ind from pval_mut_ind_aux, val_mut_ind_aux.
+Require Export PLC_init.
 
 (* Administrative lemmas *)
 Lemma var_subst : forall e x, subst_term e x (term_var_f x) = e.
@@ -33,23 +7,6 @@ Proof.
 intros e x; simpl; destruct (x == x); congruence.
 Qed.
 Hint Rewrite var_subst : lngen.
-
-Lemma pval_val_regular :
-  (forall p, pval p → lc_term p) ∧ (forall v, val v → lc_term v).
-Proof.
-apply pval_val_mut_ind; eauto.
-Qed.
-
-Lemma pval_regular : forall p, pval p → lc_term p.
-Proof.
-intros; destruct pval_val_regular as [H1 _]; auto.
-Qed.
-
-Lemma val_regular : forall v, val v → lc_term v.
-Proof.
-intros; destruct pval_val_regular as [_ H2]; auto.
-Qed.
-Hint Resolve pval_regular val_regular.
 
 Lemma red0_regular1 : forall e1 e2, red0 e1 e2 → lc_term e1.
 Proof.
@@ -170,23 +127,6 @@ apply rt_refl.
 eapply rt_trans; eauto.
 Qed.
 Hint Resolve red_star_renaming.  
-
-(* Lemmas about values *)
-Lemma value_is_normal_aux :
-  (forall v, pval v → ~ exists e, v ⇝ e) ∧
-  (forall v, val v → ~ exists e, v ⇝ e).
-Proof.
-apply pval_val_mut_ind; intros; intros [e0 Hred]; inversion Hred; subst; eauto.
-inversion H.
-inversion H1; subst. inversion p.
-inversion H0.
-pick fresh x. eapply H; eauto.
-Qed.
-
-Lemma value_is_normal : forall v, val v → ~ exists e, v ⇝ e.
-Proof.
-destruct value_is_normal_aux as [_ Th]. intuition auto.
-Qed.
 
 (* Lemmas about canonize *)
 Lemma can_deterministic : forall e e1 e2,

@@ -47,7 +47,9 @@ LNGEN_FILES = \
 ## List of other files that should be compiled.
 
 FILES = \
-	PLC_proofs \
+	PLC_init \
+	PLC_confluence \
+	PLC_other \
 
 ## Lists calculated from the above.
 
