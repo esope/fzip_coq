@@ -386,7 +386,7 @@ assert (exists u, t' ⇒[n2] u ∧ t2 ⇒[n1] u) as Hu.
 intros; apply Th with (n := n1 + n2) (t := t); auto.
 Qed.
 
-Lemma church_rosser : forall  t t1 t2,
+Theorem church_rosser : forall  t t1 t2,
   lc_term t → t ⇝⋆ t1 → t ⇝⋆ t2 →
   exists t', t1 ⇝⋆ t' ∧ t2 ⇝⋆ t'.
 Proof.
