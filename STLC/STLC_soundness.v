@@ -134,6 +134,18 @@ Qed.
 Hint Resolve red1_renaming.
 
 (* Lemmas about wfterm *)
+Lemma wfterm_fv : forall Γ e τ,
+  wfterm Γ e τ → fv_term e [<=] dom Γ.
+Proof.
+intros Γ e τ H. induction H; simpl fv_term in *.
+assert (x ∈ dom G) by eauto; fsetdec.
+fsetdec.
+pick fresh x. assert (fv_term (e ^ x) [<=] dom (x ~ t1 ++ G)) by auto.
+assert (fv_term e [<=] fv_term (e ^ x)) by auto with lngen.
+assert (fv_term e [<=] {{x}} ∪ dom G). simpl in *; fsetdec.
+fsetdec.
+Qed.
+
 Lemma wfterm_uniqueness : forall Γ e τ τ',
   wfterm Γ e τ → wfterm Γ e τ' → τ = τ'.
 Proof.
@@ -142,6 +154,27 @@ induction H1; intros τ' H2; inversion H2; subst.
 eauto using binds_unique.
 assert (typ_arrow t2 t1 = typ_arrow t3 τ') by auto; congruence.
 pick fresh x; assert (t2 = t3) by eauto; congruence.
+Qed.
+
+Lemma wfterm_strengthening : forall Γ₁ Γ₂ x τ τ' e,
+  x ∉ fv_term e →
+  wfterm (Γ₁ ++ x ~ τ' ++ Γ₂) e τ →
+  wfterm (Γ₁ ++ Γ₂) e τ.
+Proof.
+intros Γ₁ Γ₂ x τ τ' e Hx He.
+dependent induction He; simpl in Hx.
+Case "var".
+constructor. solve_uniq. analyze_binds_uniq H0.
+Case "app".
+econstructor; eauto.
+Case "abs".
+apply wfterm_abs with (L := L `union` {{x}}); intros.
+rewrite_env (([(x0, t1)] ++ Γ₁) ++ Γ₂).
+eapply H0 with (x1 := x); auto.
+assert (fv_term (e ^ x0) [<=] fv_term (term_var_f x0) ∪ fv_term e) as H2
+ by auto with lngen.
+simpl in H2; fsetdec.
+simpl_env; eauto.
 Qed.
 
 Lemma wfterm_weakening : forall Γ₁ Γ₂ Γ₃ e τ,
