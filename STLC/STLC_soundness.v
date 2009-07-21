@@ -14,6 +14,12 @@ with   val_mut_ind_aux  := Induction for val  Sort Prop.
 Combined Scheme pval_val_mut_ind from pval_mut_ind_aux, val_mut_ind_aux.
 
 (* Administrative lemmas *)
+Lemma var_subst : forall e x, subst_term e x (term_var_f x) = e.
+Proof.
+intros e x; simpl; destruct (x == x); congruence.
+Qed.
+Hint Rewrite var_subst : lngen.
+
 Lemma pval_val_regular :
   (forall p, pval p → lc_term p) ∧ (forall v, val v → lc_term v).
 Proof.
@@ -128,6 +134,16 @@ Qed.
 Hint Resolve red1_renaming.
 
 (* Lemmas about wfterm *)
+Lemma wfterm_uniqueness : forall Γ e τ τ',
+  wfterm Γ e τ → wfterm Γ e τ' → τ = τ'.
+Proof.
+intros Γ e τ τ' H1 H2. generalize dependent τ'.
+induction H1; intros τ' H2; inversion H2; subst.
+eauto using binds_unique.
+assert (typ_arrow t2 t1 = typ_arrow t3 τ') by auto; congruence.
+pick fresh x; assert (t2 = t3) by eauto; congruence.
+Qed.
+
 Lemma wfterm_weakening : forall Γ₁ Γ₂ Γ₃ e τ,
   wfterm (Γ₁ ++ Γ₃) e τ →
   uniq (Γ₁ ++ Γ₂ ++ Γ₃) →

@@ -13,23 +13,6 @@ auto.
 destruct a; destruct IHΓ; auto.
 destruct (x == a); subst; auto.
 Qed.
-Hint Resolve in_dom_dec.
-
-Lemma binds_dec : forall x τ (Γ: typing_env), {binds x τ Γ} + {~binds x τ Γ}.
-Proof.
-intros x τ Γ. induction Γ; auto.
-destruct a as [y τ']; destruct (x == y); subst.
-Case "x = y".
-destruct (eq_typ_dec τ τ'); subst; auto.
-SCase "τ ≠ τ'".
-destruct IHΓ; auto.
-SSCase "~ binds y τ Γ".
-right; intro H; unfold binds in *; simpl in H; destruct H; congruence.
-Case "x ≠ y".
-destruct IHΓ; [left | right]; auto.
-SSCase "~ binds y τ Γ".
-intro H; unfold binds in *; simpl in H; destruct H; congruence.
-Qed.
 
 Lemma uniq_dec : forall (Γ: typing_env), {uniq Γ} + {~uniq Γ}.
 Proof.
@@ -60,38 +43,69 @@ intro t; apply (Th (size_term t)); auto.
 Qed.
 
 Lemma wfterm_abs_exists : forall x τ Γ e τ',
+  x ∉ fv_term e →
   wfterm (x ~ τ ++ Γ) (e ^ x) τ' → wfterm Γ (term_abs τ e) (typ_arrow τ τ').
 Proof.
-intros x τ Γ e τ' H.
+intros x τ Γ e τ' Hx H.
 assert (uniq Γ). assert (uniq ([(x, τ)] ++ Γ)) as H1 by eauto. inversion H1; auto.
 apply wfterm_abs with (L := {{x}} ∪ dom Γ); intros y Hy. assert (y ≠ x) by auto.
 replace (e ^ y) with (subst_term (term_var_f y) x (e ^ x)).
 apply wfterm_subst with (τ₂ := τ) (Γ₁ := nil); simpl; simpl_env.
 apply wfterm_weakening; simpl_env; eauto.
 constructor; eauto.
-replace (e ^ y) with (e ^^ (subst_term (term_var_f y) x (term_var_f y))).
-(* ICI *)
+rewrite subst_term_open_term_wrt_term; auto.
+autorewrite with lngen. reflexivity.
+Qed.
 
+Lemma wfterm_abs_exists_inv : forall x τ Γ e τ',
+  x ∉ fv_term e ∪ dom Γ →
+  wfterm Γ (term_abs τ e) (typ_arrow τ τ') →
+  wfterm (x ~ τ ++ Γ) (e ^ x) τ'.
+Proof.
+intros x τ Γ e τ' Hx H.
+inversion H; subst. pick fresh y.
+assert (wfterm ([(y, τ)] ++ Γ) (e ^ y) τ') by auto.
+replace (e ^ x) with (subst_term (term_var_f x) y (e ^ y)).
+apply wfterm_subst with (τ₂ := τ) (Γ₁ := nil); simpl; simpl_env.
+eauto using wfterm_weakening. constructor; auto.
+assert (uniq ([(y, τ)] ++ Γ)) as H1 by eauto; inversion H1; subst; auto.
+rewrite subst_term_open_term_wrt_term; auto.
+autorewrite with lngen. reflexivity.
+Qed.
 
-Lemma wfterm_dec : forall Γ e τ, {wfterm Γ e τ} + {~wfterm Γ e τ}.
+Lemma wfterm_dec : forall Γ e,
+  {τ | wfterm Γ e τ} + {forall τ, ~wfterm Γ e τ}.
 Proof.
 intros Γ e.
 destruct (uniq_dec Γ); eauto.
 destruct (lc_term_dec e) as [H | H]; eauto.
 assert (lc_set_term e) as H' by auto with lngen; clear H.
 generalize dependent Γ. induction H'; intros.
-Case "var". destruct (binds_dec x1 τ Γ); auto.
-  right; intro H; inversion H; contradiction.
-Case "abs".
-destruct τ.
-SCase "typ_base". right; intro H1; inversion H1.
-SCase "typ_arrow". pick fresh x.
-destruct (eq_typ_dec t1 τ1); subst.
-SSCase "t1 = τ1".
-assert ({wfterm (x ~ τ1 ++ Γ) (e1 ^ x) τ2} + {⌉ wfterm (x ~ τ1 ++ Γ) (e1 ^ x) τ2}) as H1 by auto.
-destruct H1 as [H1 | H1]; [left | right].
-apply wfterm_abs with (L := {{x}}). intros y Hy.
-
-SSCase "t1 ≠ τ1".
-
-
+Case "var". destruct (binds_lookup _ x1 Γ) as [[τ H] | H]; eauto.
+  right; intros τ H0; inversion H0; subst; eapply H; eauto.
+Case "abs". pick fresh x.
+edestruct (H x (x ~ t1 ++ Γ)) as [[τ H1] | H1]; auto.
+left; eauto using wfterm_abs_exists.
+right; intros τ H0; inversion H0; subst; eapply H1; eauto using wfterm_abs_exists_inv.
+Case "app".
+edestruct (IHH'1 Γ) as [[τ₁ H1] | H1]; auto.
+SCase "wfterm e1".
+destruct τ₁.
+SSCase "typ_base".
+right; intros τ H; inversion H; subst;
+  assert (typ_base = typ_arrow t2 τ) by eauto using wfterm_uniqueness;
+    congruence.
+SSCase "typ_arrow".
+edestruct (IHH'2 Γ) as [[τ₂ H2] | H2]; auto.
+SSSCase "wfterm e2".
+destruct (eq_typ_dec τ₁1 τ₂); subst.
+SSSSCase "τ₁1 = τ₂". eauto.
+SSSSCase "τ₁1 ≠ τ₂". right. intros τ H. inversion H; subst.
+assert (typ_arrow τ₁1 τ₁2 = typ_arrow t2 τ) by eauto using wfterm_uniqueness.
+assert (τ₂ = t2) by eauto using wfterm_uniqueness.
+congruence.
+SSSCase "~ wfterm e2".
+right; intros τ H; inversion H; subst; eapply H2; eauto.
+SCase "~ wfterm e1".
+right; intros τ H; inversion H; subst; eapply H1; eauto.
+Qed.

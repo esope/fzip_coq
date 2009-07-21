@@ -49,6 +49,7 @@ LNGEN_FILES = \
 FILES = \
 	STLC_init \
 	STLC_soundness \
+	STLC_dec \
 #	STLC_normalization \
 
 ## Lists calculated from the above.
