@@ -167,34 +167,32 @@ Theorem abs_step_reduce_lemma : forall Γ e₁ e₂ τ₁ τ₂,
        reduce Γ (term_app (term_abs τ₁ e₂) e₁) τ₂.
 Proof.
 intros Γ e₁ e₂ τ₁ τ₂ H H0 H1 H2 H3.
+generalize dependent e₂.
 assert (lc_term e₁) as Hlc1 by eauto.
-induction Hlc1.
+induction Hlc1; intros; eapply cr3; eauto; intros.
 Case "e₁ = term_var_f x".
-apply cr3; eauto.
-intros. dependent induction H4.
-inversion H; subst; auto.
-inversion H4; subst. inversion H.
+pick fresh y. assert (lc_term (e₂ ^ y)) by eauto.
+remember (e₂ ^ y) as e. assert (close_term_wrt_term y e = e₂). subst. eauto with lngen.
+clear Heqe. generalize dependent y.
+generalize dependent e₂. induction H5; intros; subst.
+unfold close_term_wrt_term in *; simpl in *;
+unfold termvar in *; destruct (y == x0); unfold open_term_wrt_term in *; simpl in *.
+SCase "bound var".
+inversion H4; subst. inversion H5; subst; auto.
+inversion H9; subst. inversion H5.
+pick fresh y. assert (term_var_b 0 ^ y ⇝ e' ^ y) as H5 by auto.
+unfold open_term_wrt_term in H5; simpl in H5. inversion H5; subst. inversion H6.
+inversion H9; subst. inversion H5.
+SCase "free var".
+inversion H4; subst. inversion H5; subst; autorewrite with lngen; eauto.
+inversion H9; subst. inversion H5.
+pick fresh z. assert (term_var_f x0 ^ z ⇝ e' ^ z) as H5 by auto.
+autorewrite with lngen in H5. inversion H5; subst. inversion H6.
+inversion H9; subst. inversion H5.
+SCase "abs".
 
-
-  pick fresh y. assert (lc_term (e' ^ y)) by eauto.
-  destruct e'.
-  SCase "var_b".
-  unfold open_term_wrt_term in H7; simpl in H7.
-  destruct (lt_eq_lt_dec n 0); try destruct s; subst; try solve [inversion H7].
-  
-
-  SCase "var_f".
-
-  SCase "app".
-
-  SCase "abs".
-
-  inversion H7; subst.
-  assert (lc_term (term_abs τ₁ e')) by eauto.
-  eapply (H1 c); eauto using sn_red, subject_reduction; intros.
-  apply cr2 with (e := e₂ ^^ e); eauto.
-
-Case "e₁ = term_abs t e".
-Case "e₁ = term_app e1 e2".
+Focus 2.
+SCase "app".
+autorewrite with lngen in *.
 
 Theorem strong_normalization : well_founded red1.
