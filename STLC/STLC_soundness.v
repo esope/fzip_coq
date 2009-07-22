@@ -110,28 +110,30 @@ intros x y v H. destruct (pval_val_renaming x y); auto.
 Qed.
 Hint Resolve val_renaming.
 
-Lemma red0_renaming : forall x y e e', red0 e e' →
-  red0 (subst_term (term_var_f y) x e) (subst_term (term_var_f y) x e').
+(* Lemmas about red0, red1 *)
+Lemma red0_subst : forall x e'' e e', lc_term e'' → red0 e e' →
+  red0 (subst_term e'' x e) (subst_term e'' x e').
 Proof.
-intros x y e e' H.
+intros x e'' e e' Hlc H.
 inversion H; subst.
 simpl. rewrite subst_term_open_term_wrt_term; auto. apply red0_beta; auto with lngen.
-assert (lc_term (subst_term (term_var_f y) x (term_abs t e1))) by auto with lngen; auto.
+assert (lc_term (subst_term e'' x (term_abs t e1))) by auto with lngen; auto.
 Qed.
-Hint Resolve red0_renaming.
+Hint Resolve red0_subst.
 
-Lemma red1_renaming : forall x y e e', e ⇝ e' →
-  (subst_term (term_var_f y) x e) ⇝ (subst_term (term_var_f y) x e').
+Lemma red1_subst : forall x e'' e e', lc_term e'' → e ⇝ e' →
+  (subst_term e'' x e) ⇝ (subst_term e'' x e').
 Proof.
-intros x y e e' H.
+intros x e'' e e' Hlc H.
 induction H; subst; simpl; auto.
 apply red1_appL; auto with lngen.
 apply red1_appR; auto with lngen.
 apply red1_abs with (L := L `union` {{x}}); intros z Hz.
-replace (term_var_f z) with (subst_term (term_var_f y) x (term_var_f z)) by auto with lngen.
+replace (term_var_f z) with (subst_term e'' x (term_var_f z)) by auto with lngen.
 repeat rewrite <- subst_term_open_term_wrt_term; eauto.
 Qed.
-Hint Resolve red1_renaming.
+Hint Resolve red1_subst.
+
 
 (* Lemmas about wfterm *)
 Lemma wfterm_fv : forall Γ e τ,

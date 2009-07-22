@@ -161,11 +161,34 @@ inversion H; subst; inversion H0.
 Qed.
 
 Theorem abs_step_reduce_lemma : forall Γ e₁ e₂ τ₁ τ₂,
-  sn e₁ -> sn (term_app e₂ (term_var_f c)) -> reduce Γ e₁ τ₁ ->
-     (forall e, reduce Γ e τ₁ -> reduce Γ (term_app e₂ e) τ₂) ->
+  sn e₁ -> sn (e₂ ^ c) -> reduce Γ e₁ τ₁ ->
+     (forall e, reduce Γ e τ₁ -> reduce Γ (e₂ ^^ e) τ₂) ->
      wfterm Γ (term_abs τ₁ e₂) (typ_arrow τ₁ τ₂) ->
        reduce Γ (term_app (term_abs τ₁ e₂) e₁) τ₂.
 Proof.
-ICI
+intros Γ e₁ e₂ τ₁ τ₂ H H0 H1 H2 H3.
+assert (lc_term e₁) as Hlc1 by eauto.
+assert (lc_term (term_abs τ₁ e₂)) as Hlc2 by eauto.
+induction Hlc1; dependent induction Hlc2.
+Case "e₁ = term_var_f x".
+assert (forall e, (term_app (term_abs τ₁ e₂) (term_var_f x)) ⇝ e -> reduce Γ e τ₂).
+intros; inversion H6; subst.
+inversion H7; subst; auto.
+inversion H11; subst. inversion H7.
+  assert (forall e,  lc_term e → e₂ ^^ e ⇝ e' ^^ e).
+    intros. pick fresh y. assert (e₂ ^ y ⇝ e' ^ y) by auto.
+    ICI
+    rewrite subst_term_intro with (x1 := y).
+    rewrite subst_term_intro with (x1 := y).
+    apply red1_subst with (x := y) (e'' := e) in H7; auto.
+    rewrite subst_term_open_term_wrt_term in H7; auto.
+    rewrite subst_term_open_term_wrt_term in H7; auto.
+    autorewrite with lngen in H7.
+    assumption.
+  eapply H1; eauto using sn_red, subject_reduction; intros.
+  apply cr2 with (e := e₂ ^^ e); auto.
+
+Case "e₁ = term_abs t e".
+Case "e₁ = term_app e1 e2".
 
 Theorem strong_normalization : well_founded red1.
