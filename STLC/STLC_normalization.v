@@ -168,25 +168,31 @@ Theorem abs_step_reduce_lemma : forall Γ e₁ e₂ τ₁ τ₂,
 Proof.
 intros Γ e₁ e₂ τ₁ τ₂ H H0 H1 H2 H3.
 assert (lc_term e₁) as Hlc1 by eauto.
-assert (lc_term (term_abs τ₁ e₂)) as Hlc2 by eauto.
-induction Hlc1; dependent induction Hlc2.
+induction Hlc1.
 Case "e₁ = term_var_f x".
-assert (forall e, (term_app (term_abs τ₁ e₂) (term_var_f x)) ⇝ e -> reduce Γ e τ₂).
-intros; inversion H6; subst.
-inversion H7; subst; auto.
-inversion H11; subst. inversion H7.
-  assert (forall e,  lc_term e → e₂ ^^ e ⇝ e' ^^ e).
-    intros. pick fresh y. assert (e₂ ^ y ⇝ e' ^ y) by auto.
-    ICI
-    rewrite subst_term_intro with (x1 := y).
-    rewrite subst_term_intro with (x1 := y).
-    apply red1_subst with (x := y) (e'' := e) in H7; auto.
-    rewrite subst_term_open_term_wrt_term in H7; auto.
-    rewrite subst_term_open_term_wrt_term in H7; auto.
-    autorewrite with lngen in H7.
-    assumption.
-  eapply H1; eauto using sn_red, subject_reduction; intros.
-  apply cr2 with (e := e₂ ^^ e); auto.
+apply cr3; eauto.
+intros. dependent induction H4.
+inversion H; subst; auto.
+inversion H4; subst. inversion H.
+
+
+  pick fresh y. assert (lc_term (e' ^ y)) by eauto.
+  destruct e'.
+  SCase "var_b".
+  unfold open_term_wrt_term in H7; simpl in H7.
+  destruct (lt_eq_lt_dec n 0); try destruct s; subst; try solve [inversion H7].
+  
+
+  SCase "var_f".
+
+  SCase "app".
+
+  SCase "abs".
+
+  inversion H7; subst.
+  assert (lc_term (term_abs τ₁ e')) by eauto.
+  eapply (H1 c); eauto using sn_red, subject_reduction; intros.
+  apply cr2 with (e := e₂ ^^ e); eauto.
 
 Case "e₁ = term_abs t e".
 Case "e₁ = term_app e1 e2".

@@ -134,6 +134,17 @@ repeat rewrite <- subst_term_open_term_wrt_term; eauto.
 Qed.
 Hint Resolve red1_subst.
 
+Lemma red1_open : forall L e'' e e',
+  lc_term e'' →
+  (forall x, x ∉ L → e ^ x ⇝ e' ^ x) →
+  e ^^ e'' ⇝ e' ^^ e''.
+Proof.
+intros L e'' e e' Hlc H.
+pick fresh x.
+rewrite subst_term_intro with (x1 := x) (e1 := e); auto.
+rewrite subst_term_intro with (x1 := x) (e1 := e'); auto.
+Qed.
+Hint Resolve red1_open.
 
 (* Lemmas about wfterm *)
 Lemma wfterm_fv : forall Γ e τ,
