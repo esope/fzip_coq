@@ -108,6 +108,17 @@ inversion H; subst.
 apply sn_intro; intros; eauto.
 Qed.
 
+Lemma sn_appL : forall e e',
+  sn (term_app e e') → sn e'.
+Proof.
+intros e e' H.
+remember (term_app e e') as f.
+generalize dependent e. generalize dependent e'.
+induction H; intros; subst.
+inversion H; subst.
+apply sn_intro; intros; eauto.
+Qed.
+
 Lemma cr1_cr3 : forall τ Γ,
 (forall e, reduce Γ e τ → sn e) ∧
 (forall e, neutral e →
@@ -168,13 +179,17 @@ Theorem abs_step_reduce_lemma : forall Γ e₁ e₂ τ₁ τ₂,
 Proof.
 intros Γ e₁ e₂ τ₁ τ₂ H H0 H1 H2 H3.
 generalize dependent e₂.
+generalize dependent τ₁.
+generalize dependent τ₂.
 assert (lc_term e₁) as Hlc1 by eauto.
 induction Hlc1; intros; eapply cr3; eauto; intros.
 Case "e₁ = term_var_f x".
 pick fresh y. assert (lc_term (e₂ ^ y)) by eauto.
 remember (e₂ ^ y) as e. assert (close_term_wrt_term y e = e₂). subst. eauto with lngen.
 clear Heqe. generalize dependent y.
-generalize dependent e₂. induction H5; intros; subst.
+generalize dependent e₂. generalize dependent τ₁.
+generalize dependent τ₂.
+induction H5; intros; subst.
 unfold close_term_wrt_term in *; simpl in *;
 unfold termvar in *; destruct (y == x0); unfold open_term_wrt_term in *; simpl in *.
 SCase "bound var".
@@ -190,9 +205,27 @@ pick fresh z. assert (term_var_f x0 ^ z ⇝ e' ^ z) as H5 by auto.
 autorewrite with lngen in H5. inversion H5; subst. inversion H6.
 inversion H9; subst. inversion H5.
 SCase "abs".
-
 Focus 2.
+(*
+simpl in *; autorewrite with lngen in *.
+inversion H6; subst.
+inversion H7; subst; auto.
+inversion H11; subst. inversion H7.
+*)
+
+
+
 SCase "app".
-autorewrite with lngen in *.
+inversion H4; subst.
+inversion H5; subst; auto.
+inversion H9; subst. inversion H5.
+unfold close_term_wrt_term in *; simpl in *.
+pick fresh z.
+eapply IHlc_term1 with (e₂ := close_term_wrt_term_rec 0 y e1); intros;
+eauto using sn_appR.
+
+
+
+
 
 Theorem strong_normalization : well_founded red1.
