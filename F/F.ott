@@ -1,0 +1,201 @@
+metavar termvar, x, y, z ::= {{ repr-locally-nameless }}
+metavar typvar, a, b, c  ::= {{ repr-locally-nameless }}
+
+grammar
+
+typ, t :: typ_ ::=
+  | a              ::   :: var
+  | t1 -> t2       ::   :: arrow
+  | forall a . t   ::   :: forall (+ bind a in t +)
+  | ( t )          :: S :: paren {{ coq [[t]] }}
+  | { t2 / a } t1  :: M :: subst_tt {{ coq (open_typ_wrt_typ [[a t1]] [[t2]]) }}
+
+term, e, f, g :: term_ ::=
+  | x              ::   :: var
+  | \ ( x : t ) e  ::   :: abs  (+ bind x in e +)
+  | e1 e2          ::   :: app
+  | /\ a . e       ::   :: gen (+ bind a in e +)
+  | e [ t ]        ::   :: inst
+  | ( e )          :: S :: paren  {{ coq ([[e]]) }}
+  | { e2 / x } e1  :: M :: subst_ee {{ coq (open_term_wrt_term [[x e1]] [[e2]]) }}
+  | { t  / a } e   :: M :: subst_te {{ coq (open_term_wrt_typ  [[a e]]  [[t]]) }}
+
+substitutions
+  single e x :: subst_ee
+  single e a :: subst_te
+  single t a :: subst_tt
+
+freevars
+  e x :: fv_ee
+  e a :: fv_te
+  t a :: fv_tt
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+grammar
+
+typing_env, G :: '' ::=           {{ coq list (atom * option typ) }}
+  | empty          ::   :: empty  {{ coq nil }}
+  | G , x : t      ::   :: cons_x {{ coq ([[x]]~(Some [[t]]) ++ [[G]]) }}
+  | G , a          ::   :: cons_a {{ coq ([[a]]~None ++ [[G]]) }}
+
+formula :: formula_ ::=
+  | judgement      :: :: judgement
+  | x : t in G     :: :: binds_x  {{ coq binds ([[x]]) (Some ([[t]])) ([[G]]) }}
+  | a in G         :: :: binds_a  {{ coq binds ([[a]]) None ([[G]]) }}
+  | a not in dom G :: :: free_dom_a {{ coq [[a]] `notin` dom [[G]] }}
+  | x not in dom G :: :: free_dom_x {{ coq [[x]] `notin` dom [[G]] }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jval :: '' ::=
+
+defn
+pre_val e
+:: :: pval :: pval_ by
+
+--------- :: var
+pre_val x
+
+pre_val e1
+val e2
+--------------- :: app
+pre_val (e1 e2)
+
+pre_val e
+--------------- :: inst
+pre_val (e [t])
+
+defn
+val e
+:: :: val :: val_ by
+
+pre_val e
+--------- :: pval
+ val e
+
+ val e
+------------- :: abs
+val (\(x:t)e)
+
+ val e
+----------- :: gen
+val (/\a.e)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+  Jwf_env_typ :: '' ::=
+
+defn
+    G |- ok :: :: wfenv :: wfenv_ by
+
+----------- :: empty
+empty |- ok
+
+x not in dom G
+  G |- t ok
+-------------- :: cons_x
+ G, x:t |- ok
+
+a not in dom G
+   G |- ok
+-------------- :: cons_a
+ G, a |- ok
+
+defn
+    G |- t ok :: :: wftyp :: wftyp_ by
+
+  a in G
+ G |- ok
+--------- :: var
+G |- a ok
+
+   G |- t1 ok
+   G |- t2 ok
+---------------- :: arrow
+G |- t1 -> t2 ok
+
+   G, a |- t ok
+------------------- :: forall
+G |- forall a. t ok
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+  Jwfterm :: '' ::=
+
+defn
+    G |- e : t :: :: wfterm :: wfterm_ by
+
+    G |- ok
+    x:t in G
+    ---------- :: val
+    G |- x : t
+
+    G |- e1 : t2->t1
+    G |- e2 : t2
+    ---------------- :: app
+    G |- e1 e2 : t1
+
+    G, x:t1 |- e : t2
+    ---------------------- :: abs
+    G |- \(x:t1)e : t1->t2
+
+         G |- t ok
+    G |- e : forall a.t'
+    -------------------- :: inst
+    G |- e [t] : {t/a}t'
+
+          G, a |- e : t
+    ----------------------- :: gen
+    G |- /\a.e : forall a.t
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jred0 :: '' ::=
+
+defn
+e1 --> e2
+:: :: red0 :: red0_ by
+
+----------------------------- :: beta
+(\(x:t)e1) e2 --> {e2 / x} e1
+
+------------------------- :: beta_t
+(/\a.e) [t] --> {t / a} e
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jred1 :: '' ::=
+
+defn
+e1 ---> e2
+:: :: red1 :: red1_ by
+
+e --> e'
+---------- :: empty
+e ---> e'
+
+   e1 ---> e1'
+----------------- :: appL
+e1 e2 ---> e1' e2
+
+   e2 ---> e2'
+----------------- :: appR
+e1 e2 ---> e1 e2'
+
+   e ---> e'
+--------------------- :: abs
+\(x:t)e ---> \(x:t)e'
+
+    e ---> e'
+----------------- :: inst
+e [t] ---> e' [t]
+
+    e ---> e'
+----------------- :: gen
+/\a.e ---> /\a.e'
