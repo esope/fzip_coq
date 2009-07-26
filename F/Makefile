@@ -47,8 +47,8 @@ LNGEN_FILES = \
 ## List of other files that should be compiled.
 
 FILES = \
-#	F_init \
-#	F_soundness \
+	F_init \
+	F_soundness \
 #	F_dec \
 #	F_normalization \
 

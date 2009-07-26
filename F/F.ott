@@ -8,27 +8,25 @@ typ, t :: typ_ ::=
   | t1 -> t2       ::   :: arrow
   | forall a . t   ::   :: forall (+ bind a in t +)
   | ( t )          :: S :: paren {{ coq [[t]] }}
-  | { t2 / a } t1  :: M :: subst_tt {{ coq (open_typ_wrt_typ [[a t1]] [[t2]]) }}
+  | { t2 / a } t1  :: M :: subst {{ coq (open_typ_wrt_typ [[a t1]] [[t2]]) }}
 
 term, e, f, g :: term_ ::=
   | x              ::   :: var
-  | \ ( x : t ) e  ::   :: abs  (+ bind x in e +)
+  | \ ( x : t ) e  ::   :: abs (+ bind x in e +)
   | e1 e2          ::   :: app
   | /\ a . e       ::   :: gen (+ bind a in e +)
   | e [ t ]        ::   :: inst
   | ( e )          :: S :: paren  {{ coq ([[e]]) }}
-  | { e2 / x } e1  :: M :: subst_ee {{ coq (open_term_wrt_term [[x e1]] [[e2]]) }}
-  | { t  / a } e   :: M :: subst_te {{ coq (open_term_wrt_typ  [[a e]]  [[t]]) }}
+  | { e2 / x } e1  :: M :: subst {{ coq (open_term_wrt_term [[x e1]] [[e2]]) }}
+  | { t  / a } e   :: M :: tsubst {{ coq (open_term_wrt_typ  [[a e]]  [[t]]) }}
 
 substitutions
-  single e x :: subst_ee
-  single e a :: subst_te
-  single t a :: subst_tt
+  single e x :: subst
+  single t a :: tsubst
 
 freevars
-  e x :: fv_ee
-  e a :: fv_te
-  t a :: fv_tt
+  e x :: fv
+  t a :: ftv
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

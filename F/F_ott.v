@@ -106,62 +106,62 @@ Inductive lc_term : term -> Prop :=    (* defn lc_term *)
      (lc_term (term_inst e t)).
 
 (** free variables *)
-Fixpoint fv_tt_typ (t_5:typ) : vars :=
+Fixpoint ftv_typ (t_5:typ) : vars :=
   match t_5 with
   | (typ_var_b nat) => {}
   | (typ_var_f a) => {{a}}
-  | (typ_arrow t1 t2) => (fv_tt_typ t1) \u (fv_tt_typ t2)
-  | (typ_forall t) => (fv_tt_typ t)
+  | (typ_arrow t1 t2) => (ftv_typ t1) \u (ftv_typ t2)
+  | (typ_forall t) => (ftv_typ t)
 end.
 
-Fixpoint fv_ee_term (e_5:term) : vars :=
+Fixpoint fv_term (e_5:term) : vars :=
   match e_5 with
   | (term_var_b nat) => {}
   | (term_var_f x) => {{x}}
-  | (term_abs t e) => (fv_ee_term e)
-  | (term_app e1 e2) => (fv_ee_term e1) \u (fv_ee_term e2)
-  | (term_gen e) => (fv_ee_term e)
-  | (term_inst e t) => (fv_ee_term e)
+  | (term_abs t e) => (fv_term e)
+  | (term_app e1 e2) => (fv_term e1) \u (fv_term e2)
+  | (term_gen e) => (fv_term e)
+  | (term_inst e t) => (fv_term e)
 end.
 
-Fixpoint fv_tt_term (e_5:term) : vars :=
+Fixpoint ftv_term (e_5:term) : vars :=
   match e_5 with
   | (term_var_b nat) => {}
   | (term_var_f x) => {}
-  | (term_abs t e) => (fv_tt_typ t) \u (fv_tt_term e)
-  | (term_app e1 e2) => (fv_tt_term e1) \u (fv_tt_term e2)
-  | (term_gen e) => (fv_tt_term e)
-  | (term_inst e t) => (fv_tt_term e) \u (fv_tt_typ t)
+  | (term_abs t e) => (ftv_typ t) \u (ftv_term e)
+  | (term_app e1 e2) => (ftv_term e1) \u (ftv_term e2)
+  | (term_gen e) => (ftv_term e)
+  | (term_inst e t) => (ftv_term e) \u (ftv_typ t)
 end.
 
 
 (** substitutions *)
-Fixpoint subst_tt_typ (t_5:typ) (a5:typvar) (t__6:typ) {struct t__6} : typ :=
+Fixpoint tsubst_typ (t_5:typ) (a5:typvar) (t__6:typ) {struct t__6} : typ :=
   match t__6 with
   | (typ_var_b nat) => typ_var_b nat
   | (typ_var_f a) => (if eq_var a a5 then t_5 else (typ_var_f a))
-  | (typ_arrow t1 t2) => typ_arrow (subst_tt_typ t_5 a5 t1) (subst_tt_typ t_5 a5 t2)
-  | (typ_forall t) => typ_forall (subst_tt_typ t_5 a5 t)
+  | (typ_arrow t1 t2) => typ_arrow (tsubst_typ t_5 a5 t1) (tsubst_typ t_5 a5 t2)
+  | (typ_forall t) => typ_forall (tsubst_typ t_5 a5 t)
 end.
 
-Fixpoint subst_ee_term (e_5:term) (x5:termvar) (e__6:term) {struct e__6} : term :=
+Fixpoint subst_term (e_5:term) (x5:termvar) (e__6:term) {struct e__6} : term :=
   match e__6 with
   | (term_var_b nat) => term_var_b nat
   | (term_var_f x) => (if eq_var x x5 then e_5 else (term_var_f x))
-  | (term_abs t e) => term_abs t (subst_ee_term e_5 x5 e)
-  | (term_app e1 e2) => term_app (subst_ee_term e_5 x5 e1) (subst_ee_term e_5 x5 e2)
-  | (term_gen e) => term_gen (subst_ee_term e_5 x5 e)
-  | (term_inst e t) => term_inst (subst_ee_term e_5 x5 e) t
+  | (term_abs t e) => term_abs t (subst_term e_5 x5 e)
+  | (term_app e1 e2) => term_app (subst_term e_5 x5 e1) (subst_term e_5 x5 e2)
+  | (term_gen e) => term_gen (subst_term e_5 x5 e)
+  | (term_inst e t) => term_inst (subst_term e_5 x5 e) t
 end.
 
-Fixpoint subst_tt_term (t5:typ) (a5:typvar) (e_5:term) {struct e_5} : term :=
+Fixpoint tsubst_term (t5:typ) (a5:typvar) (e_5:term) {struct e_5} : term :=
   match e_5 with
   | (term_var_b nat) => term_var_b nat
   | (term_var_f x) => term_var_f x
-  | (term_abs t e) => term_abs (subst_tt_typ t5 a5 t) (subst_tt_term t5 a5 e)
-  | (term_app e1 e2) => term_app (subst_tt_term t5 a5 e1) (subst_tt_term t5 a5 e2)
-  | (term_gen e) => term_gen (subst_tt_term t5 a5 e)
-  | (term_inst e t) => term_inst (subst_tt_term t5 a5 e) (subst_tt_typ t5 a5 t)
+  | (term_abs t e) => term_abs (tsubst_typ t5 a5 t) (tsubst_term t5 a5 e)
+  | (term_app e1 e2) => term_app (tsubst_term t5 a5 e1) (tsubst_term t5 a5 e2)
+  | (term_gen e) => term_gen (tsubst_term t5 a5 e)
+  | (term_inst e t) => term_inst (tsubst_term t5 a5 e) (tsubst_typ t5 a5 t)
 end.
 
 
@@ -284,9 +284,9 @@ Inductive red1 : term -> term -> Prop :=    (* defn red1 *)
 Ltac gather_atoms ::=
   let A := gather_atoms_with (fun x : vars => x) in
   let B := gather_atoms_with (fun x : var => {{ x }}) in
-  let D1 := gather_atoms_with (fun x => fv_ee_term x) in
-  let D2 := gather_atoms_with (fun x => fv_tt_typ x) in
-  let D3 := gather_atoms_with (fun x => fv_tt_term x) in
+  let D1 := gather_atoms_with (fun x => fv_term x) in
+  let D2 := gather_atoms_with (fun x => ftv_typ x) in
+  let D3 := gather_atoms_with (fun x => ftv_term x) in
   constr:(A \u B \u D1 \u D2 \u D3).
 
 Hint Constructors pval val wfenv wftyp wfterm red0 red1 lc_typ lc_term.

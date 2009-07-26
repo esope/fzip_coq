@@ -1648,7 +1648,7 @@ Hint Immediate close_term_wrt_typ_inj : lngen.
 
 Lemma close_typ_wrt_typ_rec_open_typ_wrt_typ_rec_mutual :
 (forall t1 a1 n1,
-  a1 `notin` fv_tt_typ t1 ->
+  a1 `notin` ftv_typ t1 ->
   close_typ_wrt_typ_rec n1 a1 (open_typ_wrt_typ_rec n1 (typ_var_f a1) t1) = t1).
 Proof.
 apply_mutual_ind typ_mutind;
@@ -1661,7 +1661,7 @@ Qed.
 
 Lemma close_typ_wrt_typ_rec_open_typ_wrt_typ_rec :
 forall t1 a1 n1,
-  a1 `notin` fv_tt_typ t1 ->
+  a1 `notin` ftv_typ t1 ->
   close_typ_wrt_typ_rec n1 a1 (open_typ_wrt_typ_rec n1 (typ_var_f a1) t1) = t1.
 Proof.
 pose proof close_typ_wrt_typ_rec_open_typ_wrt_typ_rec_mutual as H; intuition eauto.
@@ -1676,7 +1676,7 @@ Hint Rewrite close_typ_wrt_typ_rec_open_typ_wrt_typ_rec using solve [auto] : lng
 
 Lemma close_term_wrt_term_rec_open_term_wrt_term_rec_mutual :
 (forall e1 x1 n1,
-  x1 `notin` fv_ee_term e1 ->
+  x1 `notin` fv_term e1 ->
   close_term_wrt_term_rec n1 x1 (open_term_wrt_term_rec n1 (term_var_f x1) e1) = e1).
 Proof.
 apply_mutual_ind term_mutind;
@@ -1689,7 +1689,7 @@ Qed.
 
 Lemma close_term_wrt_term_rec_open_term_wrt_term_rec :
 forall e1 x1 n1,
-  x1 `notin` fv_ee_term e1 ->
+  x1 `notin` fv_term e1 ->
   close_term_wrt_term_rec n1 x1 (open_term_wrt_term_rec n1 (term_var_f x1) e1) = e1.
 Proof.
 pose proof close_term_wrt_term_rec_open_term_wrt_term_rec_mutual as H; intuition eauto.
@@ -1704,7 +1704,7 @@ Hint Rewrite close_term_wrt_term_rec_open_term_wrt_term_rec using solve [auto] :
 
 Lemma close_term_wrt_typ_rec_open_term_wrt_typ_rec_mutual :
 (forall e1 a1 n1,
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e1 ->
   close_term_wrt_typ_rec n1 a1 (open_term_wrt_typ_rec n1 (typ_var_f a1) e1) = e1).
 Proof.
 apply_mutual_ind term_mutind;
@@ -1717,7 +1717,7 @@ Qed.
 
 Lemma close_term_wrt_typ_rec_open_term_wrt_typ_rec :
 forall e1 a1 n1,
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e1 ->
   close_term_wrt_typ_rec n1 a1 (open_term_wrt_typ_rec n1 (typ_var_f a1) e1) = e1.
 Proof.
 pose proof close_term_wrt_typ_rec_open_term_wrt_typ_rec_mutual as H; intuition eauto.
@@ -1730,7 +1730,7 @@ Hint Rewrite close_term_wrt_typ_rec_open_term_wrt_typ_rec using solve [auto] : l
 
 Lemma close_typ_wrt_typ_open_typ_wrt_typ :
 forall t1 a1,
-  a1 `notin` fv_tt_typ t1 ->
+  a1 `notin` ftv_typ t1 ->
   close_typ_wrt_typ a1 (open_typ_wrt_typ t1 (typ_var_f a1)) = t1.
 Proof.
 unfold close_typ_wrt_typ; unfold open_typ_wrt_typ; default_simp.
@@ -1741,7 +1741,7 @@ Hint Rewrite close_typ_wrt_typ_open_typ_wrt_typ using solve [auto] : lngen.
 
 Lemma close_term_wrt_term_open_term_wrt_term :
 forall e1 x1,
-  x1 `notin` fv_ee_term e1 ->
+  x1 `notin` fv_term e1 ->
   close_term_wrt_term x1 (open_term_wrt_term e1 (term_var_f x1)) = e1.
 Proof.
 unfold close_term_wrt_term; unfold open_term_wrt_term; default_simp.
@@ -1752,7 +1752,7 @@ Hint Rewrite close_term_wrt_term_open_term_wrt_term using solve [auto] : lngen.
 
 Lemma close_term_wrt_typ_open_term_wrt_typ :
 forall e1 a1,
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e1 ->
   close_term_wrt_typ a1 (open_term_wrt_typ e1 (typ_var_f a1)) = e1.
 Proof.
 unfold close_term_wrt_typ; unfold open_term_wrt_typ; default_simp.
@@ -1873,8 +1873,8 @@ Hint Rewrite open_term_wrt_typ_close_term_wrt_typ using solve [auto] : lngen.
 
 Lemma open_typ_wrt_typ_rec_inj_mutual :
 (forall t2 t1 a1 n1,
-  a1 `notin` fv_tt_typ t2 ->
-  a1 `notin` fv_tt_typ t1 ->
+  a1 `notin` ftv_typ t2 ->
+  a1 `notin` ftv_typ t1 ->
   open_typ_wrt_typ_rec n1 (typ_var_f a1) t2 = open_typ_wrt_typ_rec n1 (typ_var_f a1) t1 ->
   t2 = t1).
 Proof.
@@ -1891,8 +1891,8 @@ Qed.
 
 Lemma open_typ_wrt_typ_rec_inj :
 forall t2 t1 a1 n1,
-  a1 `notin` fv_tt_typ t2 ->
-  a1 `notin` fv_tt_typ t1 ->
+  a1 `notin` ftv_typ t2 ->
+  a1 `notin` ftv_typ t1 ->
   open_typ_wrt_typ_rec n1 (typ_var_f a1) t2 = open_typ_wrt_typ_rec n1 (typ_var_f a1) t1 ->
   t2 = t1.
 Proof.
@@ -1907,8 +1907,8 @@ Hint Immediate open_typ_wrt_typ_rec_inj : lngen.
 
 Lemma open_term_wrt_term_rec_inj_mutual :
 (forall e2 e1 x1 n1,
-  x1 `notin` fv_ee_term e2 ->
-  x1 `notin` fv_ee_term e1 ->
+  x1 `notin` fv_term e2 ->
+  x1 `notin` fv_term e1 ->
   open_term_wrt_term_rec n1 (term_var_f x1) e2 = open_term_wrt_term_rec n1 (term_var_f x1) e1 ->
   e2 = e1).
 Proof.
@@ -1925,8 +1925,8 @@ Qed.
 
 Lemma open_term_wrt_term_rec_inj :
 forall e2 e1 x1 n1,
-  x1 `notin` fv_ee_term e2 ->
-  x1 `notin` fv_ee_term e1 ->
+  x1 `notin` fv_term e2 ->
+  x1 `notin` fv_term e1 ->
   open_term_wrt_term_rec n1 (term_var_f x1) e2 = open_term_wrt_term_rec n1 (term_var_f x1) e1 ->
   e2 = e1.
 Proof.
@@ -1941,8 +1941,8 @@ Hint Immediate open_term_wrt_term_rec_inj : lngen.
 
 Lemma open_term_wrt_typ_rec_inj_mutual :
 (forall e2 e1 a1 n1,
-  a1 `notin` fv_tt_term e2 ->
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e2 ->
+  a1 `notin` ftv_term e1 ->
   open_term_wrt_typ_rec n1 (typ_var_f a1) e2 = open_term_wrt_typ_rec n1 (typ_var_f a1) e1 ->
   e2 = e1).
 Proof.
@@ -1959,8 +1959,8 @@ Qed.
 
 Lemma open_term_wrt_typ_rec_inj :
 forall e2 e1 a1 n1,
-  a1 `notin` fv_tt_term e2 ->
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e2 ->
+  a1 `notin` ftv_term e1 ->
   open_term_wrt_typ_rec n1 (typ_var_f a1) e2 = open_term_wrt_typ_rec n1 (typ_var_f a1) e1 ->
   e2 = e1.
 Proof.
@@ -1973,8 +1973,8 @@ Hint Immediate open_term_wrt_typ_rec_inj : lngen.
 
 Lemma open_typ_wrt_typ_inj :
 forall t2 t1 a1,
-  a1 `notin` fv_tt_typ t2 ->
-  a1 `notin` fv_tt_typ t1 ->
+  a1 `notin` ftv_typ t2 ->
+  a1 `notin` ftv_typ t1 ->
   open_typ_wrt_typ t2 (typ_var_f a1) = open_typ_wrt_typ t1 (typ_var_f a1) ->
   t2 = t1.
 Proof.
@@ -1985,8 +1985,8 @@ Hint Immediate open_typ_wrt_typ_inj : lngen.
 
 Lemma open_term_wrt_term_inj :
 forall e2 e1 x1,
-  x1 `notin` fv_ee_term e2 ->
-  x1 `notin` fv_ee_term e1 ->
+  x1 `notin` fv_term e2 ->
+  x1 `notin` fv_term e1 ->
   open_term_wrt_term e2 (term_var_f x1) = open_term_wrt_term e1 (term_var_f x1) ->
   e2 = e1.
 Proof.
@@ -1997,8 +1997,8 @@ Hint Immediate open_term_wrt_term_inj : lngen.
 
 Lemma open_term_wrt_typ_inj :
 forall e2 e1 a1,
-  a1 `notin` fv_tt_term e2 ->
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e2 ->
+  a1 `notin` ftv_term e1 ->
   open_term_wrt_typ e2 (typ_var_f a1) = open_term_wrt_typ e1 (typ_var_f a1) ->
   e2 = e1.
 Proof.
@@ -2493,7 +2493,7 @@ Ltac default_autorewrite ::= fail.
 Lemma close_typ_wrt_typ_rec_degree_typ_wrt_typ_mutual :
 (forall t1 a1 n1,
   degree_typ_wrt_typ n1 t1 ->
-  a1 `notin` fv_tt_typ t1 ->
+  a1 `notin` ftv_typ t1 ->
   close_typ_wrt_typ_rec n1 a1 t1 = t1).
 Proof.
 apply_mutual_ind typ_mutind;
@@ -2507,7 +2507,7 @@ Qed.
 Lemma close_typ_wrt_typ_rec_degree_typ_wrt_typ :
 forall t1 a1 n1,
   degree_typ_wrt_typ n1 t1 ->
-  a1 `notin` fv_tt_typ t1 ->
+  a1 `notin` ftv_typ t1 ->
   close_typ_wrt_typ_rec n1 a1 t1 = t1.
 Proof.
 pose proof close_typ_wrt_typ_rec_degree_typ_wrt_typ_mutual as H; intuition eauto.
@@ -2523,7 +2523,7 @@ Hint Rewrite close_typ_wrt_typ_rec_degree_typ_wrt_typ using solve [auto] : lngen
 Lemma close_term_wrt_term_rec_degree_term_wrt_term_mutual :
 (forall e1 x1 n1,
   degree_term_wrt_term n1 e1 ->
-  x1 `notin` fv_ee_term e1 ->
+  x1 `notin` fv_term e1 ->
   close_term_wrt_term_rec n1 x1 e1 = e1).
 Proof.
 apply_mutual_ind term_mutind;
@@ -2537,7 +2537,7 @@ Qed.
 Lemma close_term_wrt_term_rec_degree_term_wrt_term :
 forall e1 x1 n1,
   degree_term_wrt_term n1 e1 ->
-  x1 `notin` fv_ee_term e1 ->
+  x1 `notin` fv_term e1 ->
   close_term_wrt_term_rec n1 x1 e1 = e1.
 Proof.
 pose proof close_term_wrt_term_rec_degree_term_wrt_term_mutual as H; intuition eauto.
@@ -2553,7 +2553,7 @@ Hint Rewrite close_term_wrt_term_rec_degree_term_wrt_term using solve [auto] : l
 Lemma close_term_wrt_typ_rec_degree_term_wrt_typ_mutual :
 (forall e1 a1 n1,
   degree_term_wrt_typ n1 e1 ->
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e1 ->
   close_term_wrt_typ_rec n1 a1 e1 = e1).
 Proof.
 apply_mutual_ind term_mutind;
@@ -2567,7 +2567,7 @@ Qed.
 Lemma close_term_wrt_typ_rec_degree_term_wrt_typ :
 forall e1 a1 n1,
   degree_term_wrt_typ n1 e1 ->
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e1 ->
   close_term_wrt_typ_rec n1 a1 e1 = e1.
 Proof.
 pose proof close_term_wrt_typ_rec_degree_term_wrt_typ_mutual as H; intuition eauto.
@@ -2581,7 +2581,7 @@ Hint Rewrite close_term_wrt_typ_rec_degree_term_wrt_typ using solve [auto] : lng
 Lemma close_typ_wrt_typ_lc_typ :
 forall t1 a1,
   lc_typ t1 ->
-  a1 `notin` fv_tt_typ t1 ->
+  a1 `notin` ftv_typ t1 ->
   close_typ_wrt_typ a1 t1 = t1.
 Proof.
 unfold close_typ_wrt_typ; default_simp.
@@ -2593,7 +2593,7 @@ Hint Rewrite close_typ_wrt_typ_lc_typ using solve [auto] : lngen.
 Lemma close_term_wrt_term_lc_term :
 forall e1 x1,
   lc_term e1 ->
-  x1 `notin` fv_ee_term e1 ->
+  x1 `notin` fv_term e1 ->
   close_term_wrt_term x1 e1 = e1.
 Proof.
 unfold close_term_wrt_term; default_simp.
@@ -2605,7 +2605,7 @@ Hint Rewrite close_term_wrt_term_lc_term using solve [auto] : lngen.
 Lemma close_term_wrt_typ_lc_term :
 forall e1 a1,
   lc_term e1 ->
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e1 ->
   close_term_wrt_typ a1 e1 = e1.
 Proof.
 unfold close_term_wrt_typ; default_simp.
@@ -2740,9 +2740,9 @@ Ltac default_autorewrite ::= autorewrite with lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_typ_close_typ_wrt_typ_rec_mutual :
+Lemma ftv_typ_close_typ_wrt_typ_rec_mutual :
 (forall t1 a1 n1,
-  fv_tt_typ (close_typ_wrt_typ_rec n1 a1 t1) [=] remove a1 (fv_tt_typ t1)).
+  ftv_typ (close_typ_wrt_typ_rec n1 a1 t1) [=] remove a1 (ftv_typ t1)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp; fsetdec.
@@ -2752,23 +2752,23 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_tt_typ_close_typ_wrt_typ_rec :
+Lemma ftv_typ_close_typ_wrt_typ_rec :
 forall t1 a1 n1,
-  fv_tt_typ (close_typ_wrt_typ_rec n1 a1 t1) [=] remove a1 (fv_tt_typ t1).
+  ftv_typ (close_typ_wrt_typ_rec n1 a1 t1) [=] remove a1 (ftv_typ t1).
 Proof.
-pose proof fv_tt_typ_close_typ_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof ftv_typ_close_typ_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_typ_close_typ_wrt_typ_rec : lngen.
-Hint Rewrite fv_tt_typ_close_typ_wrt_typ_rec using solve [auto] : lngen.
+Hint Resolve ftv_typ_close_typ_wrt_typ_rec : lngen.
+Hint Rewrite ftv_typ_close_typ_wrt_typ_rec using solve [auto] : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_ee_term_close_term_wrt_term_rec_mutual :
+Lemma fv_term_close_term_wrt_term_rec_mutual :
 (forall e1 x1 n1,
-  fv_ee_term (close_term_wrt_term_rec n1 x1 e1) [=] remove x1 (fv_ee_term e1)).
+  fv_term (close_term_wrt_term_rec n1 x1 e1) [=] remove x1 (fv_term e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -2778,23 +2778,23 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_ee_term_close_term_wrt_term_rec :
+Lemma fv_term_close_term_wrt_term_rec :
 forall e1 x1 n1,
-  fv_ee_term (close_term_wrt_term_rec n1 x1 e1) [=] remove x1 (fv_ee_term e1).
+  fv_term (close_term_wrt_term_rec n1 x1 e1) [=] remove x1 (fv_term e1).
 Proof.
-pose proof fv_ee_term_close_term_wrt_term_rec_mutual as H; intuition eauto.
+pose proof fv_term_close_term_wrt_term_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_close_term_wrt_term_rec : lngen.
-Hint Rewrite fv_ee_term_close_term_wrt_term_rec using solve [auto] : lngen.
+Hint Resolve fv_term_close_term_wrt_term_rec : lngen.
+Hint Rewrite fv_term_close_term_wrt_term_rec using solve [auto] : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_ee_term_close_term_wrt_typ_rec_mutual :
+Lemma fv_term_close_term_wrt_typ_rec_mutual :
 (forall e1 a1 n1,
-  fv_ee_term (close_term_wrt_typ_rec n1 a1 e1) [=] fv_ee_term e1).
+  fv_term (close_term_wrt_typ_rec n1 a1 e1) [=] fv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -2804,23 +2804,23 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_ee_term_close_term_wrt_typ_rec :
+Lemma fv_term_close_term_wrt_typ_rec :
 forall e1 a1 n1,
-  fv_ee_term (close_term_wrt_typ_rec n1 a1 e1) [=] fv_ee_term e1.
+  fv_term (close_term_wrt_typ_rec n1 a1 e1) [=] fv_term e1.
 Proof.
-pose proof fv_ee_term_close_term_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof fv_term_close_term_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_close_term_wrt_typ_rec : lngen.
-Hint Rewrite fv_ee_term_close_term_wrt_typ_rec using solve [auto] : lngen.
+Hint Resolve fv_term_close_term_wrt_typ_rec : lngen.
+Hint Rewrite fv_term_close_term_wrt_typ_rec using solve [auto] : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_tt_term_close_term_wrt_term_rec_mutual :
+Lemma ftv_term_close_term_wrt_term_rec_mutual :
 (forall e1 x1 n1,
-  fv_tt_term (close_term_wrt_term_rec n1 x1 e1) [=] fv_tt_term e1).
+  ftv_term (close_term_wrt_term_rec n1 x1 e1) [=] ftv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -2830,23 +2830,23 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_tt_term_close_term_wrt_term_rec :
+Lemma ftv_term_close_term_wrt_term_rec :
 forall e1 x1 n1,
-  fv_tt_term (close_term_wrt_term_rec n1 x1 e1) [=] fv_tt_term e1.
+  ftv_term (close_term_wrt_term_rec n1 x1 e1) [=] ftv_term e1.
 Proof.
-pose proof fv_tt_term_close_term_wrt_term_rec_mutual as H; intuition eauto.
+pose proof ftv_term_close_term_wrt_term_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_close_term_wrt_term_rec : lngen.
-Hint Rewrite fv_tt_term_close_term_wrt_term_rec using solve [auto] : lngen.
+Hint Resolve ftv_term_close_term_wrt_term_rec : lngen.
+Hint Rewrite ftv_term_close_term_wrt_term_rec using solve [auto] : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_tt_term_close_term_wrt_typ_rec_mutual :
+Lemma ftv_term_close_term_wrt_typ_rec_mutual :
 (forall e1 a1 n1,
-  fv_tt_term (close_term_wrt_typ_rec n1 a1 e1) [=] remove a1 (fv_tt_term e1)).
+  ftv_term (close_term_wrt_typ_rec n1 a1 e1) [=] remove a1 (ftv_term e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -2856,73 +2856,73 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_tt_term_close_term_wrt_typ_rec :
+Lemma ftv_term_close_term_wrt_typ_rec :
 forall e1 a1 n1,
-  fv_tt_term (close_term_wrt_typ_rec n1 a1 e1) [=] remove a1 (fv_tt_term e1).
+  ftv_term (close_term_wrt_typ_rec n1 a1 e1) [=] remove a1 (ftv_term e1).
 Proof.
-pose proof fv_tt_term_close_term_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof ftv_term_close_term_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_close_term_wrt_typ_rec : lngen.
-Hint Rewrite fv_tt_term_close_term_wrt_typ_rec using solve [auto] : lngen.
+Hint Resolve ftv_term_close_term_wrt_typ_rec : lngen.
+Hint Rewrite ftv_term_close_term_wrt_typ_rec using solve [auto] : lngen.
 
 (* end hide *)
 
-Lemma fv_tt_typ_close_typ_wrt_typ :
+Lemma ftv_typ_close_typ_wrt_typ :
 forall t1 a1,
-  fv_tt_typ (close_typ_wrt_typ a1 t1) [=] remove a1 (fv_tt_typ t1).
+  ftv_typ (close_typ_wrt_typ a1 t1) [=] remove a1 (ftv_typ t1).
 Proof.
 unfold close_typ_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve fv_tt_typ_close_typ_wrt_typ : lngen.
-Hint Rewrite fv_tt_typ_close_typ_wrt_typ using solve [auto] : lngen.
+Hint Resolve ftv_typ_close_typ_wrt_typ : lngen.
+Hint Rewrite ftv_typ_close_typ_wrt_typ using solve [auto] : lngen.
 
-Lemma fv_ee_term_close_term_wrt_term :
+Lemma fv_term_close_term_wrt_term :
 forall e1 x1,
-  fv_ee_term (close_term_wrt_term x1 e1) [=] remove x1 (fv_ee_term e1).
+  fv_term (close_term_wrt_term x1 e1) [=] remove x1 (fv_term e1).
 Proof.
 unfold close_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve fv_ee_term_close_term_wrt_term : lngen.
-Hint Rewrite fv_ee_term_close_term_wrt_term using solve [auto] : lngen.
+Hint Resolve fv_term_close_term_wrt_term : lngen.
+Hint Rewrite fv_term_close_term_wrt_term using solve [auto] : lngen.
 
-Lemma fv_ee_term_close_term_wrt_typ :
+Lemma fv_term_close_term_wrt_typ :
 forall e1 a1,
-  fv_ee_term (close_term_wrt_typ a1 e1) [=] fv_ee_term e1.
+  fv_term (close_term_wrt_typ a1 e1) [=] fv_term e1.
 Proof.
 unfold close_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve fv_ee_term_close_term_wrt_typ : lngen.
-Hint Rewrite fv_ee_term_close_term_wrt_typ using solve [auto] : lngen.
+Hint Resolve fv_term_close_term_wrt_typ : lngen.
+Hint Rewrite fv_term_close_term_wrt_typ using solve [auto] : lngen.
 
-Lemma fv_tt_term_close_term_wrt_term :
+Lemma ftv_term_close_term_wrt_term :
 forall e1 x1,
-  fv_tt_term (close_term_wrt_term x1 e1) [=] fv_tt_term e1.
+  ftv_term (close_term_wrt_term x1 e1) [=] ftv_term e1.
 Proof.
 unfold close_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve fv_tt_term_close_term_wrt_term : lngen.
-Hint Rewrite fv_tt_term_close_term_wrt_term using solve [auto] : lngen.
+Hint Resolve ftv_term_close_term_wrt_term : lngen.
+Hint Rewrite ftv_term_close_term_wrt_term using solve [auto] : lngen.
 
-Lemma fv_tt_term_close_term_wrt_typ :
+Lemma ftv_term_close_term_wrt_typ :
 forall e1 a1,
-  fv_tt_term (close_term_wrt_typ a1 e1) [=] remove a1 (fv_tt_term e1).
+  ftv_term (close_term_wrt_typ a1 e1) [=] remove a1 (ftv_term e1).
 Proof.
 unfold close_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve fv_tt_term_close_term_wrt_typ : lngen.
-Hint Rewrite fv_tt_term_close_term_wrt_typ using solve [auto] : lngen.
+Hint Resolve ftv_term_close_term_wrt_typ : lngen.
+Hint Rewrite ftv_term_close_term_wrt_typ using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_typ_open_typ_wrt_typ_rec_lower_mutual :
+Lemma ftv_typ_open_typ_wrt_typ_rec_lower_mutual :
 (forall t1 t2 n1,
-  fv_tt_typ t1 [<=] fv_tt_typ (open_typ_wrt_typ_rec n1 t2 t1)).
+  ftv_typ t1 [<=] ftv_typ (open_typ_wrt_typ_rec n1 t2 t1)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp; fsetdec.
@@ -2932,22 +2932,22 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_tt_typ_open_typ_wrt_typ_rec_lower :
+Lemma ftv_typ_open_typ_wrt_typ_rec_lower :
 forall t1 t2 n1,
-  fv_tt_typ t1 [<=] fv_tt_typ (open_typ_wrt_typ_rec n1 t2 t1).
+  ftv_typ t1 [<=] ftv_typ (open_typ_wrt_typ_rec n1 t2 t1).
 Proof.
-pose proof fv_tt_typ_open_typ_wrt_typ_rec_lower_mutual as H; intuition eauto.
+pose proof ftv_typ_open_typ_wrt_typ_rec_lower_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_typ_open_typ_wrt_typ_rec_lower : lngen.
+Hint Resolve ftv_typ_open_typ_wrt_typ_rec_lower : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_ee_term_open_term_wrt_term_rec_lower_mutual :
+Lemma fv_term_open_term_wrt_term_rec_lower_mutual :
 (forall e1 e2 n1,
-  fv_ee_term e1 [<=] fv_ee_term (open_term_wrt_term_rec n1 e2 e1)).
+  fv_term e1 [<=] fv_term (open_term_wrt_term_rec n1 e2 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -2957,22 +2957,22 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_ee_term_open_term_wrt_term_rec_lower :
+Lemma fv_term_open_term_wrt_term_rec_lower :
 forall e1 e2 n1,
-  fv_ee_term e1 [<=] fv_ee_term (open_term_wrt_term_rec n1 e2 e1).
+  fv_term e1 [<=] fv_term (open_term_wrt_term_rec n1 e2 e1).
 Proof.
-pose proof fv_ee_term_open_term_wrt_term_rec_lower_mutual as H; intuition eauto.
+pose proof fv_term_open_term_wrt_term_rec_lower_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_open_term_wrt_term_rec_lower : lngen.
+Hint Resolve fv_term_open_term_wrt_term_rec_lower : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_ee_term_open_term_wrt_typ_rec_lower_mutual :
+Lemma fv_term_open_term_wrt_typ_rec_lower_mutual :
 (forall e1 t1 n1,
-  fv_ee_term e1 [<=] fv_ee_term (open_term_wrt_typ_rec n1 t1 e1)).
+  fv_term e1 [<=] fv_term (open_term_wrt_typ_rec n1 t1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -2982,22 +2982,22 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_ee_term_open_term_wrt_typ_rec_lower :
+Lemma fv_term_open_term_wrt_typ_rec_lower :
 forall e1 t1 n1,
-  fv_ee_term e1 [<=] fv_ee_term (open_term_wrt_typ_rec n1 t1 e1).
+  fv_term e1 [<=] fv_term (open_term_wrt_typ_rec n1 t1 e1).
 Proof.
-pose proof fv_ee_term_open_term_wrt_typ_rec_lower_mutual as H; intuition eauto.
+pose proof fv_term_open_term_wrt_typ_rec_lower_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_open_term_wrt_typ_rec_lower : lngen.
+Hint Resolve fv_term_open_term_wrt_typ_rec_lower : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_tt_term_open_term_wrt_term_rec_lower_mutual :
+Lemma ftv_term_open_term_wrt_term_rec_lower_mutual :
 (forall e1 e2 n1,
-  fv_tt_term e1 [<=] fv_tt_term (open_term_wrt_term_rec n1 e2 e1)).
+  ftv_term e1 [<=] ftv_term (open_term_wrt_term_rec n1 e2 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3007,22 +3007,22 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_tt_term_open_term_wrt_term_rec_lower :
+Lemma ftv_term_open_term_wrt_term_rec_lower :
 forall e1 e2 n1,
-  fv_tt_term e1 [<=] fv_tt_term (open_term_wrt_term_rec n1 e2 e1).
+  ftv_term e1 [<=] ftv_term (open_term_wrt_term_rec n1 e2 e1).
 Proof.
-pose proof fv_tt_term_open_term_wrt_term_rec_lower_mutual as H; intuition eauto.
+pose proof ftv_term_open_term_wrt_term_rec_lower_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_open_term_wrt_term_rec_lower : lngen.
+Hint Resolve ftv_term_open_term_wrt_term_rec_lower : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_tt_term_open_term_wrt_typ_rec_lower_mutual :
+Lemma ftv_term_open_term_wrt_typ_rec_lower_mutual :
 (forall e1 t1 n1,
-  fv_tt_term e1 [<=] fv_tt_term (open_term_wrt_typ_rec n1 t1 e1)).
+  ftv_term e1 [<=] ftv_term (open_term_wrt_typ_rec n1 t1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3032,67 +3032,67 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_tt_term_open_term_wrt_typ_rec_lower :
+Lemma ftv_term_open_term_wrt_typ_rec_lower :
 forall e1 t1 n1,
-  fv_tt_term e1 [<=] fv_tt_term (open_term_wrt_typ_rec n1 t1 e1).
+  ftv_term e1 [<=] ftv_term (open_term_wrt_typ_rec n1 t1 e1).
 Proof.
-pose proof fv_tt_term_open_term_wrt_typ_rec_lower_mutual as H; intuition eauto.
+pose proof ftv_term_open_term_wrt_typ_rec_lower_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_open_term_wrt_typ_rec_lower : lngen.
+Hint Resolve ftv_term_open_term_wrt_typ_rec_lower : lngen.
 
 (* end hide *)
 
-Lemma fv_tt_typ_open_typ_wrt_typ_lower :
+Lemma ftv_typ_open_typ_wrt_typ_lower :
 forall t1 t2,
-  fv_tt_typ t1 [<=] fv_tt_typ (open_typ_wrt_typ t1 t2).
+  ftv_typ t1 [<=] ftv_typ (open_typ_wrt_typ t1 t2).
 Proof.
 unfold open_typ_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve fv_tt_typ_open_typ_wrt_typ_lower : lngen.
+Hint Resolve ftv_typ_open_typ_wrt_typ_lower : lngen.
 
-Lemma fv_ee_term_open_term_wrt_term_lower :
+Lemma fv_term_open_term_wrt_term_lower :
 forall e1 e2,
-  fv_ee_term e1 [<=] fv_ee_term (open_term_wrt_term e1 e2).
+  fv_term e1 [<=] fv_term (open_term_wrt_term e1 e2).
 Proof.
 unfold open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve fv_ee_term_open_term_wrt_term_lower : lngen.
+Hint Resolve fv_term_open_term_wrt_term_lower : lngen.
 
-Lemma fv_ee_term_open_term_wrt_typ_lower :
+Lemma fv_term_open_term_wrt_typ_lower :
 forall e1 t1,
-  fv_ee_term e1 [<=] fv_ee_term (open_term_wrt_typ e1 t1).
+  fv_term e1 [<=] fv_term (open_term_wrt_typ e1 t1).
 Proof.
 unfold open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve fv_ee_term_open_term_wrt_typ_lower : lngen.
+Hint Resolve fv_term_open_term_wrt_typ_lower : lngen.
 
-Lemma fv_tt_term_open_term_wrt_term_lower :
+Lemma ftv_term_open_term_wrt_term_lower :
 forall e1 e2,
-  fv_tt_term e1 [<=] fv_tt_term (open_term_wrt_term e1 e2).
+  ftv_term e1 [<=] ftv_term (open_term_wrt_term e1 e2).
 Proof.
 unfold open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve fv_tt_term_open_term_wrt_term_lower : lngen.
+Hint Resolve ftv_term_open_term_wrt_term_lower : lngen.
 
-Lemma fv_tt_term_open_term_wrt_typ_lower :
+Lemma ftv_term_open_term_wrt_typ_lower :
 forall e1 t1,
-  fv_tt_term e1 [<=] fv_tt_term (open_term_wrt_typ e1 t1).
+  ftv_term e1 [<=] ftv_term (open_term_wrt_typ e1 t1).
 Proof.
 unfold open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve fv_tt_term_open_term_wrt_typ_lower : lngen.
+Hint Resolve ftv_term_open_term_wrt_typ_lower : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_typ_open_typ_wrt_typ_rec_upper_mutual :
+Lemma ftv_typ_open_typ_wrt_typ_rec_upper_mutual :
 (forall t1 t2 n1,
-  fv_tt_typ (open_typ_wrt_typ_rec n1 t2 t1) [<=] fv_tt_typ t2 `union` fv_tt_typ t1).
+  ftv_typ (open_typ_wrt_typ_rec n1 t2 t1) [<=] ftv_typ t2 `union` ftv_typ t1).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp; fsetdec.
@@ -3102,22 +3102,22 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_tt_typ_open_typ_wrt_typ_rec_upper :
+Lemma ftv_typ_open_typ_wrt_typ_rec_upper :
 forall t1 t2 n1,
-  fv_tt_typ (open_typ_wrt_typ_rec n1 t2 t1) [<=] fv_tt_typ t2 `union` fv_tt_typ t1.
+  ftv_typ (open_typ_wrt_typ_rec n1 t2 t1) [<=] ftv_typ t2 `union` ftv_typ t1.
 Proof.
-pose proof fv_tt_typ_open_typ_wrt_typ_rec_upper_mutual as H; intuition eauto.
+pose proof ftv_typ_open_typ_wrt_typ_rec_upper_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_typ_open_typ_wrt_typ_rec_upper : lngen.
+Hint Resolve ftv_typ_open_typ_wrt_typ_rec_upper : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_ee_term_open_term_wrt_term_rec_upper_mutual :
+Lemma fv_term_open_term_wrt_term_rec_upper_mutual :
 (forall e1 e2 n1,
-  fv_ee_term (open_term_wrt_term_rec n1 e2 e1) [<=] fv_ee_term e2 `union` fv_ee_term e1).
+  fv_term (open_term_wrt_term_rec n1 e2 e1) [<=] fv_term e2 `union` fv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3127,22 +3127,22 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_ee_term_open_term_wrt_term_rec_upper :
+Lemma fv_term_open_term_wrt_term_rec_upper :
 forall e1 e2 n1,
-  fv_ee_term (open_term_wrt_term_rec n1 e2 e1) [<=] fv_ee_term e2 `union` fv_ee_term e1.
+  fv_term (open_term_wrt_term_rec n1 e2 e1) [<=] fv_term e2 `union` fv_term e1.
 Proof.
-pose proof fv_ee_term_open_term_wrt_term_rec_upper_mutual as H; intuition eauto.
+pose proof fv_term_open_term_wrt_term_rec_upper_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_open_term_wrt_term_rec_upper : lngen.
+Hint Resolve fv_term_open_term_wrt_term_rec_upper : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_ee_term_open_term_wrt_typ_rec_upper_mutual :
+Lemma fv_term_open_term_wrt_typ_rec_upper_mutual :
 (forall e1 t1 n1,
-  fv_ee_term (open_term_wrt_typ_rec n1 t1 e1) [<=] fv_ee_term e1).
+  fv_term (open_term_wrt_typ_rec n1 t1 e1) [<=] fv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3152,22 +3152,22 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_ee_term_open_term_wrt_typ_rec_upper :
+Lemma fv_term_open_term_wrt_typ_rec_upper :
 forall e1 t1 n1,
-  fv_ee_term (open_term_wrt_typ_rec n1 t1 e1) [<=] fv_ee_term e1.
+  fv_term (open_term_wrt_typ_rec n1 t1 e1) [<=] fv_term e1.
 Proof.
-pose proof fv_ee_term_open_term_wrt_typ_rec_upper_mutual as H; intuition eauto.
+pose proof fv_term_open_term_wrt_typ_rec_upper_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_open_term_wrt_typ_rec_upper : lngen.
+Hint Resolve fv_term_open_term_wrt_typ_rec_upper : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_tt_term_open_term_wrt_term_rec_upper_mutual :
+Lemma ftv_term_open_term_wrt_term_rec_upper_mutual :
 (forall e1 e2 n1,
-  fv_tt_term (open_term_wrt_term_rec n1 e2 e1) [<=] fv_tt_term e2 `union` fv_tt_term e1).
+  ftv_term (open_term_wrt_term_rec n1 e2 e1) [<=] ftv_term e2 `union` ftv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3177,22 +3177,22 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_tt_term_open_term_wrt_term_rec_upper :
+Lemma ftv_term_open_term_wrt_term_rec_upper :
 forall e1 e2 n1,
-  fv_tt_term (open_term_wrt_term_rec n1 e2 e1) [<=] fv_tt_term e2 `union` fv_tt_term e1.
+  ftv_term (open_term_wrt_term_rec n1 e2 e1) [<=] ftv_term e2 `union` ftv_term e1.
 Proof.
-pose proof fv_tt_term_open_term_wrt_term_rec_upper_mutual as H; intuition eauto.
+pose proof ftv_term_open_term_wrt_term_rec_upper_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_open_term_wrt_term_rec_upper : lngen.
+Hint Resolve ftv_term_open_term_wrt_term_rec_upper : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma fv_tt_term_open_term_wrt_typ_rec_upper_mutual :
+Lemma ftv_term_open_term_wrt_typ_rec_upper_mutual :
 (forall e1 t1 n1,
-  fv_tt_term (open_term_wrt_typ_rec n1 t1 e1) [<=] fv_tt_typ t1 `union` fv_tt_term e1).
+  ftv_term (open_term_wrt_typ_rec n1 t1 e1) [<=] ftv_typ t1 `union` ftv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3202,68 +3202,68 @@ Qed.
 
 (* begin hide *)
 
-Lemma fv_tt_term_open_term_wrt_typ_rec_upper :
+Lemma ftv_term_open_term_wrt_typ_rec_upper :
 forall e1 t1 n1,
-  fv_tt_term (open_term_wrt_typ_rec n1 t1 e1) [<=] fv_tt_typ t1 `union` fv_tt_term e1.
+  ftv_term (open_term_wrt_typ_rec n1 t1 e1) [<=] ftv_typ t1 `union` ftv_term e1.
 Proof.
-pose proof fv_tt_term_open_term_wrt_typ_rec_upper_mutual as H; intuition eauto.
+pose proof ftv_term_open_term_wrt_typ_rec_upper_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_open_term_wrt_typ_rec_upper : lngen.
+Hint Resolve ftv_term_open_term_wrt_typ_rec_upper : lngen.
 
 (* end hide *)
 
-Lemma fv_tt_typ_open_typ_wrt_typ_upper :
+Lemma ftv_typ_open_typ_wrt_typ_upper :
 forall t1 t2,
-  fv_tt_typ (open_typ_wrt_typ t1 t2) [<=] fv_tt_typ t2 `union` fv_tt_typ t1.
+  ftv_typ (open_typ_wrt_typ t1 t2) [<=] ftv_typ t2 `union` ftv_typ t1.
 Proof.
 unfold open_typ_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve fv_tt_typ_open_typ_wrt_typ_upper : lngen.
+Hint Resolve ftv_typ_open_typ_wrt_typ_upper : lngen.
 
-Lemma fv_ee_term_open_term_wrt_term_upper :
+Lemma fv_term_open_term_wrt_term_upper :
 forall e1 e2,
-  fv_ee_term (open_term_wrt_term e1 e2) [<=] fv_ee_term e2 `union` fv_ee_term e1.
+  fv_term (open_term_wrt_term e1 e2) [<=] fv_term e2 `union` fv_term e1.
 Proof.
 unfold open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve fv_ee_term_open_term_wrt_term_upper : lngen.
+Hint Resolve fv_term_open_term_wrt_term_upper : lngen.
 
-Lemma fv_ee_term_open_term_wrt_typ_upper :
+Lemma fv_term_open_term_wrt_typ_upper :
 forall e1 t1,
-  fv_ee_term (open_term_wrt_typ e1 t1) [<=] fv_ee_term e1.
+  fv_term (open_term_wrt_typ e1 t1) [<=] fv_term e1.
 Proof.
 unfold open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve fv_ee_term_open_term_wrt_typ_upper : lngen.
+Hint Resolve fv_term_open_term_wrt_typ_upper : lngen.
 
-Lemma fv_tt_term_open_term_wrt_term_upper :
+Lemma ftv_term_open_term_wrt_term_upper :
 forall e1 e2,
-  fv_tt_term (open_term_wrt_term e1 e2) [<=] fv_tt_term e2 `union` fv_tt_term e1.
+  ftv_term (open_term_wrt_term e1 e2) [<=] ftv_term e2 `union` ftv_term e1.
 Proof.
 unfold open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve fv_tt_term_open_term_wrt_term_upper : lngen.
+Hint Resolve ftv_term_open_term_wrt_term_upper : lngen.
 
-Lemma fv_tt_term_open_term_wrt_typ_upper :
+Lemma ftv_term_open_term_wrt_typ_upper :
 forall e1 t1,
-  fv_tt_term (open_term_wrt_typ e1 t1) [<=] fv_tt_typ t1 `union` fv_tt_term e1.
+  ftv_term (open_term_wrt_typ e1 t1) [<=] ftv_typ t1 `union` ftv_term e1.
 Proof.
 unfold open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve fv_tt_term_open_term_wrt_typ_upper : lngen.
+Hint Resolve ftv_term_open_term_wrt_typ_upper : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_typ_subst_tt_typ_fresh_mutual :
+Lemma ftv_typ_tsubst_typ_fresh_mutual :
 (forall t1 t2 a1,
-  a1 `notin` fv_tt_typ t1 ->
-  fv_tt_typ (subst_tt_typ t2 a1 t1) [=] fv_tt_typ t1).
+  a1 `notin` ftv_typ t1 ->
+  ftv_typ (tsubst_typ t2 a1 t1) [=] ftv_typ t1).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp; fsetdec.
@@ -3271,23 +3271,23 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_typ_subst_tt_typ_fresh :
+Lemma ftv_typ_tsubst_typ_fresh :
 forall t1 t2 a1,
-  a1 `notin` fv_tt_typ t1 ->
-  fv_tt_typ (subst_tt_typ t2 a1 t1) [=] fv_tt_typ t1.
+  a1 `notin` ftv_typ t1 ->
+  ftv_typ (tsubst_typ t2 a1 t1) [=] ftv_typ t1.
 Proof.
-pose proof fv_tt_typ_subst_tt_typ_fresh_mutual as H; intuition eauto.
+pose proof ftv_typ_tsubst_typ_fresh_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_typ_subst_tt_typ_fresh : lngen.
-Hint Rewrite fv_tt_typ_subst_tt_typ_fresh using solve [auto] : lngen.
+Hint Resolve ftv_typ_tsubst_typ_fresh : lngen.
+Hint Rewrite ftv_typ_tsubst_typ_fresh using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma fv_ee_term_subst_ee_term_fresh_mutual :
+Lemma fv_term_subst_term_fresh_mutual :
 (forall e1 e2 x1,
-  x1 `notin` fv_ee_term e1 ->
-  fv_ee_term (subst_ee_term e2 x1 e1) [=] fv_ee_term e1).
+  x1 `notin` fv_term e1 ->
+  fv_term (subst_term e2 x1 e1) [=] fv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3295,22 +3295,22 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_ee_term_subst_ee_term_fresh :
+Lemma fv_term_subst_term_fresh :
 forall e1 e2 x1,
-  x1 `notin` fv_ee_term e1 ->
-  fv_ee_term (subst_ee_term e2 x1 e1) [=] fv_ee_term e1.
+  x1 `notin` fv_term e1 ->
+  fv_term (subst_term e2 x1 e1) [=] fv_term e1.
 Proof.
-pose proof fv_ee_term_subst_ee_term_fresh_mutual as H; intuition eauto.
+pose proof fv_term_subst_term_fresh_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_subst_ee_term_fresh : lngen.
-Hint Rewrite fv_ee_term_subst_ee_term_fresh using solve [auto] : lngen.
+Hint Resolve fv_term_subst_term_fresh : lngen.
+Hint Rewrite fv_term_subst_term_fresh using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_term_subst_ee_term_fresh_mutual :
+Lemma ftv_term_subst_term_fresh_mutual :
 (forall e1 t1 a1,
-  fv_ee_term (subst_tt_term t1 a1 e1) [=] fv_ee_term e1).
+  fv_term (tsubst_term t1 a1 e1) [=] fv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3318,22 +3318,22 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_term_subst_ee_term_fresh :
+Lemma ftv_term_subst_term_fresh :
 forall e1 t1 a1,
-  fv_ee_term (subst_tt_term t1 a1 e1) [=] fv_ee_term e1.
+  fv_term (tsubst_term t1 a1 e1) [=] fv_term e1.
 Proof.
-pose proof fv_tt_term_subst_ee_term_fresh_mutual as H; intuition eauto.
+pose proof ftv_term_subst_term_fresh_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_subst_ee_term_fresh : lngen.
-Hint Rewrite fv_tt_term_subst_ee_term_fresh using solve [auto] : lngen.
+Hint Resolve ftv_term_subst_term_fresh : lngen.
+Hint Rewrite ftv_term_subst_term_fresh using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_term_subst_tt_term_fresh_mutual :
+Lemma ftv_term_tsubst_term_fresh_mutual :
 (forall e1 t1 a1,
-  a1 `notin` fv_tt_term e1 ->
-  fv_tt_term (subst_tt_term t1 a1 e1) [=] fv_tt_term e1).
+  a1 `notin` ftv_term e1 ->
+  ftv_term (tsubst_term t1 a1 e1) [=] ftv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3341,22 +3341,22 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_term_subst_tt_term_fresh :
+Lemma ftv_term_tsubst_term_fresh :
 forall e1 t1 a1,
-  a1 `notin` fv_tt_term e1 ->
-  fv_tt_term (subst_tt_term t1 a1 e1) [=] fv_tt_term e1.
+  a1 `notin` ftv_term e1 ->
+  ftv_term (tsubst_term t1 a1 e1) [=] ftv_term e1.
 Proof.
-pose proof fv_tt_term_subst_tt_term_fresh_mutual as H; intuition eauto.
+pose proof ftv_term_tsubst_term_fresh_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_subst_tt_term_fresh : lngen.
-Hint Rewrite fv_tt_term_subst_tt_term_fresh using solve [auto] : lngen.
+Hint Resolve ftv_term_tsubst_term_fresh : lngen.
+Hint Rewrite ftv_term_tsubst_term_fresh using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_typ_subst_tt_typ_lower_mutual :
+Lemma ftv_typ_tsubst_typ_lower_mutual :
 (forall t1 t2 a1,
-  remove a1 (fv_tt_typ t1) [<=] fv_tt_typ (subst_tt_typ t2 a1 t1)).
+  remove a1 (ftv_typ t1) [<=] ftv_typ (tsubst_typ t2 a1 t1)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp; fsetdec.
@@ -3364,20 +3364,20 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_typ_subst_tt_typ_lower :
+Lemma ftv_typ_tsubst_typ_lower :
 forall t1 t2 a1,
-  remove a1 (fv_tt_typ t1) [<=] fv_tt_typ (subst_tt_typ t2 a1 t1).
+  remove a1 (ftv_typ t1) [<=] ftv_typ (tsubst_typ t2 a1 t1).
 Proof.
-pose proof fv_tt_typ_subst_tt_typ_lower_mutual as H; intuition eauto.
+pose proof ftv_typ_tsubst_typ_lower_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_typ_subst_tt_typ_lower : lngen.
+Hint Resolve ftv_typ_tsubst_typ_lower : lngen.
 
 (* begin hide *)
 
-Lemma fv_ee_term_subst_ee_term_lower_mutual :
+Lemma fv_term_subst_term_lower_mutual :
 (forall e1 e2 x1,
-  remove x1 (fv_ee_term e1) [<=] fv_ee_term (subst_ee_term e2 x1 e1)).
+  remove x1 (fv_term e1) [<=] fv_term (subst_term e2 x1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3385,20 +3385,20 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_ee_term_subst_ee_term_lower :
+Lemma fv_term_subst_term_lower :
 forall e1 e2 x1,
-  remove x1 (fv_ee_term e1) [<=] fv_ee_term (subst_ee_term e2 x1 e1).
+  remove x1 (fv_term e1) [<=] fv_term (subst_term e2 x1 e1).
 Proof.
-pose proof fv_ee_term_subst_ee_term_lower_mutual as H; intuition eauto.
+pose proof fv_term_subst_term_lower_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_subst_ee_term_lower : lngen.
+Hint Resolve fv_term_subst_term_lower : lngen.
 
 (* begin hide *)
 
-Lemma fv_ee_term_subst_tt_term_lower_mutual :
+Lemma fv_term_tsubst_term_lower_mutual :
 (forall e1 t1 a1,
-  fv_ee_term e1 [<=] fv_ee_term (subst_tt_term t1 a1 e1)).
+  fv_term e1 [<=] fv_term (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3406,20 +3406,20 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_ee_term_subst_tt_term_lower :
+Lemma fv_term_tsubst_term_lower :
 forall e1 t1 a1,
-  fv_ee_term e1 [<=] fv_ee_term (subst_tt_term t1 a1 e1).
+  fv_term e1 [<=] fv_term (tsubst_term t1 a1 e1).
 Proof.
-pose proof fv_ee_term_subst_tt_term_lower_mutual as H; intuition eauto.
+pose proof fv_term_tsubst_term_lower_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_subst_tt_term_lower : lngen.
+Hint Resolve fv_term_tsubst_term_lower : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_term_subst_ee_term_lower_mutual :
+Lemma ftv_term_subst_term_lower_mutual :
 (forall e1 e2 x1,
-  fv_tt_term e1 [<=] fv_tt_term (subst_ee_term e2 x1 e1)).
+  ftv_term e1 [<=] ftv_term (subst_term e2 x1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3427,20 +3427,20 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_term_subst_ee_term_lower :
+Lemma ftv_term_subst_term_lower :
 forall e1 e2 x1,
-  fv_tt_term e1 [<=] fv_tt_term (subst_ee_term e2 x1 e1).
+  ftv_term e1 [<=] ftv_term (subst_term e2 x1 e1).
 Proof.
-pose proof fv_tt_term_subst_ee_term_lower_mutual as H; intuition eauto.
+pose proof ftv_term_subst_term_lower_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_subst_ee_term_lower : lngen.
+Hint Resolve ftv_term_subst_term_lower : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_term_subst_tt_term_lower_mutual :
+Lemma ftv_term_tsubst_term_lower_mutual :
 (forall e1 t1 a1,
-  remove a1 (fv_tt_term e1) [<=] fv_tt_term (subst_tt_term t1 a1 e1)).
+  remove a1 (ftv_term e1) [<=] ftv_term (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3448,22 +3448,22 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_term_subst_tt_term_lower :
+Lemma ftv_term_tsubst_term_lower :
 forall e1 t1 a1,
-  remove a1 (fv_tt_term e1) [<=] fv_tt_term (subst_tt_term t1 a1 e1).
+  remove a1 (ftv_term e1) [<=] ftv_term (tsubst_term t1 a1 e1).
 Proof.
-pose proof fv_tt_term_subst_tt_term_lower_mutual as H; intuition eauto.
+pose proof ftv_term_tsubst_term_lower_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_subst_tt_term_lower : lngen.
+Hint Resolve ftv_term_tsubst_term_lower : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_typ_subst_tt_typ_notin_mutual :
+Lemma ftv_typ_tsubst_typ_notin_mutual :
 (forall t1 t2 a1 a2,
-  a2 `notin` fv_tt_typ t1 ->
-  a2 `notin` fv_tt_typ t2 ->
-  a2 `notin` fv_tt_typ (subst_tt_typ t2 a1 t1)).
+  a2 `notin` ftv_typ t1 ->
+  a2 `notin` ftv_typ t2 ->
+  a2 `notin` ftv_typ (tsubst_typ t2 a1 t1)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp; fsetdec.
@@ -3471,24 +3471,24 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_typ_subst_tt_typ_notin :
+Lemma ftv_typ_tsubst_typ_notin :
 forall t1 t2 a1 a2,
-  a2 `notin` fv_tt_typ t1 ->
-  a2 `notin` fv_tt_typ t2 ->
-  a2 `notin` fv_tt_typ (subst_tt_typ t2 a1 t1).
+  a2 `notin` ftv_typ t1 ->
+  a2 `notin` ftv_typ t2 ->
+  a2 `notin` ftv_typ (tsubst_typ t2 a1 t1).
 Proof.
-pose proof fv_tt_typ_subst_tt_typ_notin_mutual as H; intuition eauto.
+pose proof ftv_typ_tsubst_typ_notin_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_typ_subst_tt_typ_notin : lngen.
+Hint Resolve ftv_typ_tsubst_typ_notin : lngen.
 
 (* begin hide *)
 
-Lemma fv_ee_term_subst_ee_term_notin_mutual :
+Lemma fv_term_subst_term_notin_mutual :
 (forall e1 e2 x1 x2,
-  x2 `notin` fv_ee_term e1 ->
-  x2 `notin` fv_ee_term e2 ->
-  x2 `notin` fv_ee_term (subst_ee_term e2 x1 e1)).
+  x2 `notin` fv_term e1 ->
+  x2 `notin` fv_term e2 ->
+  x2 `notin` fv_term (subst_term e2 x1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3496,23 +3496,23 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_ee_term_subst_ee_term_notin :
+Lemma fv_term_subst_term_notin :
 forall e1 e2 x1 x2,
-  x2 `notin` fv_ee_term e1 ->
-  x2 `notin` fv_ee_term e2 ->
-  x2 `notin` fv_ee_term (subst_ee_term e2 x1 e1).
+  x2 `notin` fv_term e1 ->
+  x2 `notin` fv_term e2 ->
+  x2 `notin` fv_term (subst_term e2 x1 e1).
 Proof.
-pose proof fv_ee_term_subst_ee_term_notin_mutual as H; intuition eauto.
+pose proof fv_term_subst_term_notin_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_subst_ee_term_notin : lngen.
+Hint Resolve fv_term_subst_term_notin : lngen.
 
 (* begin hide *)
 
-Lemma fv_ee_term_subst_tt_term_notin_mutual :
+Lemma fv_term_tsubst_term_notin_mutual :
 (forall e1 t1 a1 x1,
-  x1 `notin` fv_ee_term e1 ->
-  x1 `notin` fv_ee_term (subst_tt_term t1 a1 e1)).
+  x1 `notin` fv_term e1 ->
+  x1 `notin` fv_term (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3520,23 +3520,23 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_ee_term_subst_tt_term_notin :
+Lemma fv_term_tsubst_term_notin :
 forall e1 t1 a1 x1,
-  x1 `notin` fv_ee_term e1 ->
-  x1 `notin` fv_ee_term (subst_tt_term t1 a1 e1).
+  x1 `notin` fv_term e1 ->
+  x1 `notin` fv_term (tsubst_term t1 a1 e1).
 Proof.
-pose proof fv_ee_term_subst_tt_term_notin_mutual as H; intuition eauto.
+pose proof fv_term_tsubst_term_notin_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_subst_tt_term_notin : lngen.
+Hint Resolve fv_term_tsubst_term_notin : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_term_subst_ee_term_notin_mutual :
+Lemma ftv_term_subst_term_notin_mutual :
 (forall e1 e2 x1 a1,
-  a1 `notin` fv_tt_term e1 ->
-  a1 `notin` fv_tt_term e2 ->
-  a1 `notin` fv_tt_term (subst_ee_term e2 x1 e1)).
+  a1 `notin` ftv_term e1 ->
+  a1 `notin` ftv_term e2 ->
+  a1 `notin` ftv_term (subst_term e2 x1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3544,24 +3544,24 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_term_subst_ee_term_notin :
+Lemma ftv_term_subst_term_notin :
 forall e1 e2 x1 a1,
-  a1 `notin` fv_tt_term e1 ->
-  a1 `notin` fv_tt_term e2 ->
-  a1 `notin` fv_tt_term (subst_ee_term e2 x1 e1).
+  a1 `notin` ftv_term e1 ->
+  a1 `notin` ftv_term e2 ->
+  a1 `notin` ftv_term (subst_term e2 x1 e1).
 Proof.
-pose proof fv_tt_term_subst_ee_term_notin_mutual as H; intuition eauto.
+pose proof ftv_term_subst_term_notin_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_subst_ee_term_notin : lngen.
+Hint Resolve ftv_term_subst_term_notin : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_term_subst_tt_term_notin_mutual :
+Lemma ftv_term_tsubst_term_notin_mutual :
 (forall e1 t1 a1 a2,
-  a2 `notin` fv_tt_term e1 ->
-  a2 `notin` fv_tt_typ t1 ->
-  a2 `notin` fv_tt_term (subst_tt_term t1 a1 e1)).
+  a2 `notin` ftv_term e1 ->
+  a2 `notin` ftv_typ t1 ->
+  a2 `notin` ftv_term (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3569,22 +3569,22 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_term_subst_tt_term_notin :
+Lemma ftv_term_tsubst_term_notin :
 forall e1 t1 a1 a2,
-  a2 `notin` fv_tt_term e1 ->
-  a2 `notin` fv_tt_typ t1 ->
-  a2 `notin` fv_tt_term (subst_tt_term t1 a1 e1).
+  a2 `notin` ftv_term e1 ->
+  a2 `notin` ftv_typ t1 ->
+  a2 `notin` ftv_term (tsubst_term t1 a1 e1).
 Proof.
-pose proof fv_tt_term_subst_tt_term_notin_mutual as H; intuition eauto.
+pose proof ftv_term_tsubst_term_notin_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_subst_tt_term_notin : lngen.
+Hint Resolve ftv_term_tsubst_term_notin : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_typ_subst_tt_typ_upper_mutual :
+Lemma ftv_typ_tsubst_typ_upper_mutual :
 (forall t1 t2 a1,
-  fv_tt_typ (subst_tt_typ t2 a1 t1) [<=] fv_tt_typ t2 `union` remove a1 (fv_tt_typ t1)).
+  ftv_typ (tsubst_typ t2 a1 t1) [<=] ftv_typ t2 `union` remove a1 (ftv_typ t1)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp; fsetdec.
@@ -3592,20 +3592,20 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_typ_subst_tt_typ_upper :
+Lemma ftv_typ_tsubst_typ_upper :
 forall t1 t2 a1,
-  fv_tt_typ (subst_tt_typ t2 a1 t1) [<=] fv_tt_typ t2 `union` remove a1 (fv_tt_typ t1).
+  ftv_typ (tsubst_typ t2 a1 t1) [<=] ftv_typ t2 `union` remove a1 (ftv_typ t1).
 Proof.
-pose proof fv_tt_typ_subst_tt_typ_upper_mutual as H; intuition eauto.
+pose proof ftv_typ_tsubst_typ_upper_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_typ_subst_tt_typ_upper : lngen.
+Hint Resolve ftv_typ_tsubst_typ_upper : lngen.
 
 (* begin hide *)
 
-Lemma fv_ee_term_subst_ee_term_upper_mutual :
+Lemma fv_term_subst_term_upper_mutual :
 (forall e1 e2 x1,
-  fv_ee_term (subst_ee_term e2 x1 e1) [<=] fv_ee_term e2 `union` remove x1 (fv_ee_term e1)).
+  fv_term (subst_term e2 x1 e1) [<=] fv_term e2 `union` remove x1 (fv_term e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3613,20 +3613,20 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_ee_term_subst_ee_term_upper :
+Lemma fv_term_subst_term_upper :
 forall e1 e2 x1,
-  fv_ee_term (subst_ee_term e2 x1 e1) [<=] fv_ee_term e2 `union` remove x1 (fv_ee_term e1).
+  fv_term (subst_term e2 x1 e1) [<=] fv_term e2 `union` remove x1 (fv_term e1).
 Proof.
-pose proof fv_ee_term_subst_ee_term_upper_mutual as H; intuition eauto.
+pose proof fv_term_subst_term_upper_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_subst_ee_term_upper : lngen.
+Hint Resolve fv_term_subst_term_upper : lngen.
 
 (* begin hide *)
 
-Lemma fv_ee_term_subst_tt_term_upper_mutual :
+Lemma fv_term_tsubst_term_upper_mutual :
 (forall e1 t1 a1,
-  fv_ee_term (subst_tt_term t1 a1 e1) [<=] fv_ee_term e1).
+  fv_term (tsubst_term t1 a1 e1) [<=] fv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3634,20 +3634,20 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_ee_term_subst_tt_term_upper :
+Lemma fv_term_tsubst_term_upper :
 forall e1 t1 a1,
-  fv_ee_term (subst_tt_term t1 a1 e1) [<=] fv_ee_term e1.
+  fv_term (tsubst_term t1 a1 e1) [<=] fv_term e1.
 Proof.
-pose proof fv_ee_term_subst_tt_term_upper_mutual as H; intuition eauto.
+pose proof fv_term_tsubst_term_upper_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_ee_term_subst_tt_term_upper : lngen.
+Hint Resolve fv_term_tsubst_term_upper : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_term_subst_ee_term_upper_mutual :
+Lemma ftv_term_subst_term_upper_mutual :
 (forall e1 e2 x1,
-  fv_tt_term (subst_ee_term e2 x1 e1) [<=] fv_tt_term e2 `union` fv_tt_term e1).
+  ftv_term (subst_term e2 x1 e1) [<=] ftv_term e2 `union` ftv_term e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3655,20 +3655,20 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_term_subst_ee_term_upper :
+Lemma ftv_term_subst_term_upper :
 forall e1 e2 x1,
-  fv_tt_term (subst_ee_term e2 x1 e1) [<=] fv_tt_term e2 `union` fv_tt_term e1.
+  ftv_term (subst_term e2 x1 e1) [<=] ftv_term e2 `union` ftv_term e1.
 Proof.
-pose proof fv_tt_term_subst_ee_term_upper_mutual as H; intuition eauto.
+pose proof ftv_term_subst_term_upper_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_subst_ee_term_upper : lngen.
+Hint Resolve ftv_term_subst_term_upper : lngen.
 
 (* begin hide *)
 
-Lemma fv_tt_term_subst_tt_term_upper_mutual :
+Lemma ftv_term_tsubst_term_upper_mutual :
 (forall e1 t1 a1,
-  fv_tt_term (subst_tt_term t1 a1 e1) [<=] fv_tt_typ t1 `union` remove a1 (fv_tt_term e1)).
+  ftv_term (tsubst_term t1 a1 e1) [<=] ftv_typ t1 `union` remove a1 (ftv_term e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp; fsetdec.
@@ -3676,14 +3676,14 @@ Qed.
 
 (* end hide *)
 
-Lemma fv_tt_term_subst_tt_term_upper :
+Lemma ftv_term_tsubst_term_upper :
 forall e1 t1 a1,
-  fv_tt_term (subst_tt_term t1 a1 e1) [<=] fv_tt_typ t1 `union` remove a1 (fv_tt_term e1).
+  ftv_term (tsubst_term t1 a1 e1) [<=] ftv_typ t1 `union` remove a1 (ftv_term e1).
 Proof.
-pose proof fv_tt_term_subst_tt_term_upper_mutual as H; intuition eauto.
+pose proof ftv_term_tsubst_term_upper_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve fv_tt_term_subst_tt_term_upper : lngen.
+Hint Resolve ftv_term_tsubst_term_upper : lngen.
 
 
 (* *********************************************************************** *)
@@ -3694,12 +3694,12 @@ Ltac default_autorewrite ::= autorewrite with lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_close_typ_wrt_typ_rec_mutual :
+Lemma tsubst_typ_close_typ_wrt_typ_rec_mutual :
 (forall t2 t1 a1 a2 n1,
   degree_typ_wrt_typ n1 t1 ->
   a1 <> a2 ->
-  a2 `notin` fv_tt_typ t1 ->
-  subst_tt_typ t1 a1 (close_typ_wrt_typ_rec n1 a2 t2) = close_typ_wrt_typ_rec n1 a2 (subst_tt_typ t1 a1 t2)).
+  a2 `notin` ftv_typ t1 ->
+  tsubst_typ t1 a1 (close_typ_wrt_typ_rec n1 a2 t2) = close_typ_wrt_typ_rec n1 a2 (tsubst_typ t1 a1 t2)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp.
@@ -3707,26 +3707,26 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_typ_close_typ_wrt_typ_rec :
+Lemma tsubst_typ_close_typ_wrt_typ_rec :
 forall t2 t1 a1 a2 n1,
   degree_typ_wrt_typ n1 t1 ->
   a1 <> a2 ->
-  a2 `notin` fv_tt_typ t1 ->
-  subst_tt_typ t1 a1 (close_typ_wrt_typ_rec n1 a2 t2) = close_typ_wrt_typ_rec n1 a2 (subst_tt_typ t1 a1 t2).
+  a2 `notin` ftv_typ t1 ->
+  tsubst_typ t1 a1 (close_typ_wrt_typ_rec n1 a2 t2) = close_typ_wrt_typ_rec n1 a2 (tsubst_typ t1 a1 t2).
 Proof.
-pose proof subst_tt_typ_close_typ_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof tsubst_typ_close_typ_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_typ_close_typ_wrt_typ_rec : lngen.
+Hint Resolve tsubst_typ_close_typ_wrt_typ_rec : lngen.
 
 (* begin hide *)
 
-Lemma subst_ee_term_close_term_wrt_term_rec_mutual :
+Lemma subst_term_close_term_wrt_term_rec_mutual :
 (forall e2 e1 x1 x2 n1,
   degree_term_wrt_term n1 e1 ->
   x1 <> x2 ->
-  x2 `notin` fv_ee_term e1 ->
-  subst_ee_term e1 x1 (close_term_wrt_term_rec n1 x2 e2) = close_term_wrt_term_rec n1 x2 (subst_ee_term e1 x1 e2)).
+  x2 `notin` fv_term e1 ->
+  subst_term e1 x1 (close_term_wrt_term_rec n1 x2 e2) = close_term_wrt_term_rec n1 x2 (subst_term e1 x1 e2)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -3734,25 +3734,25 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_ee_term_close_term_wrt_term_rec :
+Lemma subst_term_close_term_wrt_term_rec :
 forall e2 e1 x1 x2 n1,
   degree_term_wrt_term n1 e1 ->
   x1 <> x2 ->
-  x2 `notin` fv_ee_term e1 ->
-  subst_ee_term e1 x1 (close_term_wrt_term_rec n1 x2 e2) = close_term_wrt_term_rec n1 x2 (subst_ee_term e1 x1 e2).
+  x2 `notin` fv_term e1 ->
+  subst_term e1 x1 (close_term_wrt_term_rec n1 x2 e2) = close_term_wrt_term_rec n1 x2 (subst_term e1 x1 e2).
 Proof.
-pose proof subst_ee_term_close_term_wrt_term_rec_mutual as H; intuition eauto.
+pose proof subst_term_close_term_wrt_term_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_close_term_wrt_term_rec : lngen.
+Hint Resolve subst_term_close_term_wrt_term_rec : lngen.
 
 (* begin hide *)
 
-Lemma subst_ee_term_close_term_wrt_typ_rec_mutual :
+Lemma subst_term_close_term_wrt_typ_rec_mutual :
 (forall e2 e1 a1 x1 n1,
   degree_term_wrt_typ n1 e1 ->
-  x1 `notin` fv_tt_term e1 ->
-  subst_ee_term e1 a1 (close_term_wrt_typ_rec n1 x1 e2) = close_term_wrt_typ_rec n1 x1 (subst_ee_term e1 a1 e2)).
+  x1 `notin` ftv_term e1 ->
+  subst_term e1 a1 (close_term_wrt_typ_rec n1 x1 e2) = close_term_wrt_typ_rec n1 x1 (subst_term e1 a1 e2)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -3760,22 +3760,22 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_ee_term_close_term_wrt_typ_rec :
+Lemma subst_term_close_term_wrt_typ_rec :
 forall e2 e1 a1 x1 n1,
   degree_term_wrt_typ n1 e1 ->
-  x1 `notin` fv_tt_term e1 ->
-  subst_ee_term e1 a1 (close_term_wrt_typ_rec n1 x1 e2) = close_term_wrt_typ_rec n1 x1 (subst_ee_term e1 a1 e2).
+  x1 `notin` ftv_term e1 ->
+  subst_term e1 a1 (close_term_wrt_typ_rec n1 x1 e2) = close_term_wrt_typ_rec n1 x1 (subst_term e1 a1 e2).
 Proof.
-pose proof subst_ee_term_close_term_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof subst_term_close_term_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_close_term_wrt_typ_rec : lngen.
+Hint Resolve subst_term_close_term_wrt_typ_rec : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_term_close_term_wrt_term_rec_mutual :
+Lemma tsubst_term_close_term_wrt_term_rec_mutual :
 (forall e1 t1 x1 a1 n1,
-  subst_tt_term t1 x1 (close_term_wrt_term_rec n1 a1 e1) = close_term_wrt_term_rec n1 a1 (subst_tt_term t1 x1 e1)).
+  tsubst_term t1 x1 (close_term_wrt_term_rec n1 a1 e1) = close_term_wrt_term_rec n1 a1 (tsubst_term t1 x1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -3783,23 +3783,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_term_close_term_wrt_term_rec :
+Lemma tsubst_term_close_term_wrt_term_rec :
 forall e1 t1 x1 a1 n1,
-  subst_tt_term t1 x1 (close_term_wrt_term_rec n1 a1 e1) = close_term_wrt_term_rec n1 a1 (subst_tt_term t1 x1 e1).
+  tsubst_term t1 x1 (close_term_wrt_term_rec n1 a1 e1) = close_term_wrt_term_rec n1 a1 (tsubst_term t1 x1 e1).
 Proof.
-pose proof subst_tt_term_close_term_wrt_term_rec_mutual as H; intuition eauto.
+pose proof tsubst_term_close_term_wrt_term_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_close_term_wrt_term_rec : lngen.
+Hint Resolve tsubst_term_close_term_wrt_term_rec : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_term_close_term_wrt_typ_rec_mutual :
+Lemma tsubst_term_close_term_wrt_typ_rec_mutual :
 (forall e1 t1 a1 a2 n1,
   degree_typ_wrt_typ n1 t1 ->
   a1 <> a2 ->
-  a2 `notin` fv_tt_typ t1 ->
-  subst_tt_term t1 a1 (close_term_wrt_typ_rec n1 a2 e1) = close_term_wrt_typ_rec n1 a2 (subst_tt_term t1 a1 e1)).
+  a2 `notin` ftv_typ t1 ->
+  tsubst_term t1 a1 (close_term_wrt_typ_rec n1 a2 e1) = close_term_wrt_typ_rec n1 a2 (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -3807,77 +3807,77 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_term_close_term_wrt_typ_rec :
+Lemma tsubst_term_close_term_wrt_typ_rec :
 forall e1 t1 a1 a2 n1,
   degree_typ_wrt_typ n1 t1 ->
   a1 <> a2 ->
-  a2 `notin` fv_tt_typ t1 ->
-  subst_tt_term t1 a1 (close_term_wrt_typ_rec n1 a2 e1) = close_term_wrt_typ_rec n1 a2 (subst_tt_term t1 a1 e1).
+  a2 `notin` ftv_typ t1 ->
+  tsubst_term t1 a1 (close_term_wrt_typ_rec n1 a2 e1) = close_term_wrt_typ_rec n1 a2 (tsubst_term t1 a1 e1).
 Proof.
-pose proof subst_tt_term_close_term_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof tsubst_term_close_term_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_close_term_wrt_typ_rec : lngen.
+Hint Resolve tsubst_term_close_term_wrt_typ_rec : lngen.
 
-Lemma subst_tt_typ_close_typ_wrt_typ :
+Lemma tsubst_typ_close_typ_wrt_typ :
 forall t2 t1 a1 a2,
   lc_typ t1 ->  a1 <> a2 ->
-  a2 `notin` fv_tt_typ t1 ->
-  subst_tt_typ t1 a1 (close_typ_wrt_typ a2 t2) = close_typ_wrt_typ a2 (subst_tt_typ t1 a1 t2).
+  a2 `notin` ftv_typ t1 ->
+  tsubst_typ t1 a1 (close_typ_wrt_typ a2 t2) = close_typ_wrt_typ a2 (tsubst_typ t1 a1 t2).
 Proof.
 unfold close_typ_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_typ_close_typ_wrt_typ : lngen.
+Hint Resolve tsubst_typ_close_typ_wrt_typ : lngen.
 
-Lemma subst_ee_term_close_term_wrt_term :
+Lemma subst_term_close_term_wrt_term :
 forall e2 e1 x1 x2,
   lc_term e1 ->  x1 <> x2 ->
-  x2 `notin` fv_ee_term e1 ->
-  subst_ee_term e1 x1 (close_term_wrt_term x2 e2) = close_term_wrt_term x2 (subst_ee_term e1 x1 e2).
+  x2 `notin` fv_term e1 ->
+  subst_term e1 x1 (close_term_wrt_term x2 e2) = close_term_wrt_term x2 (subst_term e1 x1 e2).
 Proof.
 unfold close_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_close_term_wrt_term : lngen.
+Hint Resolve subst_term_close_term_wrt_term : lngen.
 
-Lemma subst_ee_term_close_term_wrt_typ :
+Lemma subst_term_close_term_wrt_typ :
 forall e2 e1 a1 x1,
-  lc_term e1 ->  x1 `notin` fv_tt_term e1 ->
-  subst_ee_term e1 a1 (close_term_wrt_typ x1 e2) = close_term_wrt_typ x1 (subst_ee_term e1 a1 e2).
+  lc_term e1 ->  x1 `notin` ftv_term e1 ->
+  subst_term e1 a1 (close_term_wrt_typ x1 e2) = close_term_wrt_typ x1 (subst_term e1 a1 e2).
 Proof.
 unfold close_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_close_term_wrt_typ : lngen.
+Hint Resolve subst_term_close_term_wrt_typ : lngen.
 
-Lemma subst_tt_term_close_term_wrt_term :
+Lemma tsubst_term_close_term_wrt_term :
 forall e1 t1 x1 a1,
-  lc_typ t1 ->  subst_tt_term t1 x1 (close_term_wrt_term a1 e1) = close_term_wrt_term a1 (subst_tt_term t1 x1 e1).
+  lc_typ t1 ->  tsubst_term t1 x1 (close_term_wrt_term a1 e1) = close_term_wrt_term a1 (tsubst_term t1 x1 e1).
 Proof.
 unfold close_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_close_term_wrt_term : lngen.
+Hint Resolve tsubst_term_close_term_wrt_term : lngen.
 
-Lemma subst_tt_term_close_term_wrt_typ :
+Lemma tsubst_term_close_term_wrt_typ :
 forall e1 t1 a1 a2,
   lc_typ t1 ->  a1 <> a2 ->
-  a2 `notin` fv_tt_typ t1 ->
-  subst_tt_term t1 a1 (close_term_wrt_typ a2 e1) = close_term_wrt_typ a2 (subst_tt_term t1 a1 e1).
+  a2 `notin` ftv_typ t1 ->
+  tsubst_term t1 a1 (close_term_wrt_typ a2 e1) = close_term_wrt_typ a2 (tsubst_term t1 a1 e1).
 Proof.
 unfold close_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_close_term_wrt_typ : lngen.
+Hint Resolve tsubst_term_close_term_wrt_typ : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_degree_typ_wrt_typ_mutual :
+Lemma tsubst_typ_degree_typ_wrt_typ_mutual :
 (forall t1 t2 a1 n1,
   degree_typ_wrt_typ n1 t1 ->
   degree_typ_wrt_typ n1 t2 ->
-  degree_typ_wrt_typ n1 (subst_tt_typ t2 a1 t1)).
+  degree_typ_wrt_typ n1 (tsubst_typ t2 a1 t1)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp.
@@ -3885,24 +3885,24 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_typ_degree_typ_wrt_typ :
+Lemma tsubst_typ_degree_typ_wrt_typ :
 forall t1 t2 a1 n1,
   degree_typ_wrt_typ n1 t1 ->
   degree_typ_wrt_typ n1 t2 ->
-  degree_typ_wrt_typ n1 (subst_tt_typ t2 a1 t1).
+  degree_typ_wrt_typ n1 (tsubst_typ t2 a1 t1).
 Proof.
-pose proof subst_tt_typ_degree_typ_wrt_typ_mutual as H; intuition eauto.
+pose proof tsubst_typ_degree_typ_wrt_typ_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_typ_degree_typ_wrt_typ : lngen.
+Hint Resolve tsubst_typ_degree_typ_wrt_typ : lngen.
 
 (* begin hide *)
 
-Lemma subst_ee_term_degree_term_wrt_term_mutual :
+Lemma subst_term_degree_term_wrt_term_mutual :
 (forall e1 e2 x1 n1,
   degree_term_wrt_term n1 e1 ->
   degree_term_wrt_term n1 e2 ->
-  degree_term_wrt_term n1 (subst_ee_term e2 x1 e1)).
+  degree_term_wrt_term n1 (subst_term e2 x1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -3910,24 +3910,24 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_ee_term_degree_term_wrt_term :
+Lemma subst_term_degree_term_wrt_term :
 forall e1 e2 x1 n1,
   degree_term_wrt_term n1 e1 ->
   degree_term_wrt_term n1 e2 ->
-  degree_term_wrt_term n1 (subst_ee_term e2 x1 e1).
+  degree_term_wrt_term n1 (subst_term e2 x1 e1).
 Proof.
-pose proof subst_ee_term_degree_term_wrt_term_mutual as H; intuition eauto.
+pose proof subst_term_degree_term_wrt_term_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_degree_term_wrt_term : lngen.
+Hint Resolve subst_term_degree_term_wrt_term : lngen.
 
 (* begin hide *)
 
-Lemma subst_ee_term_degree_term_wrt_typ_mutual :
+Lemma subst_term_degree_term_wrt_typ_mutual :
 (forall e1 e2 x1 n1,
   degree_term_wrt_typ n1 e1 ->
   degree_term_wrt_typ n1 e2 ->
-  degree_term_wrt_typ n1 (subst_ee_term e2 x1 e1)).
+  degree_term_wrt_typ n1 (subst_term e2 x1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -3935,23 +3935,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_ee_term_degree_term_wrt_typ :
+Lemma subst_term_degree_term_wrt_typ :
 forall e1 e2 x1 n1,
   degree_term_wrt_typ n1 e1 ->
   degree_term_wrt_typ n1 e2 ->
-  degree_term_wrt_typ n1 (subst_ee_term e2 x1 e1).
+  degree_term_wrt_typ n1 (subst_term e2 x1 e1).
 Proof.
-pose proof subst_ee_term_degree_term_wrt_typ_mutual as H; intuition eauto.
+pose proof subst_term_degree_term_wrt_typ_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_degree_term_wrt_typ : lngen.
+Hint Resolve subst_term_degree_term_wrt_typ : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_term_degree_term_wrt_term_mutual :
+Lemma tsubst_term_degree_term_wrt_term_mutual :
 (forall e1 t1 a1 n1,
   degree_term_wrt_term n1 e1 ->
-  degree_term_wrt_term n1 (subst_tt_term t1 a1 e1)).
+  degree_term_wrt_term n1 (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -3959,23 +3959,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_term_degree_term_wrt_term :
+Lemma tsubst_term_degree_term_wrt_term :
 forall e1 t1 a1 n1,
   degree_term_wrt_term n1 e1 ->
-  degree_term_wrt_term n1 (subst_tt_term t1 a1 e1).
+  degree_term_wrt_term n1 (tsubst_term t1 a1 e1).
 Proof.
-pose proof subst_tt_term_degree_term_wrt_term_mutual as H; intuition eauto.
+pose proof tsubst_term_degree_term_wrt_term_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_degree_term_wrt_term : lngen.
+Hint Resolve tsubst_term_degree_term_wrt_term : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_term_degree_term_wrt_typ_mutual :
+Lemma tsubst_term_degree_term_wrt_typ_mutual :
 (forall e1 t1 a1 n1,
   degree_term_wrt_typ n1 e1 ->
   degree_typ_wrt_typ n1 t1 ->
-  degree_term_wrt_typ n1 (subst_tt_term t1 a1 e1)).
+  degree_term_wrt_typ n1 (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -3983,23 +3983,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_term_degree_term_wrt_typ :
+Lemma tsubst_term_degree_term_wrt_typ :
 forall e1 t1 a1 n1,
   degree_term_wrt_typ n1 e1 ->
   degree_typ_wrt_typ n1 t1 ->
-  degree_term_wrt_typ n1 (subst_tt_term t1 a1 e1).
+  degree_term_wrt_typ n1 (tsubst_term t1 a1 e1).
 Proof.
-pose proof subst_tt_term_degree_term_wrt_typ_mutual as H; intuition eauto.
+pose proof tsubst_term_degree_term_wrt_typ_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_degree_term_wrt_typ : lngen.
+Hint Resolve tsubst_term_degree_term_wrt_typ : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_fresh_eq_mutual :
+Lemma tsubst_typ_fresh_eq_mutual :
 (forall t2 t1 a1,
-  a1 `notin` fv_tt_typ t2 ->
-  subst_tt_typ t1 a1 t2 = t2).
+  a1 `notin` ftv_typ t2 ->
+  tsubst_typ t1 a1 t2 = t2).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp.
@@ -4007,23 +4007,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_typ_fresh_eq :
+Lemma tsubst_typ_fresh_eq :
 forall t2 t1 a1,
-  a1 `notin` fv_tt_typ t2 ->
-  subst_tt_typ t1 a1 t2 = t2.
+  a1 `notin` ftv_typ t2 ->
+  tsubst_typ t1 a1 t2 = t2.
 Proof.
-pose proof subst_tt_typ_fresh_eq_mutual as H; intuition eauto.
+pose proof tsubst_typ_fresh_eq_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_typ_fresh_eq : lngen.
-Hint Rewrite subst_tt_typ_fresh_eq using solve [auto] : lngen.
+Hint Resolve tsubst_typ_fresh_eq : lngen.
+Hint Rewrite tsubst_typ_fresh_eq using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma subst_ee_term_fresh_eq_mutual :
+Lemma subst_term_fresh_eq_mutual :
 (forall e2 e1 x1,
-  x1 `notin` fv_ee_term e2 ->
-  subst_ee_term e1 x1 e2 = e2).
+  x1 `notin` fv_term e2 ->
+  subst_term e1 x1 e2 = e2).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4031,23 +4031,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_ee_term_fresh_eq :
+Lemma subst_term_fresh_eq :
 forall e2 e1 x1,
-  x1 `notin` fv_ee_term e2 ->
-  subst_ee_term e1 x1 e2 = e2.
+  x1 `notin` fv_term e2 ->
+  subst_term e1 x1 e2 = e2.
 Proof.
-pose proof subst_ee_term_fresh_eq_mutual as H; intuition eauto.
+pose proof subst_term_fresh_eq_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_fresh_eq : lngen.
-Hint Rewrite subst_ee_term_fresh_eq using solve [auto] : lngen.
+Hint Resolve subst_term_fresh_eq : lngen.
+Hint Rewrite subst_term_fresh_eq using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_term_fresh_eq_mutual :
+Lemma tsubst_term_fresh_eq_mutual :
 (forall e1 t1 a1,
-  a1 `notin` fv_tt_term e1 ->
-  subst_tt_term t1 a1 e1 = e1).
+  a1 `notin` ftv_term e1 ->
+  tsubst_term t1 a1 e1 = e1).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4055,23 +4055,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_term_fresh_eq :
+Lemma tsubst_term_fresh_eq :
 forall e1 t1 a1,
-  a1 `notin` fv_tt_term e1 ->
-  subst_tt_term t1 a1 e1 = e1.
+  a1 `notin` ftv_term e1 ->
+  tsubst_term t1 a1 e1 = e1.
 Proof.
-pose proof subst_tt_term_fresh_eq_mutual as H; intuition eauto.
+pose proof tsubst_term_fresh_eq_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_fresh_eq : lngen.
-Hint Rewrite subst_tt_term_fresh_eq using solve [auto] : lngen.
+Hint Resolve tsubst_term_fresh_eq : lngen.
+Hint Rewrite tsubst_term_fresh_eq using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_fresh_same_mutual :
+Lemma tsubst_typ_fresh_same_mutual :
 (forall t2 t1 a1,
-  a1 `notin` fv_tt_typ t1 ->
-  a1 `notin` fv_tt_typ (subst_tt_typ t1 a1 t2)).
+  a1 `notin` ftv_typ t1 ->
+  a1 `notin` ftv_typ (tsubst_typ t1 a1 t2)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp.
@@ -4079,23 +4079,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_typ_fresh_same :
+Lemma tsubst_typ_fresh_same :
 forall t2 t1 a1,
-  a1 `notin` fv_tt_typ t1 ->
-  a1 `notin` fv_tt_typ (subst_tt_typ t1 a1 t2).
+  a1 `notin` ftv_typ t1 ->
+  a1 `notin` ftv_typ (tsubst_typ t1 a1 t2).
 Proof.
-pose proof subst_tt_typ_fresh_same_mutual as H; intuition eauto.
+pose proof tsubst_typ_fresh_same_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_typ_fresh_same : lngen.
-Hint Rewrite subst_tt_typ_fresh_same using solve [auto] : lngen.
+Hint Resolve tsubst_typ_fresh_same : lngen.
+Hint Rewrite tsubst_typ_fresh_same using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma subst_ee_term_fresh_same_mutual :
+Lemma subst_term_fresh_same_mutual :
 (forall e2 e1 x1,
-  x1 `notin` fv_ee_term e1 ->
-  x1 `notin` fv_ee_term (subst_ee_term e1 x1 e2)).
+  x1 `notin` fv_term e1 ->
+  x1 `notin` fv_term (subst_term e1 x1 e2)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4103,23 +4103,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_ee_term_fresh_same :
+Lemma subst_term_fresh_same :
 forall e2 e1 x1,
-  x1 `notin` fv_ee_term e1 ->
-  x1 `notin` fv_ee_term (subst_ee_term e1 x1 e2).
+  x1 `notin` fv_term e1 ->
+  x1 `notin` fv_term (subst_term e1 x1 e2).
 Proof.
-pose proof subst_ee_term_fresh_same_mutual as H; intuition eauto.
+pose proof subst_term_fresh_same_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_fresh_same : lngen.
-Hint Rewrite subst_ee_term_fresh_same using solve [auto] : lngen.
+Hint Resolve subst_term_fresh_same : lngen.
+Hint Rewrite subst_term_fresh_same using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_term_fresh_same_mutual :
+Lemma tsubst_term_fresh_same_mutual :
 (forall e1 t1 a1,
-  a1 `notin` fv_tt_typ t1 ->
-  a1 `notin` fv_tt_term (subst_tt_term t1 a1 e1)).
+  a1 `notin` ftv_typ t1 ->
+  a1 `notin` ftv_term (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4127,24 +4127,24 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_term_fresh_same :
+Lemma tsubst_term_fresh_same :
 forall e1 t1 a1,
-  a1 `notin` fv_tt_typ t1 ->
-  a1 `notin` fv_tt_term (subst_tt_term t1 a1 e1).
+  a1 `notin` ftv_typ t1 ->
+  a1 `notin` ftv_term (tsubst_term t1 a1 e1).
 Proof.
-pose proof subst_tt_term_fresh_same_mutual as H; intuition eauto.
+pose proof tsubst_term_fresh_same_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_fresh_same : lngen.
-Hint Rewrite subst_tt_term_fresh_same using solve [auto] : lngen.
+Hint Resolve tsubst_term_fresh_same : lngen.
+Hint Rewrite tsubst_term_fresh_same using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_fresh_mutual :
+Lemma tsubst_typ_fresh_mutual :
 (forall t2 t1 a1 a2,
-  a1 `notin` fv_tt_typ t2 ->
-  a1 `notin` fv_tt_typ t1 ->
-  a1 `notin` fv_tt_typ (subst_tt_typ t1 a2 t2)).
+  a1 `notin` ftv_typ t2 ->
+  a1 `notin` ftv_typ t1 ->
+  a1 `notin` ftv_typ (tsubst_typ t1 a2 t2)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp.
@@ -4152,25 +4152,25 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_typ_fresh :
+Lemma tsubst_typ_fresh :
 forall t2 t1 a1 a2,
-  a1 `notin` fv_tt_typ t2 ->
-  a1 `notin` fv_tt_typ t1 ->
-  a1 `notin` fv_tt_typ (subst_tt_typ t1 a2 t2).
+  a1 `notin` ftv_typ t2 ->
+  a1 `notin` ftv_typ t1 ->
+  a1 `notin` ftv_typ (tsubst_typ t1 a2 t2).
 Proof.
-pose proof subst_tt_typ_fresh_mutual as H; intuition eauto.
+pose proof tsubst_typ_fresh_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_typ_fresh : lngen.
-Hint Rewrite subst_tt_typ_fresh using solve [auto] : lngen.
+Hint Resolve tsubst_typ_fresh : lngen.
+Hint Rewrite tsubst_typ_fresh using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma subst_ee_term_fresh_mutual :
+Lemma subst_term_fresh_mutual :
 (forall e2 e1 x1 x2,
-  x1 `notin` fv_ee_term e2 ->
-  x1 `notin` fv_ee_term e1 ->
-  x1 `notin` fv_ee_term (subst_ee_term e1 x2 e2)).
+  x1 `notin` fv_term e2 ->
+  x1 `notin` fv_term e1 ->
+  x1 `notin` fv_term (subst_term e1 x2 e2)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4178,25 +4178,25 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_ee_term_fresh :
+Lemma subst_term_fresh :
 forall e2 e1 x1 x2,
-  x1 `notin` fv_ee_term e2 ->
-  x1 `notin` fv_ee_term e1 ->
-  x1 `notin` fv_ee_term (subst_ee_term e1 x2 e2).
+  x1 `notin` fv_term e2 ->
+  x1 `notin` fv_term e1 ->
+  x1 `notin` fv_term (subst_term e1 x2 e2).
 Proof.
-pose proof subst_ee_term_fresh_mutual as H; intuition eauto.
+pose proof subst_term_fresh_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_fresh : lngen.
-Hint Rewrite subst_ee_term_fresh using solve [auto] : lngen.
+Hint Resolve subst_term_fresh : lngen.
+Hint Rewrite subst_term_fresh using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_term_fresh_mutual :
+Lemma tsubst_term_fresh_mutual :
 (forall e1 t1 a1 a2,
-  a1 `notin` fv_tt_term e1 ->
-  a1 `notin` fv_tt_typ t1 ->
-  a1 `notin` fv_tt_term (subst_tt_term t1 a2 e1)).
+  a1 `notin` ftv_term e1 ->
+  a1 `notin` ftv_typ t1 ->
+  a1 `notin` ftv_term (tsubst_term t1 a2 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4204,57 +4204,57 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_term_fresh :
+Lemma tsubst_term_fresh :
 forall e1 t1 a1 a2,
-  a1 `notin` fv_tt_term e1 ->
-  a1 `notin` fv_tt_typ t1 ->
-  a1 `notin` fv_tt_term (subst_tt_term t1 a2 e1).
+  a1 `notin` ftv_term e1 ->
+  a1 `notin` ftv_typ t1 ->
+  a1 `notin` ftv_term (tsubst_term t1 a2 e1).
 Proof.
-pose proof subst_tt_term_fresh_mutual as H; intuition eauto.
+pose proof tsubst_term_fresh_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_fresh : lngen.
-Hint Rewrite subst_tt_term_fresh using solve [auto] : lngen.
+Hint Resolve tsubst_term_fresh : lngen.
+Hint Rewrite tsubst_term_fresh using solve [auto] : lngen.
 
-Lemma subst_tt_typ_lc_typ :
+Lemma tsubst_typ_lc_typ :
 forall t1 t2 a1,
   lc_typ t1 ->
   lc_typ t2 ->
-  lc_typ (subst_tt_typ t2 a1 t1).
+  lc_typ (tsubst_typ t2 a1 t1).
 Proof.
 default_simp.
 Qed.
 
-Hint Resolve subst_tt_typ_lc_typ : lngen.
+Hint Resolve tsubst_typ_lc_typ : lngen.
 
-Lemma subst_ee_term_lc_term :
+Lemma subst_term_lc_term :
 forall e1 e2 x1,
   lc_term e1 ->
   lc_term e2 ->
-  lc_term (subst_ee_term e2 x1 e1).
+  lc_term (subst_term e2 x1 e1).
 Proof.
 default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_lc_term : lngen.
+Hint Resolve subst_term_lc_term : lngen.
 
-Lemma subst_tt_term_lc_term :
+Lemma tsubst_term_lc_term :
 forall e1 t1 a1,
   lc_term e1 ->
   lc_typ t1 ->
-  lc_term (subst_tt_term t1 a1 e1).
+  lc_term (tsubst_term t1 a1 e1).
 Proof.
 default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_lc_term : lngen.
+Hint Resolve tsubst_term_lc_term : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_open_typ_wrt_typ_rec_mutual :
+Lemma tsubst_typ_open_typ_wrt_typ_rec_mutual :
 (forall t3 t1 t2 a1 n1,
   lc_typ t1 ->
-  subst_tt_typ t1 a1 (open_typ_wrt_typ_rec n1 t2 t3) = open_typ_wrt_typ_rec n1 (subst_tt_typ t1 a1 t2) (subst_tt_typ t1 a1 t3)).
+  tsubst_typ t1 a1 (open_typ_wrt_typ_rec n1 t2 t3) = open_typ_wrt_typ_rec n1 (tsubst_typ t1 a1 t2) (tsubst_typ t1 a1 t3)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp.
@@ -4264,24 +4264,24 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_open_typ_wrt_typ_rec :
+Lemma tsubst_typ_open_typ_wrt_typ_rec :
 forall t3 t1 t2 a1 n1,
   lc_typ t1 ->
-  subst_tt_typ t1 a1 (open_typ_wrt_typ_rec n1 t2 t3) = open_typ_wrt_typ_rec n1 (subst_tt_typ t1 a1 t2) (subst_tt_typ t1 a1 t3).
+  tsubst_typ t1 a1 (open_typ_wrt_typ_rec n1 t2 t3) = open_typ_wrt_typ_rec n1 (tsubst_typ t1 a1 t2) (tsubst_typ t1 a1 t3).
 Proof.
-pose proof subst_tt_typ_open_typ_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof tsubst_typ_open_typ_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_typ_open_typ_wrt_typ_rec : lngen.
+Hint Resolve tsubst_typ_open_typ_wrt_typ_rec : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma subst_ee_term_open_term_wrt_term_rec_mutual :
+Lemma subst_term_open_term_wrt_term_rec_mutual :
 (forall e3 e1 e2 x1 n1,
   lc_term e1 ->
-  subst_ee_term e1 x1 (open_term_wrt_term_rec n1 e2 e3) = open_term_wrt_term_rec n1 (subst_ee_term e1 x1 e2) (subst_ee_term e1 x1 e3)).
+  subst_term e1 x1 (open_term_wrt_term_rec n1 e2 e3) = open_term_wrt_term_rec n1 (subst_term e1 x1 e2) (subst_term e1 x1 e3)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4291,24 +4291,24 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_ee_term_open_term_wrt_term_rec :
+Lemma subst_term_open_term_wrt_term_rec :
 forall e3 e1 e2 x1 n1,
   lc_term e1 ->
-  subst_ee_term e1 x1 (open_term_wrt_term_rec n1 e2 e3) = open_term_wrt_term_rec n1 (subst_ee_term e1 x1 e2) (subst_ee_term e1 x1 e3).
+  subst_term e1 x1 (open_term_wrt_term_rec n1 e2 e3) = open_term_wrt_term_rec n1 (subst_term e1 x1 e2) (subst_term e1 x1 e3).
 Proof.
-pose proof subst_ee_term_open_term_wrt_term_rec_mutual as H; intuition eauto.
+pose proof subst_term_open_term_wrt_term_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_open_term_wrt_term_rec : lngen.
+Hint Resolve subst_term_open_term_wrt_term_rec : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma subst_ee_term_open_term_wrt_typ_rec_mutual :
+Lemma subst_term_open_term_wrt_typ_rec_mutual :
 (forall e2 e1 t1 x1 n1,
   lc_term e1 ->
-  subst_ee_term e1 x1 (open_term_wrt_typ_rec n1 t1 e2) = open_term_wrt_typ_rec n1 t1 (subst_ee_term e1 x1 e2)).
+  subst_term e1 x1 (open_term_wrt_typ_rec n1 t1 e2) = open_term_wrt_typ_rec n1 t1 (subst_term e1 x1 e2)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4318,23 +4318,23 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_ee_term_open_term_wrt_typ_rec :
+Lemma subst_term_open_term_wrt_typ_rec :
 forall e2 e1 t1 x1 n1,
   lc_term e1 ->
-  subst_ee_term e1 x1 (open_term_wrt_typ_rec n1 t1 e2) = open_term_wrt_typ_rec n1 t1 (subst_ee_term e1 x1 e2).
+  subst_term e1 x1 (open_term_wrt_typ_rec n1 t1 e2) = open_term_wrt_typ_rec n1 t1 (subst_term e1 x1 e2).
 Proof.
-pose proof subst_ee_term_open_term_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof subst_term_open_term_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_open_term_wrt_typ_rec : lngen.
+Hint Resolve subst_term_open_term_wrt_typ_rec : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma subst_tt_term_open_term_wrt_term_rec_mutual :
+Lemma tsubst_term_open_term_wrt_term_rec_mutual :
 (forall e2 t1 e1 a1 n1,
-  subst_tt_term t1 a1 (open_term_wrt_term_rec n1 e1 e2) = open_term_wrt_term_rec n1 (subst_tt_term t1 a1 e1) (subst_tt_term t1 a1 e2)).
+  tsubst_term t1 a1 (open_term_wrt_term_rec n1 e1 e2) = open_term_wrt_term_rec n1 (tsubst_term t1 a1 e1) (tsubst_term t1 a1 e2)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4344,23 +4344,23 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_tt_term_open_term_wrt_term_rec :
+Lemma tsubst_term_open_term_wrt_term_rec :
 forall e2 t1 e1 a1 n1,
-  subst_tt_term t1 a1 (open_term_wrt_term_rec n1 e1 e2) = open_term_wrt_term_rec n1 (subst_tt_term t1 a1 e1) (subst_tt_term t1 a1 e2).
+  tsubst_term t1 a1 (open_term_wrt_term_rec n1 e1 e2) = open_term_wrt_term_rec n1 (tsubst_term t1 a1 e1) (tsubst_term t1 a1 e2).
 Proof.
-pose proof subst_tt_term_open_term_wrt_term_rec_mutual as H; intuition eauto.
+pose proof tsubst_term_open_term_wrt_term_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_open_term_wrt_term_rec : lngen.
+Hint Resolve tsubst_term_open_term_wrt_term_rec : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma subst_tt_term_open_term_wrt_typ_rec_mutual :
+Lemma tsubst_term_open_term_wrt_typ_rec_mutual :
 (forall e1 t1 t2 a1 n1,
   lc_typ t1 ->
-  subst_tt_term t1 a1 (open_term_wrt_typ_rec n1 t2 e1) = open_term_wrt_typ_rec n1 (subst_tt_typ t1 a1 t2) (subst_tt_term t1 a1 e1)).
+  tsubst_term t1 a1 (open_term_wrt_typ_rec n1 t2 e1) = open_term_wrt_typ_rec n1 (tsubst_typ t1 a1 t2) (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4370,124 +4370,124 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_tt_term_open_term_wrt_typ_rec :
+Lemma tsubst_term_open_term_wrt_typ_rec :
 forall e1 t1 t2 a1 n1,
   lc_typ t1 ->
-  subst_tt_term t1 a1 (open_term_wrt_typ_rec n1 t2 e1) = open_term_wrt_typ_rec n1 (subst_tt_typ t1 a1 t2) (subst_tt_term t1 a1 e1).
+  tsubst_term t1 a1 (open_term_wrt_typ_rec n1 t2 e1) = open_term_wrt_typ_rec n1 (tsubst_typ t1 a1 t2) (tsubst_term t1 a1 e1).
 Proof.
-pose proof subst_tt_term_open_term_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof tsubst_term_open_term_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_open_term_wrt_typ_rec : lngen.
+Hint Resolve tsubst_term_open_term_wrt_typ_rec : lngen.
 
 (* end hide *)
 
-Lemma subst_tt_typ_open_typ_wrt_typ :
+Lemma tsubst_typ_open_typ_wrt_typ :
 forall t3 t1 t2 a1,
   lc_typ t1 ->
-  subst_tt_typ t1 a1 (open_typ_wrt_typ t3 t2) = open_typ_wrt_typ (subst_tt_typ t1 a1 t3) (subst_tt_typ t1 a1 t2).
+  tsubst_typ t1 a1 (open_typ_wrt_typ t3 t2) = open_typ_wrt_typ (tsubst_typ t1 a1 t3) (tsubst_typ t1 a1 t2).
 Proof.
 unfold open_typ_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_typ_open_typ_wrt_typ : lngen.
+Hint Resolve tsubst_typ_open_typ_wrt_typ : lngen.
 
-Lemma subst_ee_term_open_term_wrt_term :
+Lemma subst_term_open_term_wrt_term :
 forall e3 e1 e2 x1,
   lc_term e1 ->
-  subst_ee_term e1 x1 (open_term_wrt_term e3 e2) = open_term_wrt_term (subst_ee_term e1 x1 e3) (subst_ee_term e1 x1 e2).
+  subst_term e1 x1 (open_term_wrt_term e3 e2) = open_term_wrt_term (subst_term e1 x1 e3) (subst_term e1 x1 e2).
 Proof.
 unfold open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_open_term_wrt_term : lngen.
+Hint Resolve subst_term_open_term_wrt_term : lngen.
 
-Lemma subst_ee_term_open_term_wrt_typ :
+Lemma subst_term_open_term_wrt_typ :
 forall e2 e1 t1 x1,
   lc_term e1 ->
-  subst_ee_term e1 x1 (open_term_wrt_typ e2 t1) = open_term_wrt_typ (subst_ee_term e1 x1 e2) t1.
+  subst_term e1 x1 (open_term_wrt_typ e2 t1) = open_term_wrt_typ (subst_term e1 x1 e2) t1.
 Proof.
 unfold open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_open_term_wrt_typ : lngen.
+Hint Resolve subst_term_open_term_wrt_typ : lngen.
 
-Lemma subst_tt_term_open_term_wrt_term :
+Lemma tsubst_term_open_term_wrt_term :
 forall e2 t1 e1 a1,
-  subst_tt_term t1 a1 (open_term_wrt_term e2 e1) = open_term_wrt_term (subst_tt_term t1 a1 e2) (subst_tt_term t1 a1 e1).
+  tsubst_term t1 a1 (open_term_wrt_term e2 e1) = open_term_wrt_term (tsubst_term t1 a1 e2) (tsubst_term t1 a1 e1).
 Proof.
 unfold open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_open_term_wrt_term : lngen.
+Hint Resolve tsubst_term_open_term_wrt_term : lngen.
 
-Lemma subst_tt_term_open_term_wrt_typ :
+Lemma tsubst_term_open_term_wrt_typ :
 forall e1 t1 t2 a1,
   lc_typ t1 ->
-  subst_tt_term t1 a1 (open_term_wrt_typ e1 t2) = open_term_wrt_typ (subst_tt_term t1 a1 e1) (subst_tt_typ t1 a1 t2).
+  tsubst_term t1 a1 (open_term_wrt_typ e1 t2) = open_term_wrt_typ (tsubst_term t1 a1 e1) (tsubst_typ t1 a1 t2).
 Proof.
 unfold open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_open_term_wrt_typ : lngen.
+Hint Resolve tsubst_term_open_term_wrt_typ : lngen.
 
-Lemma subst_tt_typ_open_typ_wrt_typ_var :
+Lemma tsubst_typ_open_typ_wrt_typ_var :
 forall t2 t1 a1 a2,
   a1 <> a2 ->
   lc_typ t1 ->
-  open_typ_wrt_typ (subst_tt_typ t1 a1 t2) (typ_var_f a2) = subst_tt_typ t1 a1 (open_typ_wrt_typ t2 (typ_var_f a2)).
+  open_typ_wrt_typ (tsubst_typ t1 a1 t2) (typ_var_f a2) = tsubst_typ t1 a1 (open_typ_wrt_typ t2 (typ_var_f a2)).
 Proof.
-intros; rewrite subst_tt_typ_open_typ_wrt_typ; default_simp.
+intros; rewrite tsubst_typ_open_typ_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_typ_open_typ_wrt_typ_var : lngen.
+Hint Resolve tsubst_typ_open_typ_wrt_typ_var : lngen.
 
-Lemma subst_ee_term_open_term_wrt_term_var :
+Lemma subst_term_open_term_wrt_term_var :
 forall e2 e1 x1 x2,
   x1 <> x2 ->
   lc_term e1 ->
-  open_term_wrt_term (subst_ee_term e1 x1 e2) (term_var_f x2) = subst_ee_term e1 x1 (open_term_wrt_term e2 (term_var_f x2)).
+  open_term_wrt_term (subst_term e1 x1 e2) (term_var_f x2) = subst_term e1 x1 (open_term_wrt_term e2 (term_var_f x2)).
 Proof.
-intros; rewrite subst_ee_term_open_term_wrt_term; default_simp.
+intros; rewrite subst_term_open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_open_term_wrt_term_var : lngen.
+Hint Resolve subst_term_open_term_wrt_term_var : lngen.
 
-Lemma subst_ee_term_open_term_wrt_typ_var :
+Lemma subst_term_open_term_wrt_typ_var :
 forall e2 e1 x1 a1,
   lc_term e1 ->
-  open_term_wrt_typ (subst_ee_term e1 x1 e2) (typ_var_f a1) = subst_ee_term e1 x1 (open_term_wrt_typ e2 (typ_var_f a1)).
+  open_term_wrt_typ (subst_term e1 x1 e2) (typ_var_f a1) = subst_term e1 x1 (open_term_wrt_typ e2 (typ_var_f a1)).
 Proof.
-intros; rewrite subst_ee_term_open_term_wrt_typ; default_simp.
+intros; rewrite subst_term_open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_open_term_wrt_typ_var : lngen.
+Hint Resolve subst_term_open_term_wrt_typ_var : lngen.
 
-Lemma subst_tt_term_open_term_wrt_term_var :
+Lemma tsubst_term_open_term_wrt_term_var :
 forall e1 t1 a1 x1,
-  open_term_wrt_term (subst_tt_term t1 a1 e1) (term_var_f x1) = subst_tt_term t1 a1 (open_term_wrt_term e1 (term_var_f x1)).
+  open_term_wrt_term (tsubst_term t1 a1 e1) (term_var_f x1) = tsubst_term t1 a1 (open_term_wrt_term e1 (term_var_f x1)).
 Proof.
-intros; rewrite subst_tt_term_open_term_wrt_term; default_simp.
+intros; rewrite tsubst_term_open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_open_term_wrt_term_var : lngen.
+Hint Resolve tsubst_term_open_term_wrt_term_var : lngen.
 
-Lemma subst_tt_term_open_term_wrt_typ_var :
+Lemma tsubst_term_open_term_wrt_typ_var :
 forall e1 t1 a1 a2,
   a1 <> a2 ->
   lc_typ t1 ->
-  open_term_wrt_typ (subst_tt_term t1 a1 e1) (typ_var_f a2) = subst_tt_term t1 a1 (open_term_wrt_typ e1 (typ_var_f a2)).
+  open_term_wrt_typ (tsubst_term t1 a1 e1) (typ_var_f a2) = tsubst_term t1 a1 (open_term_wrt_typ e1 (typ_var_f a2)).
 Proof.
-intros; rewrite subst_tt_term_open_term_wrt_typ; default_simp.
+intros; rewrite tsubst_term_open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_open_term_wrt_typ_var : lngen.
+Hint Resolve tsubst_term_open_term_wrt_typ_var : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_spec_rec_mutual :
+Lemma tsubst_typ_spec_rec_mutual :
 (forall t1 t2 a1 n1,
-  subst_tt_typ t2 a1 t1 = open_typ_wrt_typ_rec n1 t2 (close_typ_wrt_typ_rec n1 a1 t1)).
+  tsubst_typ t2 a1 t1 = open_typ_wrt_typ_rec n1 t2 (close_typ_wrt_typ_rec n1 a1 t1)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp.
@@ -4497,22 +4497,22 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_spec_rec :
+Lemma tsubst_typ_spec_rec :
 forall t1 t2 a1 n1,
-  subst_tt_typ t2 a1 t1 = open_typ_wrt_typ_rec n1 t2 (close_typ_wrt_typ_rec n1 a1 t1).
+  tsubst_typ t2 a1 t1 = open_typ_wrt_typ_rec n1 t2 (close_typ_wrt_typ_rec n1 a1 t1).
 Proof.
-pose proof subst_tt_typ_spec_rec_mutual as H; intuition eauto.
+pose proof tsubst_typ_spec_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_typ_spec_rec : lngen.
+Hint Resolve tsubst_typ_spec_rec : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma subst_ee_term_spec_rec_mutual :
+Lemma subst_term_spec_rec_mutual :
 (forall e1 e2 x1 n1,
-  subst_ee_term e2 x1 e1 = open_term_wrt_term_rec n1 e2 (close_term_wrt_term_rec n1 x1 e1)).
+  subst_term e2 x1 e1 = open_term_wrt_term_rec n1 e2 (close_term_wrt_term_rec n1 x1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4522,22 +4522,22 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_ee_term_spec_rec :
+Lemma subst_term_spec_rec :
 forall e1 e2 x1 n1,
-  subst_ee_term e2 x1 e1 = open_term_wrt_term_rec n1 e2 (close_term_wrt_term_rec n1 x1 e1).
+  subst_term e2 x1 e1 = open_term_wrt_term_rec n1 e2 (close_term_wrt_term_rec n1 x1 e1).
 Proof.
-pose proof subst_ee_term_spec_rec_mutual as H; intuition eauto.
+pose proof subst_term_spec_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_spec_rec : lngen.
+Hint Resolve subst_term_spec_rec : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma subst_tt_term_spec_rec_mutual :
+Lemma tsubst_term_spec_rec_mutual :
 (forall e1 t1 a1 n1,
-  subst_tt_term t1 a1 e1 = open_term_wrt_typ_rec n1 t1 (close_term_wrt_typ_rec n1 a1 e1)).
+  tsubst_term t1 a1 e1 = open_term_wrt_typ_rec n1 t1 (close_term_wrt_typ_rec n1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4547,51 +4547,51 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_tt_term_spec_rec :
+Lemma tsubst_term_spec_rec :
 forall e1 t1 a1 n1,
-  subst_tt_term t1 a1 e1 = open_term_wrt_typ_rec n1 t1 (close_term_wrt_typ_rec n1 a1 e1).
+  tsubst_term t1 a1 e1 = open_term_wrt_typ_rec n1 t1 (close_term_wrt_typ_rec n1 a1 e1).
 Proof.
-pose proof subst_tt_term_spec_rec_mutual as H; intuition eauto.
+pose proof tsubst_term_spec_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_spec_rec : lngen.
+Hint Resolve tsubst_term_spec_rec : lngen.
 
 (* end hide *)
 
-Lemma subst_tt_typ_spec :
+Lemma tsubst_typ_spec :
 forall t1 t2 a1,
-  subst_tt_typ t2 a1 t1 = open_typ_wrt_typ (close_typ_wrt_typ a1 t1) t2.
+  tsubst_typ t2 a1 t1 = open_typ_wrt_typ (close_typ_wrt_typ a1 t1) t2.
 Proof.
 unfold close_typ_wrt_typ; unfold open_typ_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_typ_spec : lngen.
+Hint Resolve tsubst_typ_spec : lngen.
 
-Lemma subst_ee_term_spec :
+Lemma subst_term_spec :
 forall e1 e2 x1,
-  subst_ee_term e2 x1 e1 = open_term_wrt_term (close_term_wrt_term x1 e1) e2.
+  subst_term e2 x1 e1 = open_term_wrt_term (close_term_wrt_term x1 e1) e2.
 Proof.
 unfold close_term_wrt_term; unfold open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_spec : lngen.
+Hint Resolve subst_term_spec : lngen.
 
-Lemma subst_tt_term_spec :
+Lemma tsubst_term_spec :
 forall e1 t1 a1,
-  subst_tt_term t1 a1 e1 = open_term_wrt_typ (close_term_wrt_typ a1 e1) t1.
+  tsubst_term t1 a1 e1 = open_term_wrt_typ (close_term_wrt_typ a1 e1) t1.
 Proof.
 unfold close_term_wrt_typ; unfold open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_spec : lngen.
+Hint Resolve tsubst_term_spec : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_subst_tt_typ_mutual :
+Lemma tsubst_typ_tsubst_typ_mutual :
 (forall t1 t2 t3 a2 a1,
-  a2 `notin` fv_tt_typ t2 ->
+  a2 `notin` ftv_typ t2 ->
   a2 <> a1 ->
-  subst_tt_typ t2 a1 (subst_tt_typ t3 a2 t1) = subst_tt_typ (subst_tt_typ t2 a1 t3) a2 (subst_tt_typ t2 a1 t1)).
+  tsubst_typ t2 a1 (tsubst_typ t3 a2 t1) = tsubst_typ (tsubst_typ t2 a1 t3) a2 (tsubst_typ t2 a1 t1)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp.
@@ -4599,24 +4599,24 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_typ_subst_tt_typ :
+Lemma tsubst_typ_tsubst_typ :
 forall t1 t2 t3 a2 a1,
-  a2 `notin` fv_tt_typ t2 ->
+  a2 `notin` ftv_typ t2 ->
   a2 <> a1 ->
-  subst_tt_typ t2 a1 (subst_tt_typ t3 a2 t1) = subst_tt_typ (subst_tt_typ t2 a1 t3) a2 (subst_tt_typ t2 a1 t1).
+  tsubst_typ t2 a1 (tsubst_typ t3 a2 t1) = tsubst_typ (tsubst_typ t2 a1 t3) a2 (tsubst_typ t2 a1 t1).
 Proof.
-pose proof subst_tt_typ_subst_tt_typ_mutual as H; intuition eauto.
+pose proof tsubst_typ_tsubst_typ_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_typ_subst_tt_typ : lngen.
+Hint Resolve tsubst_typ_tsubst_typ : lngen.
 
 (* begin hide *)
 
-Lemma subst_ee_term_subst_ee_term_mutual :
+Lemma subst_term_subst_term_mutual :
 (forall e1 e2 e3 x2 x1,
-  x2 `notin` fv_ee_term e2 ->
+  x2 `notin` fv_term e2 ->
   x2 <> x1 ->
-  subst_ee_term e2 x1 (subst_ee_term e3 x2 e1) = subst_ee_term (subst_ee_term e2 x1 e3) x2 (subst_ee_term e2 x1 e1)).
+  subst_term e2 x1 (subst_term e3 x2 e1) = subst_term (subst_term e2 x1 e3) x2 (subst_term e2 x1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4624,23 +4624,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_ee_term_subst_ee_term :
+Lemma subst_term_subst_term :
 forall e1 e2 e3 x2 x1,
-  x2 `notin` fv_ee_term e2 ->
+  x2 `notin` fv_term e2 ->
   x2 <> x1 ->
-  subst_ee_term e2 x1 (subst_ee_term e3 x2 e1) = subst_ee_term (subst_ee_term e2 x1 e3) x2 (subst_ee_term e2 x1 e1).
+  subst_term e2 x1 (subst_term e3 x2 e1) = subst_term (subst_term e2 x1 e3) x2 (subst_term e2 x1 e1).
 Proof.
-pose proof subst_ee_term_subst_ee_term_mutual as H; intuition eauto.
+pose proof subst_term_subst_term_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_subst_ee_term : lngen.
+Hint Resolve subst_term_subst_term : lngen.
 
 (* begin hide *)
 
-Lemma subst_ee_term_subst_tt_term_mutual :
+Lemma subst_term_tsubst_term_mutual :
 (forall e1 e2 t1 a1 x1,
-  a1 `notin` fv_tt_term e2 ->
-  subst_ee_term e2 x1 (subst_tt_term t1 a1 e1) = subst_tt_term t1 a1 (subst_ee_term e2 x1 e1)).
+  a1 `notin` ftv_term e2 ->
+  subst_term e2 x1 (tsubst_term t1 a1 e1) = tsubst_term t1 a1 (subst_term e2 x1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4648,21 +4648,21 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_ee_term_subst_tt_term :
+Lemma subst_term_tsubst_term :
 forall e1 e2 t1 a1 x1,
-  a1 `notin` fv_tt_term e2 ->
-  subst_ee_term e2 x1 (subst_tt_term t1 a1 e1) = subst_tt_term t1 a1 (subst_ee_term e2 x1 e1).
+  a1 `notin` ftv_term e2 ->
+  subst_term e2 x1 (tsubst_term t1 a1 e1) = tsubst_term t1 a1 (subst_term e2 x1 e1).
 Proof.
-pose proof subst_ee_term_subst_tt_term_mutual as H; intuition eauto.
+pose proof subst_term_tsubst_term_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_subst_tt_term : lngen.
+Hint Resolve subst_term_tsubst_term : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_term_subst_ee_term_mutual :
+Lemma tsubst_term_subst_term_mutual :
 (forall e1 t1 e2 x1 a1,
-  subst_tt_term t1 a1 (subst_ee_term e2 x1 e1) = subst_ee_term (subst_tt_term t1 a1 e2) x1 (subst_tt_term t1 a1 e1)).
+  tsubst_term t1 a1 (subst_term e2 x1 e1) = subst_term (tsubst_term t1 a1 e2) x1 (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4670,22 +4670,22 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_term_subst_ee_term :
+Lemma tsubst_term_subst_term :
 forall e1 t1 e2 x1 a1,
-  subst_tt_term t1 a1 (subst_ee_term e2 x1 e1) = subst_ee_term (subst_tt_term t1 a1 e2) x1 (subst_tt_term t1 a1 e1).
+  tsubst_term t1 a1 (subst_term e2 x1 e1) = subst_term (tsubst_term t1 a1 e2) x1 (tsubst_term t1 a1 e1).
 Proof.
-pose proof subst_tt_term_subst_ee_term_mutual as H; intuition eauto.
+pose proof tsubst_term_subst_term_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_subst_ee_term : lngen.
+Hint Resolve tsubst_term_subst_term : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_term_subst_tt_term_mutual :
+Lemma tsubst_term_tsubst_term_mutual :
 (forall e1 t1 t2 a2 a1,
-  a2 `notin` fv_tt_typ t1 ->
+  a2 `notin` ftv_typ t1 ->
   a2 <> a1 ->
-  subst_tt_term t1 a1 (subst_tt_term t2 a2 e1) = subst_tt_term (subst_tt_typ t1 a1 t2) a2 (subst_tt_term t1 a1 e1)).
+  tsubst_term t1 a1 (tsubst_term t2 a2 e1) = tsubst_term (tsubst_typ t1 a1 t2) a2 (tsubst_term t1 a1 e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -4693,26 +4693,26 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_term_subst_tt_term :
+Lemma tsubst_term_tsubst_term :
 forall e1 t1 t2 a2 a1,
-  a2 `notin` fv_tt_typ t1 ->
+  a2 `notin` ftv_typ t1 ->
   a2 <> a1 ->
-  subst_tt_term t1 a1 (subst_tt_term t2 a2 e1) = subst_tt_term (subst_tt_typ t1 a1 t2) a2 (subst_tt_term t1 a1 e1).
+  tsubst_term t1 a1 (tsubst_term t2 a2 e1) = tsubst_term (tsubst_typ t1 a1 t2) a2 (tsubst_term t1 a1 e1).
 Proof.
-pose proof subst_tt_term_subst_tt_term_mutual as H; intuition eauto.
+pose proof tsubst_term_tsubst_term_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_subst_tt_term : lngen.
+Hint Resolve tsubst_term_tsubst_term : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_close_typ_wrt_typ_rec_open_typ_wrt_typ_rec_mutual :
+Lemma tsubst_typ_close_typ_wrt_typ_rec_open_typ_wrt_typ_rec_mutual :
 (forall t2 t1 a1 a2 n1,
-  a2 `notin` fv_tt_typ t2 ->
-  a2 `notin` fv_tt_typ t1 ->
+  a2 `notin` ftv_typ t2 ->
+  a2 `notin` ftv_typ t1 ->
   a2 <> a1 ->
   degree_typ_wrt_typ n1 t1 ->
-  subst_tt_typ t1 a1 t2 = close_typ_wrt_typ_rec n1 a2 (subst_tt_typ t1 a1 (open_typ_wrt_typ_rec n1 (typ_var_f a2) t2))).
+  tsubst_typ t1 a1 t2 = close_typ_wrt_typ_rec n1 a2 (tsubst_typ t1 a1 (open_typ_wrt_typ_rec n1 (typ_var_f a2) t2))).
 Proof.
 apply_mutual_ind typ_mutrec;
 default_simp.
@@ -4722,30 +4722,30 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_close_typ_wrt_typ_rec_open_typ_wrt_typ_rec :
+Lemma tsubst_typ_close_typ_wrt_typ_rec_open_typ_wrt_typ_rec :
 forall t2 t1 a1 a2 n1,
-  a2 `notin` fv_tt_typ t2 ->
-  a2 `notin` fv_tt_typ t1 ->
+  a2 `notin` ftv_typ t2 ->
+  a2 `notin` ftv_typ t1 ->
   a2 <> a1 ->
   degree_typ_wrt_typ n1 t1 ->
-  subst_tt_typ t1 a1 t2 = close_typ_wrt_typ_rec n1 a2 (subst_tt_typ t1 a1 (open_typ_wrt_typ_rec n1 (typ_var_f a2) t2)).
+  tsubst_typ t1 a1 t2 = close_typ_wrt_typ_rec n1 a2 (tsubst_typ t1 a1 (open_typ_wrt_typ_rec n1 (typ_var_f a2) t2)).
 Proof.
-pose proof subst_tt_typ_close_typ_wrt_typ_rec_open_typ_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof tsubst_typ_close_typ_wrt_typ_rec_open_typ_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_typ_close_typ_wrt_typ_rec_open_typ_wrt_typ_rec : lngen.
+Hint Resolve tsubst_typ_close_typ_wrt_typ_rec_open_typ_wrt_typ_rec : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma subst_ee_term_close_term_wrt_term_rec_open_term_wrt_term_rec_mutual :
+Lemma subst_term_close_term_wrt_term_rec_open_term_wrt_term_rec_mutual :
 (forall e2 e1 x1 x2 n1,
-  x2 `notin` fv_ee_term e2 ->
-  x2 `notin` fv_ee_term e1 ->
+  x2 `notin` fv_term e2 ->
+  x2 `notin` fv_term e1 ->
   x2 <> x1 ->
   degree_term_wrt_term n1 e1 ->
-  subst_ee_term e1 x1 e2 = close_term_wrt_term_rec n1 x2 (subst_ee_term e1 x1 (open_term_wrt_term_rec n1 (term_var_f x2) e2))).
+  subst_term e1 x1 e2 = close_term_wrt_term_rec n1 x2 (subst_term e1 x1 (open_term_wrt_term_rec n1 (term_var_f x2) e2))).
 Proof.
 apply_mutual_ind term_mutrec;
 default_simp.
@@ -4755,29 +4755,29 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_ee_term_close_term_wrt_term_rec_open_term_wrt_term_rec :
+Lemma subst_term_close_term_wrt_term_rec_open_term_wrt_term_rec :
 forall e2 e1 x1 x2 n1,
-  x2 `notin` fv_ee_term e2 ->
-  x2 `notin` fv_ee_term e1 ->
+  x2 `notin` fv_term e2 ->
+  x2 `notin` fv_term e1 ->
   x2 <> x1 ->
   degree_term_wrt_term n1 e1 ->
-  subst_ee_term e1 x1 e2 = close_term_wrt_term_rec n1 x2 (subst_ee_term e1 x1 (open_term_wrt_term_rec n1 (term_var_f x2) e2)).
+  subst_term e1 x1 e2 = close_term_wrt_term_rec n1 x2 (subst_term e1 x1 (open_term_wrt_term_rec n1 (term_var_f x2) e2)).
 Proof.
-pose proof subst_ee_term_close_term_wrt_term_rec_open_term_wrt_term_rec_mutual as H; intuition eauto.
+pose proof subst_term_close_term_wrt_term_rec_open_term_wrt_term_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_close_term_wrt_term_rec_open_term_wrt_term_rec : lngen.
+Hint Resolve subst_term_close_term_wrt_term_rec_open_term_wrt_term_rec : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma subst_ee_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec_mutual :
+Lemma subst_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec_mutual :
 (forall e2 e1 x1 a1 n1,
-  a1 `notin` fv_tt_term e2 ->
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e2 ->
+  a1 `notin` ftv_term e1 ->
   degree_term_wrt_typ n1 e1 ->
-  subst_ee_term e1 x1 e2 = close_term_wrt_typ_rec n1 a1 (subst_ee_term e1 x1 (open_term_wrt_typ_rec n1 (typ_var_f a1) e2))).
+  subst_term e1 x1 e2 = close_term_wrt_typ_rec n1 a1 (subst_term e1 x1 (open_term_wrt_typ_rec n1 (typ_var_f a1) e2))).
 Proof.
 apply_mutual_ind term_mutrec;
 default_simp.
@@ -4787,26 +4787,26 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_ee_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec :
+Lemma subst_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec :
 forall e2 e1 x1 a1 n1,
-  a1 `notin` fv_tt_term e2 ->
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e2 ->
+  a1 `notin` ftv_term e1 ->
   degree_term_wrt_typ n1 e1 ->
-  subst_ee_term e1 x1 e2 = close_term_wrt_typ_rec n1 a1 (subst_ee_term e1 x1 (open_term_wrt_typ_rec n1 (typ_var_f a1) e2)).
+  subst_term e1 x1 e2 = close_term_wrt_typ_rec n1 a1 (subst_term e1 x1 (open_term_wrt_typ_rec n1 (typ_var_f a1) e2)).
 Proof.
-pose proof subst_ee_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof subst_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec : lngen.
+Hint Resolve subst_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma subst_tt_term_close_term_wrt_term_rec_open_term_wrt_term_rec_mutual :
+Lemma tsubst_term_close_term_wrt_term_rec_open_term_wrt_term_rec_mutual :
 (forall e1 t1 a1 x1 n1,
-  x1 `notin` fv_ee_term e1 ->
-  subst_tt_term t1 a1 e1 = close_term_wrt_term_rec n1 x1 (subst_tt_term t1 a1 (open_term_wrt_term_rec n1 (term_var_f x1) e1))).
+  x1 `notin` fv_term e1 ->
+  tsubst_term t1 a1 e1 = close_term_wrt_term_rec n1 x1 (tsubst_term t1 a1 (open_term_wrt_term_rec n1 (term_var_f x1) e1))).
 Proof.
 apply_mutual_ind term_mutrec;
 default_simp.
@@ -4816,27 +4816,27 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_tt_term_close_term_wrt_term_rec_open_term_wrt_term_rec :
+Lemma tsubst_term_close_term_wrt_term_rec_open_term_wrt_term_rec :
 forall e1 t1 a1 x1 n1,
-  x1 `notin` fv_ee_term e1 ->
-  subst_tt_term t1 a1 e1 = close_term_wrt_term_rec n1 x1 (subst_tt_term t1 a1 (open_term_wrt_term_rec n1 (term_var_f x1) e1)).
+  x1 `notin` fv_term e1 ->
+  tsubst_term t1 a1 e1 = close_term_wrt_term_rec n1 x1 (tsubst_term t1 a1 (open_term_wrt_term_rec n1 (term_var_f x1) e1)).
 Proof.
-pose proof subst_tt_term_close_term_wrt_term_rec_open_term_wrt_term_rec_mutual as H; intuition eauto.
+pose proof tsubst_term_close_term_wrt_term_rec_open_term_wrt_term_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_close_term_wrt_term_rec_open_term_wrt_term_rec : lngen.
+Hint Resolve tsubst_term_close_term_wrt_term_rec_open_term_wrt_term_rec : lngen.
 
 (* end hide *)
 
 (* begin hide *)
 
-Lemma subst_tt_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec_mutual :
+Lemma tsubst_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec_mutual :
 (forall e1 t1 a1 a2 n1,
-  a2 `notin` fv_tt_term e1 ->
-  a2 `notin` fv_tt_typ t1 ->
+  a2 `notin` ftv_term e1 ->
+  a2 `notin` ftv_typ t1 ->
   a2 <> a1 ->
   degree_typ_wrt_typ n1 t1 ->
-  subst_tt_term t1 a1 e1 = close_term_wrt_typ_rec n1 a2 (subst_tt_term t1 a1 (open_term_wrt_typ_rec n1 (typ_var_f a2) e1))).
+  tsubst_term t1 a1 e1 = close_term_wrt_typ_rec n1 a2 (tsubst_term t1 a1 (open_term_wrt_typ_rec n1 (typ_var_f a2) e1))).
 Proof.
 apply_mutual_ind term_mutrec;
 default_simp.
@@ -4846,144 +4846,144 @@ Qed.
 
 (* begin hide *)
 
-Lemma subst_tt_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec :
+Lemma tsubst_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec :
 forall e1 t1 a1 a2 n1,
-  a2 `notin` fv_tt_term e1 ->
-  a2 `notin` fv_tt_typ t1 ->
+  a2 `notin` ftv_term e1 ->
+  a2 `notin` ftv_typ t1 ->
   a2 <> a1 ->
   degree_typ_wrt_typ n1 t1 ->
-  subst_tt_term t1 a1 e1 = close_term_wrt_typ_rec n1 a2 (subst_tt_term t1 a1 (open_term_wrt_typ_rec n1 (typ_var_f a2) e1)).
+  tsubst_term t1 a1 e1 = close_term_wrt_typ_rec n1 a2 (tsubst_term t1 a1 (open_term_wrt_typ_rec n1 (typ_var_f a2) e1)).
 Proof.
-pose proof subst_tt_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec_mutual as H; intuition eauto.
+pose proof tsubst_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec : lngen.
+Hint Resolve tsubst_term_close_term_wrt_typ_rec_open_term_wrt_typ_rec : lngen.
 
 (* end hide *)
 
-Lemma subst_tt_typ_close_typ_wrt_typ_open_typ_wrt_typ :
+Lemma tsubst_typ_close_typ_wrt_typ_open_typ_wrt_typ :
 forall t2 t1 a1 a2,
-  a2 `notin` fv_tt_typ t2 ->
-  a2 `notin` fv_tt_typ t1 ->
+  a2 `notin` ftv_typ t2 ->
+  a2 `notin` ftv_typ t1 ->
   a2 <> a1 ->
   lc_typ t1 ->
-  subst_tt_typ t1 a1 t2 = close_typ_wrt_typ a2 (subst_tt_typ t1 a1 (open_typ_wrt_typ t2 (typ_var_f a2))).
+  tsubst_typ t1 a1 t2 = close_typ_wrt_typ a2 (tsubst_typ t1 a1 (open_typ_wrt_typ t2 (typ_var_f a2))).
 Proof.
 unfold close_typ_wrt_typ; unfold open_typ_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_typ_close_typ_wrt_typ_open_typ_wrt_typ : lngen.
+Hint Resolve tsubst_typ_close_typ_wrt_typ_open_typ_wrt_typ : lngen.
 
-Lemma subst_ee_term_close_term_wrt_term_open_term_wrt_term :
+Lemma subst_term_close_term_wrt_term_open_term_wrt_term :
 forall e2 e1 x1 x2,
-  x2 `notin` fv_ee_term e2 ->
-  x2 `notin` fv_ee_term e1 ->
+  x2 `notin` fv_term e2 ->
+  x2 `notin` fv_term e1 ->
   x2 <> x1 ->
   lc_term e1 ->
-  subst_ee_term e1 x1 e2 = close_term_wrt_term x2 (subst_ee_term e1 x1 (open_term_wrt_term e2 (term_var_f x2))).
+  subst_term e1 x1 e2 = close_term_wrt_term x2 (subst_term e1 x1 (open_term_wrt_term e2 (term_var_f x2))).
 Proof.
 unfold close_term_wrt_term; unfold open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_close_term_wrt_term_open_term_wrt_term : lngen.
+Hint Resolve subst_term_close_term_wrt_term_open_term_wrt_term : lngen.
 
-Lemma subst_ee_term_close_term_wrt_typ_open_term_wrt_typ :
+Lemma subst_term_close_term_wrt_typ_open_term_wrt_typ :
 forall e2 e1 x1 a1,
-  a1 `notin` fv_tt_term e2 ->
-  a1 `notin` fv_tt_term e1 ->
+  a1 `notin` ftv_term e2 ->
+  a1 `notin` ftv_term e1 ->
   lc_term e1 ->
-  subst_ee_term e1 x1 e2 = close_term_wrt_typ a1 (subst_ee_term e1 x1 (open_term_wrt_typ e2 (typ_var_f a1))).
+  subst_term e1 x1 e2 = close_term_wrt_typ a1 (subst_term e1 x1 (open_term_wrt_typ e2 (typ_var_f a1))).
 Proof.
 unfold close_term_wrt_typ; unfold open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_close_term_wrt_typ_open_term_wrt_typ : lngen.
+Hint Resolve subst_term_close_term_wrt_typ_open_term_wrt_typ : lngen.
 
-Lemma subst_tt_term_close_term_wrt_term_open_term_wrt_term :
+Lemma tsubst_term_close_term_wrt_term_open_term_wrt_term :
 forall e1 t1 a1 x1,
-  x1 `notin` fv_ee_term e1 ->
+  x1 `notin` fv_term e1 ->
   lc_typ t1 ->
-  subst_tt_term t1 a1 e1 = close_term_wrt_term x1 (subst_tt_term t1 a1 (open_term_wrt_term e1 (term_var_f x1))).
+  tsubst_term t1 a1 e1 = close_term_wrt_term x1 (tsubst_term t1 a1 (open_term_wrt_term e1 (term_var_f x1))).
 Proof.
 unfold close_term_wrt_term; unfold open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_close_term_wrt_term_open_term_wrt_term : lngen.
+Hint Resolve tsubst_term_close_term_wrt_term_open_term_wrt_term : lngen.
 
-Lemma subst_tt_term_close_term_wrt_typ_open_term_wrt_typ :
+Lemma tsubst_term_close_term_wrt_typ_open_term_wrt_typ :
 forall e1 t1 a1 a2,
-  a2 `notin` fv_tt_term e1 ->
-  a2 `notin` fv_tt_typ t1 ->
+  a2 `notin` ftv_term e1 ->
+  a2 `notin` ftv_typ t1 ->
   a2 <> a1 ->
   lc_typ t1 ->
-  subst_tt_term t1 a1 e1 = close_term_wrt_typ a2 (subst_tt_term t1 a1 (open_term_wrt_typ e1 (typ_var_f a2))).
+  tsubst_term t1 a1 e1 = close_term_wrt_typ a2 (tsubst_term t1 a1 (open_term_wrt_typ e1 (typ_var_f a2))).
 Proof.
 unfold close_term_wrt_typ; unfold open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_close_term_wrt_typ_open_term_wrt_typ : lngen.
+Hint Resolve tsubst_term_close_term_wrt_typ_open_term_wrt_typ : lngen.
 
-Lemma subst_tt_typ_typ_forall :
+Lemma tsubst_typ_typ_forall :
 forall a2 t2 t1 a1,
   lc_typ t1 ->
-  a2 `notin` fv_tt_typ t1 `union` fv_tt_typ t2 `union` singleton a1 ->
-  subst_tt_typ t1 a1 (typ_forall t2) = typ_forall (close_typ_wrt_typ a2 (subst_tt_typ t1 a1 (open_typ_wrt_typ t2 (typ_var_f a2)))).
+  a2 `notin` ftv_typ t1 `union` ftv_typ t2 `union` singleton a1 ->
+  tsubst_typ t1 a1 (typ_forall t2) = typ_forall (close_typ_wrt_typ a2 (tsubst_typ t1 a1 (open_typ_wrt_typ t2 (typ_var_f a2)))).
 Proof.
 default_simp.
 Qed.
 
-Hint Resolve subst_tt_typ_typ_forall : lngen.
+Hint Resolve tsubst_typ_typ_forall : lngen.
 
-Lemma subst_ee_term_term_abs :
+Lemma subst_term_term_abs :
 forall x2 t1 e2 e1 x1,
   lc_term e1 ->
-  x2 `notin` fv_ee_term e1 `union` fv_ee_term e2 `union` singleton x1 ->
-  subst_ee_term e1 x1 (term_abs t1 e2) = term_abs (t1) (close_term_wrt_term x2 (subst_ee_term e1 x1 (open_term_wrt_term e2 (term_var_f x2)))).
+  x2 `notin` fv_term e1 `union` fv_term e2 `union` singleton x1 ->
+  subst_term e1 x1 (term_abs t1 e2) = term_abs (t1) (close_term_wrt_term x2 (subst_term e1 x1 (open_term_wrt_term e2 (term_var_f x2)))).
 Proof.
 default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_term_abs : lngen.
+Hint Resolve subst_term_term_abs : lngen.
 
-Lemma subst_ee_term_term_gen :
+Lemma subst_term_term_gen :
 forall a1 e2 e1 x1,
   lc_term e1 ->
-  a1 `notin` fv_tt_term e1 `union` fv_tt_term e2 ->
-  subst_ee_term e1 x1 (term_gen e2) = term_gen (close_term_wrt_typ a1 (subst_ee_term e1 x1 (open_term_wrt_typ e2 (typ_var_f a1)))).
+  a1 `notin` ftv_term e1 `union` ftv_term e2 ->
+  subst_term e1 x1 (term_gen e2) = term_gen (close_term_wrt_typ a1 (subst_term e1 x1 (open_term_wrt_typ e2 (typ_var_f a1)))).
 Proof.
 default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_term_gen : lngen.
+Hint Resolve subst_term_term_gen : lngen.
 
-Lemma subst_tt_term_term_abs :
+Lemma tsubst_term_term_abs :
 forall x1 t2 e1 t1 a1,
   lc_typ t1 ->
-  x1 `notin` fv_ee_term e1 ->
-  subst_tt_term t1 a1 (term_abs t2 e1) = term_abs (subst_tt_typ t1 a1 t2) (close_term_wrt_term x1 (subst_tt_term t1 a1 (open_term_wrt_term e1 (term_var_f x1)))).
+  x1 `notin` fv_term e1 ->
+  tsubst_term t1 a1 (term_abs t2 e1) = term_abs (tsubst_typ t1 a1 t2) (close_term_wrt_term x1 (tsubst_term t1 a1 (open_term_wrt_term e1 (term_var_f x1)))).
 Proof.
 default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_term_abs : lngen.
+Hint Resolve tsubst_term_term_abs : lngen.
 
-Lemma subst_tt_term_term_gen :
+Lemma tsubst_term_term_gen :
 forall a2 e1 t1 a1,
   lc_typ t1 ->
-  a2 `notin` fv_tt_typ t1 `union` fv_tt_term e1 `union` singleton a1 ->
-  subst_tt_term t1 a1 (term_gen e1) = term_gen (close_term_wrt_typ a2 (subst_tt_term t1 a1 (open_term_wrt_typ e1 (typ_var_f a2)))).
+  a2 `notin` ftv_typ t1 `union` ftv_term e1 `union` singleton a1 ->
+  tsubst_term t1 a1 (term_gen e1) = term_gen (close_term_wrt_typ a2 (tsubst_term t1 a1 (open_term_wrt_typ e1 (typ_var_f a2)))).
 Proof.
 default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_term_gen : lngen.
+Hint Resolve tsubst_term_term_gen : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_typ_intro_rec_mutual :
+Lemma tsubst_typ_intro_rec_mutual :
 (forall t1 a1 t2 n1,
-  a1 `notin` fv_tt_typ t1 ->
-  open_typ_wrt_typ_rec n1 t2 t1 = subst_tt_typ t2 a1 (open_typ_wrt_typ_rec n1 (typ_var_f a1) t1)).
+  a1 `notin` ftv_typ t1 ->
+  open_typ_wrt_typ_rec n1 t2 t1 = tsubst_typ t2 a1 (open_typ_wrt_typ_rec n1 (typ_var_f a1) t1)).
 Proof.
 apply_mutual_ind typ_mutind;
 default_simp.
@@ -4991,23 +4991,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_typ_intro_rec :
+Lemma tsubst_typ_intro_rec :
 forall t1 a1 t2 n1,
-  a1 `notin` fv_tt_typ t1 ->
-  open_typ_wrt_typ_rec n1 t2 t1 = subst_tt_typ t2 a1 (open_typ_wrt_typ_rec n1 (typ_var_f a1) t1).
+  a1 `notin` ftv_typ t1 ->
+  open_typ_wrt_typ_rec n1 t2 t1 = tsubst_typ t2 a1 (open_typ_wrt_typ_rec n1 (typ_var_f a1) t1).
 Proof.
-pose proof subst_tt_typ_intro_rec_mutual as H; intuition eauto.
+pose proof tsubst_typ_intro_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_typ_intro_rec : lngen.
-Hint Rewrite subst_tt_typ_intro_rec using solve [auto] : lngen.
+Hint Resolve tsubst_typ_intro_rec : lngen.
+Hint Rewrite tsubst_typ_intro_rec using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma subst_ee_term_intro_rec_mutual :
+Lemma subst_term_intro_rec_mutual :
 (forall e1 x1 e2 n1,
-  x1 `notin` fv_ee_term e1 ->
-  open_term_wrt_term_rec n1 e2 e1 = subst_ee_term e2 x1 (open_term_wrt_term_rec n1 (term_var_f x1) e1)).
+  x1 `notin` fv_term e1 ->
+  open_term_wrt_term_rec n1 e2 e1 = subst_term e2 x1 (open_term_wrt_term_rec n1 (term_var_f x1) e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -5015,23 +5015,23 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_ee_term_intro_rec :
+Lemma subst_term_intro_rec :
 forall e1 x1 e2 n1,
-  x1 `notin` fv_ee_term e1 ->
-  open_term_wrt_term_rec n1 e2 e1 = subst_ee_term e2 x1 (open_term_wrt_term_rec n1 (term_var_f x1) e1).
+  x1 `notin` fv_term e1 ->
+  open_term_wrt_term_rec n1 e2 e1 = subst_term e2 x1 (open_term_wrt_term_rec n1 (term_var_f x1) e1).
 Proof.
-pose proof subst_ee_term_intro_rec_mutual as H; intuition eauto.
+pose proof subst_term_intro_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_ee_term_intro_rec : lngen.
-Hint Rewrite subst_ee_term_intro_rec using solve [auto] : lngen.
+Hint Resolve subst_term_intro_rec : lngen.
+Hint Rewrite subst_term_intro_rec using solve [auto] : lngen.
 
 (* begin hide *)
 
-Lemma subst_tt_term_intro_rec_mutual :
+Lemma tsubst_term_intro_rec_mutual :
 (forall e1 a1 t1 n1,
-  a1 `notin` fv_tt_term e1 ->
-  open_term_wrt_typ_rec n1 t1 e1 = subst_tt_term t1 a1 (open_term_wrt_typ_rec n1 (typ_var_f a1) e1)).
+  a1 `notin` ftv_term e1 ->
+  open_term_wrt_typ_rec n1 t1 e1 = tsubst_term t1 a1 (open_term_wrt_typ_rec n1 (typ_var_f a1) e1)).
 Proof.
 apply_mutual_ind term_mutind;
 default_simp.
@@ -5039,46 +5039,46 @@ Qed.
 
 (* end hide *)
 
-Lemma subst_tt_term_intro_rec :
+Lemma tsubst_term_intro_rec :
 forall e1 a1 t1 n1,
-  a1 `notin` fv_tt_term e1 ->
-  open_term_wrt_typ_rec n1 t1 e1 = subst_tt_term t1 a1 (open_term_wrt_typ_rec n1 (typ_var_f a1) e1).
+  a1 `notin` ftv_term e1 ->
+  open_term_wrt_typ_rec n1 t1 e1 = tsubst_term t1 a1 (open_term_wrt_typ_rec n1 (typ_var_f a1) e1).
 Proof.
-pose proof subst_tt_term_intro_rec_mutual as H; intuition eauto.
+pose proof tsubst_term_intro_rec_mutual as H; intuition eauto.
 Qed.
 
-Hint Resolve subst_tt_term_intro_rec : lngen.
-Hint Rewrite subst_tt_term_intro_rec using solve [auto] : lngen.
+Hint Resolve tsubst_term_intro_rec : lngen.
+Hint Rewrite tsubst_term_intro_rec using solve [auto] : lngen.
 
-Lemma subst_tt_typ_intro :
+Lemma tsubst_typ_intro :
 forall a1 t1 t2,
-  a1 `notin` fv_tt_typ t1 ->
-  open_typ_wrt_typ t1 t2 = subst_tt_typ t2 a1 (open_typ_wrt_typ t1 (typ_var_f a1)).
+  a1 `notin` ftv_typ t1 ->
+  open_typ_wrt_typ t1 t2 = tsubst_typ t2 a1 (open_typ_wrt_typ t1 (typ_var_f a1)).
 Proof.
 unfold open_typ_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_typ_intro : lngen.
+Hint Resolve tsubst_typ_intro : lngen.
 
-Lemma subst_ee_term_intro :
+Lemma subst_term_intro :
 forall x1 e1 e2,
-  x1 `notin` fv_ee_term e1 ->
-  open_term_wrt_term e1 e2 = subst_ee_term e2 x1 (open_term_wrt_term e1 (term_var_f x1)).
+  x1 `notin` fv_term e1 ->
+  open_term_wrt_term e1 e2 = subst_term e2 x1 (open_term_wrt_term e1 (term_var_f x1)).
 Proof.
 unfold open_term_wrt_term; default_simp.
 Qed.
 
-Hint Resolve subst_ee_term_intro : lngen.
+Hint Resolve subst_term_intro : lngen.
 
-Lemma subst_tt_term_intro :
+Lemma tsubst_term_intro :
 forall a1 e1 t1,
-  a1 `notin` fv_tt_term e1 ->
-  open_term_wrt_typ e1 t1 = subst_tt_term t1 a1 (open_term_wrt_typ e1 (typ_var_f a1)).
+  a1 `notin` ftv_term e1 ->
+  open_term_wrt_typ e1 t1 = tsubst_term t1 a1 (open_term_wrt_typ e1 (typ_var_f a1)).
 Proof.
 unfold open_term_wrt_typ; default_simp.
 Qed.
 
-Hint Resolve subst_tt_term_intro : lngen.
+Hint Resolve tsubst_term_intro : lngen.
 
 
 (* *********************************************************************** *)
