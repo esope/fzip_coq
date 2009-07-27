@@ -402,6 +402,25 @@ intros x y v H. destruct (pval_val_renaming x y); auto.
 Qed.
 Hint Resolve val_renaming.
 
+Lemma pval_val_trenaming : forall a b,
+  (forall v, pval v → pval (tsubst_term (typ_var_f b) a v)) ∧
+  (forall v, val v → val (tsubst_term (typ_var_f b) a v)).
+Proof.
+intros a b.
+apply pval_val_mut_ind; intros; simpl; auto with lngen.
+Case "abs". pick fresh z and apply val_abs; auto with lngen.
+  rewrite tsubst_term_open_term_wrt_term_var; auto.
+Case "gen". pick fresh c and apply val_gen; auto.
+  rewrite tsubst_term_open_term_wrt_typ_var; auto.
+Qed.
+
+Lemma val_trenaming : forall a b v,
+  val v → val (tsubst_term (typ_var_f b) a v).
+Proof.
+intros a b v H. destruct (pval_val_trenaming a b); auto.
+Qed.
+Hint Resolve val_trenaming.
+
 (* Lemmas about red0, red1 *)
 Lemma red0_subst : forall x e'' e e', lc_term e'' → red0 e e' →
   red0 (subst_term e'' x e) (subst_term e'' x e').
@@ -419,9 +438,7 @@ Lemma red1_subst : forall x e'' e e', lc_term e'' → e ⇝ e' →
   (subst_term e'' x e) ⇝ (subst_term e'' x e').
 Proof.
 intros x e'' e e' Hlc H.
-induction H; subst; simpl; auto.
-apply red1_appL; auto with lngen.
-apply red1_appR; auto with lngen.
+induction H; subst; simpl; auto with lngen.
 apply red1_abs with (L := L `union` {{x}}); auto; intros z Hz.
 replace (term_var_f z) with (subst_term e'' x (term_var_f z)) by auto with lngen.
 repeat rewrite <- subst_term_open_term_wrt_term; eauto.
@@ -441,6 +458,44 @@ rewrite subst_term_intro with (x1 := x) (e1 := e); auto.
 rewrite subst_term_intro with (x1 := x) (e1 := e'); auto.
 Qed.
 Hint Resolve red1_open.
+
+Lemma red0_tsubst : forall a τ e e', lc_typ τ → red0 e e' →
+  red0 (tsubst_term τ a e) (tsubst_term τ a e').
+Proof.
+intros a τ e e' Hlc H.
+inversion H; subst; simpl.
+rewrite tsubst_term_open_term_wrt_term; auto. apply red0_beta; auto with lngen.
+assert (lc_term (tsubst_term τ a (term_abs t e1))) by auto with lngen; auto.
+rewrite tsubst_term_open_term_wrt_typ; auto. apply red0_beta_t; auto with lngen.
+assert (lc_term (tsubst_term τ a (term_gen e0))) by auto with lngen; auto.
+Qed.
+Hint Resolve red0_tsubst.
+
+Lemma red1_tsubst : forall a τ e e', lc_typ τ → e ⇝ e' →
+  (tsubst_term τ a e) ⇝ (tsubst_term τ a e').
+Proof.
+intros a τ e e' Hlc H.
+induction H; subst; simpl; auto with lngen.
+apply red1_abs with (L := L `union` {{a}}); auto with lngen ; intros z Hz.
+replace (term_var_f z) with (tsubst_term τ a (term_var_f z)) by reflexivity.
+repeat rewrite <- tsubst_term_open_term_wrt_term; eauto.
+apply red1_gen with (L := L `union` {{a}}); intros b Hb.
+replace (typ_var_f b) with (tsubst_typ τ a (typ_var_f b)) by auto with lngen.
+repeat rewrite <- tsubst_term_open_term_wrt_typ; eauto.
+Qed.
+Hint Resolve red1_tsubst.
+
+Lemma red1_topen : forall L τ e e',
+  lc_typ τ →
+  (forall a, a ∉ L → open_term_wrt_typ e (typ_var_f a) ⇝ open_term_wrt_typ e' (typ_var_f a)) →
+  open_term_wrt_typ e τ ⇝ open_term_wrt_typ e' τ.
+Proof.
+intros L τ e e' Hlc H.
+pick fresh a.
+rewrite tsubst_term_intro with (a1 := a) (e1 := e); auto.
+rewrite tsubst_term_intro with (a1 := a) (e1 := e'); auto.
+Qed.
+Hint Resolve red1_topen.
 
 (*
 (* Lemmas about wfterm *)
@@ -617,11 +672,24 @@ Proof with eauto 7.
       assert (wfenv ([(z, Some t1)] ++ G)) by eauto.
       eapply wfenv_regular; eauto.
       rewrite <- subst_term_spec.
-
-      ICI
-
       rewrite (subst_term_intro z)...
     right.
-      apply val_abs with (L := L `union` {{z}}); intros...
+      apply val_abs with (L := L `union` {{z}}); intros.
+      assert (wfenv ([(z, Some t1)] ++ G)) by eauto.
+      eapply wfenv_regular; eauto.
       rewrite (subst_term_intro z)...
+  Case "inst".
+    destruct IHwfterm as [[e' ? ] | ? ]...
+    destruct e; simpl in H1; inversion H1; subst...
+    inversion H0.
+  Case "gen".
+    pick fresh a. edestruct (H0 a) as [[e1 ?] | ?]...
+    left.
+      exists (term_gen (close_term_wrt_typ a e1)).
+      apply red1_gen with (L := L `union` {{a}}); intros.
+      rewrite <- tsubst_term_spec.
+      rewrite (tsubst_term_intro a)...
+    right.
+      apply val_gen with (L := L `union` {{a}}); intros.
+      rewrite (tsubst_term_intro a)...
 Qed.
