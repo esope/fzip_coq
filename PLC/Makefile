@@ -18,7 +18,7 @@
 
 COQC = coqc
 COQDEP = coqdep
-COQDOC = coqdoc
+COQDOC = coqdoc --utf8
 
 ## Paths for ott and lngen.
 
