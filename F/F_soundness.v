@@ -10,7 +10,7 @@ Ltac gather_atoms ::=
   let D3 := gather_atoms_with (fun x => ftv_term x) in
   constr:(A \u B \u C \u D1 \u D2 \u D3).
 
-(* Mutual induction principles *)
+(** Mutual induction principles *)
 Scheme pval_mut_ind_aux := Induction for pval Sort Prop
 with   val_mut_ind_aux  := Induction for val  Sort Prop.
 Combined Scheme pval_val_mut_ind from pval_mut_ind_aux, val_mut_ind_aux.
@@ -20,19 +20,7 @@ with   wftyp_mut_ind_aux := Induction for wftyp Sort Prop.
 Combined Scheme wfenv_wftyp_mut_ind from
   wfenv_mut_ind_aux, wftyp_mut_ind_aux.
 
-(* Administrative lemmas *)
-Lemma var_subst : forall e x, subst_term e x (term_var_f x) = e.
-Proof.
-intros e x; simpl; destruct (x == x); congruence.
-Qed.
-Hint Rewrite var_subst : lngen.
-
-Lemma tvar_tsubst : forall t a, tsubst_typ t a (typ_var_f a) = t.
-Proof.
-intros t a; simpl; destruct (a == a); congruence.
-Qed.
-Hint Rewrite tvar_tsubst : lngen.
-
+(** Administrative lemmas *)
 Lemma pval_val_regular :
   (forall p, pval p → lc_term p) ∧ (forall v, val v → lc_term v).
 Proof.
@@ -126,6 +114,7 @@ eauto.
 Qed.
 Hint Resolve wftyp_uniq.
 
+(** Lemmas about [wfenv] and [wftyp] *)
 Lemma wfenv_wftyp_weakening :
 (forall Γ, wfenv Γ → forall Γ₁ Γ₂ Γ₃, Γ = Γ₁ ++ Γ₃ → wfenv (Γ₂ ++ Γ₃) → disjoint Γ₁ Γ₂ → wfenv (Γ₁ ++ Γ₂ ++ Γ₃))
 ∧
@@ -325,6 +314,7 @@ fsetdec.
 Qed.
 Hint Resolve wftyp_fv.
 
+(** Lemmas about [wfterm] *)
 Lemma wfterm_wfenv : forall Γ e τ,
   wfterm Γ e τ → wfenv Γ.
 Proof.
@@ -382,7 +372,7 @@ intros Γ e τ H. eauto.
 Qed.
 Hint Resolve wfterm_env_uniq.
 
-(* Lemmas about values *)
+(** Lemmas about values *)
 Lemma value_is_normal_aux :
   (forall v, pval v → ~ exists e, v ⇝ e) ∧
   (forall v, val v → ~ exists e, v ⇝ e).
@@ -402,7 +392,7 @@ Proof.
 destruct value_is_normal_aux as [_ Th]. intuition auto.
 Qed.
 
-(* Renaming lemmas *)
+(** Renaming lemmas *)
 Lemma pval_val_renaming : forall x y,
   (forall v, pval v → pval (subst_term (term_var_f y) x v)) ∧
   (forall v, val v → val (subst_term (term_var_f y) x v)).
@@ -442,7 +432,7 @@ intros a b v H. destruct (pval_val_trenaming a b); auto.
 Qed.
 Hint Resolve val_trenaming.
 
-(* Lemmas about red0, red1 *)
+(** Lemmas about red0, red1 *)
 Lemma red0_subst : forall x e'' e e', lc_term e'' → red0 e e' →
   red0 (subst_term e'' x e) (subst_term e'' x e').
 Proof.
@@ -574,6 +564,7 @@ simpl_env; eauto.
 Qed.
 *)
 
+(** Major lemmas about [wfterm] *)
 Lemma wfterm_weakening : forall Γ₁ Γ₂ Γ₃ e τ,
   wfterm (Γ₁ ++ Γ₃) e τ →
   wfenv (Γ₂ ++ Γ₃) →
@@ -652,6 +643,7 @@ Case "gen".
   rewrite tsubst_typ_open_typ_wrt_typ_var...
 Qed.
 
+(** Soundness *)
 Theorem subject_reduction : forall Γ e e' τ,
   wfterm Γ e τ → e ⇝ e' → wfterm Γ e' τ.
 Proof with eauto.

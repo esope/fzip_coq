@@ -4,7 +4,7 @@ Require Export F_inf.
 Require Export Utf8.
 Require Export Coq.Program.Equality.
 
-(* Notations *)
+(** Notations *)
 (*
 Notation "[ e2 / x ] e1" := (subst_term e2 x e1) (at level 67).
 Notation "[ y → x ] e" := (subst_term (term_var_f y) x e) (at level 67).
@@ -20,7 +20,7 @@ Notation "x '∉' L" := (x `notin` L) (at level 70).
 Notation "x '∈' L" := (x `in` L) (at level 70) : set_hs_scope.
 Notation "E '∪' F" := (E `union` F) (at level 65, right associativity, format "E '∪' '/' F") : set_hs_scope.
 
-(* Tactics *)
+(** Tactics *)
 Tactic Notation "absurdity" "with" tactic(tac) :=
   assert False by tac; contradiction.
 Ltac absurdity := absurdity with auto.
@@ -28,6 +28,7 @@ Ltac size_absurd size t :=
   assert (1 <= size t) by auto with lngen; absurdity with omega.
 Ltac size_term_absurd t := size_absurd size_term t.
 
+(** env_map *)
 Definition option_map {A B : Type} (f : A → B) (o : option A) :=
   match o with
     | Some x => Some (f x)
@@ -38,3 +39,16 @@ Hint Unfold option_map.
 Definition env_map {A : Type} (f : typ → A) (env : typing_env) :=
   map (option_map f) env.
 Hint Unfold env_map.
+
+(** Additional lemmas *)
+Lemma var_subst : forall e x, subst_term e x (term_var_f x) = e.
+Proof.
+intros e x; simpl; destruct (x == x); congruence.
+Qed.
+Hint Rewrite var_subst : lngen.
+
+Lemma tvar_tsubst : forall t a, tsubst_typ t a (typ_var_f a) = t.
+Proof.
+intros t a; simpl; destruct (a == a); congruence.
+Qed.
+Hint Rewrite tvar_tsubst : lngen.
