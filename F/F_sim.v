@@ -102,12 +102,25 @@ Lemma erase_fv : forall e e',
   erase e e' → fv_term e [=] PLC_ott.fv_term e'.
 Proof.
 intros e e' H. induction H; simpl in *; try fsetdec.
+Case "abs".
 pick fresh x.
-intro a; split; intro.
-
-ICI
-
-destruct (a == x).
+assert (PLC_ott.fv_term (PLC_ott.open_term_wrt_term e' (PLC_ott.term_var_f x)) [<=] PLC_ott.fv_term (PLC_ott.term_var_f x) ∪ PLC_ott.fv_term e') by auto with lngen.
+assert (PLC_ott.fv_term e' [<=] PLC_ott.fv_term (PLC_ott.open_term_wrt_term e' (PLC_ott.term_var_f x))) by auto with lngen.
+assert (fv_term (open_term_wrt_term e (term_var_f x)) [<=] fv_term (term_var_f x) ∪ fv_term e) by auto with lngen.
+assert (fv_term e [<=] fv_term (open_term_wrt_term e (term_var_f x))) by auto with lngen.
+assert (fv_term (open_term_wrt_term e (term_var_f x)) [=] PLC_ott.fv_term (PLC_ott.open_term_wrt_term e' (PLC_ott.term_var_f x))) by auto.
+simpl in *.
+fsetdec.
+Case "gen".
+pick fresh x.
+assert (PLC_ott.fv_term (PLC_ott.open_term_wrt_term e' (PLC_ott.term_var_f x)) [<=] PLC_ott.fv_term (PLC_ott.term_var_f x) ∪ PLC_ott.fv_term e') by auto with lngen.
+assert (PLC_ott.fv_term e' [<=] PLC_ott.fv_term (PLC_ott.open_term_wrt_term e' (PLC_ott.term_var_f x))) by auto with lngen.
+assert (fv_term (open_term_wrt_typ e (typ_var_f x)) [<=] fv_term e) by auto with lngen.
+assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f x))) by auto with lngen.
+assert (fv_term (open_term_wrt_typ e (typ_var_f x)) [=] PLC_ott.fv_term (PLC_ott.open_term_wrt_term e' (PLC_ott.term_var_f x))) by auto.
+simpl in *.
+fsetdec.
+Qed.
 
 Lemma erase_uniqueness : forall e e₁ e₂,
   erase e e₁ → erase e e₂ → e₁ = e₂.
@@ -141,11 +154,25 @@ exists (PLC_ott.term_abs (PLC_inf.close_term_wrt_term x e')).
 apply erase_gen with (L := PLC_ott.fv_term e' ∪ {{x}}); intros; auto.
 rewrite <- PLC_inf.subst_term_spec.
 rewrite (tsubst_term_intro x); auto.
-
+assert (x ∉ PLC_ott.fv_term e').
+assert (fv_term (open_term_wrt_typ e (typ_var_f x)) [=] PLC_ott.fv_term e') by auto using erase_fv.
+assert (fv_term (open_term_wrt_typ e (typ_var_f x)) [<=] fv_term e). auto with lngen.
+fsetdec.
+autorewrite with lngen. auto.
+Case "inst". destruct IHlc_term as [e' H1]. eauto.
+Qed.
 
 Lemma erase_red0 : forall e₁ e₂ e₁',
   red0 e₁ e₂ → erase e₁ e₁' → exists e₂', PLC_ott.red0 e₁' e₂'.
 Proof.
 intros e₁ e₂ e₁' H H0.
 inversion H; subst; inversion H0; subst.
-inversion H6; subst.
+Case "beta".
+inversion H6; subst. pick fresh x. eauto.
+Case "beta_t".
+inversion H7; subst. pick fresh x.
+exists (PLC_ott.open_term_wrt_term e'0 (PLC_ott.term_abs (PLC_ott.term_var_b 0))).
+apply PLC_ott.red0_beta. eauto.
+constructor; intros; unfold PLC_ott.open_term_wrt_term; simpl; auto.
+Qed.
+
