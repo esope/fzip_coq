@@ -27,6 +27,12 @@ intros e x; simpl; destruct (x == x); congruence.
 Qed.
 Hint Rewrite var_subst : lngen.
 
+Lemma tvar_tsubst : forall t a, tsubst_typ t a (typ_var_f a) = t.
+Proof.
+intros t a; simpl; destruct (a == a); congruence.
+Qed.
+Hint Rewrite tvar_tsubst : lngen.
+
 Lemma pval_val_regular :
   (forall p, pval p → lc_term p) ∧ (forall v, val v → lc_term v).
 Proof.
@@ -186,6 +192,13 @@ inversion H; subst. eapply IHΓ; eauto.
 Qed.
 Hint Resolve wfenv_wftyp2.
 
+Lemma wfenv_wftyp3 :
+forall Γ x τ, wfenv (x ~ Some τ ++ Γ) → wftyp Γ τ.
+Proof.
+intros Γ x τ H; inversion H; subst; auto.
+Qed.
+Hint Resolve wfenv_wftyp3.
+
 Lemma wfenv_regular :
 forall Γ x τ, wfenv Γ → binds x (Some τ) Γ → lc_typ τ.
 Proof.
@@ -194,6 +207,13 @@ replace t with τ in * by congruence; eauto.
 eauto.
 Qed.
 Hint Resolve wfenv_regular.
+
+Lemma wftyp_regular2 : forall Γ x τ τ',
+  wftyp (x ~ Some τ ++ Γ) τ' → lc_typ τ.
+Proof.
+intros Γ x τ τ' H. eauto.
+Qed.
+Hint Resolve wftyp_regular2.
 
 Lemma wfenv_wftyp_subst :
   (forall Γ, wfenv Γ → forall Γ₁ Γ₂ x τ, Γ = Γ₁ ++ x ~ (Some τ) ++ Γ₂ → wfenv (Γ₁ ++ Γ₂)) ∧
@@ -346,11 +366,12 @@ Hint Resolve wfterm_regular2.
 Lemma wfterm_regular1 : forall Γ e τ,
   wfterm Γ e τ → lc_term e.
 Proof.
-intros Γ e τ H; induction H; eauto.
+intros Γ e τ H; induction H; auto.
 pick fresh x.
 apply lc_term_abs_exists with (x1 := x).
 apply wfenv_regular with (Γ := [(x, Some t1)] ++ G) (x := x); eauto.
 auto.
+eauto.
 Qed.
 Hint Resolve wfterm_regular1.
 
@@ -656,32 +677,28 @@ Qed.
 Theorem progress : forall Γ e τ,
   wfterm Γ e τ →
   (exists e', e ⇝ e') ∨ val e.
-Proof with eauto 7.
+Proof with eauto.
   intros Γ e τ H.
   dependent induction H; simpl...
   Case "typing_app".
     destruct IHwfterm1 as [[e1' ?] | ?]...
     destruct IHwfterm2 as [[e2' ?] | ?]...
-    destruct e1; simpl in H1; inversion H1; subst...
-    inversion H.
+    destruct e1; simpl in H1; inversion H1; subst; try solve [inversion H]; eauto 7.
   Case "abs".
     pick fresh z. edestruct (H0 z) as [[e1 ?] | ?]...
     left.
       exists (term_abs t1 (close_term_wrt_term z e1)).
-      apply red1_abs with (L := L `union` {{z}}); intros.
-      assert (wfenv ([(z, Some t1)] ++ G)) by eauto.
-      eapply wfenv_regular; eauto.
+      apply red1_abs with (L := L `union` {{z}}); intros...
       rewrite <- subst_term_spec.
       rewrite (subst_term_intro z)...
     right.
-      apply val_abs with (L := L `union` {{z}}); intros.
-      assert (wfenv ([(z, Some t1)] ++ G)) by eauto.
-      eapply wfenv_regular; eauto.
+      apply val_abs with (L := L `union` {{z}}); intros...
       rewrite (subst_term_intro z)...
   Case "inst".
     destruct IHwfterm as [[e' ? ] | ? ]...
-    destruct e; simpl in H1; inversion H1; subst...
+    destruct e; simpl in H1; inversion H1; subst; eauto.
     inversion H0.
+    eauto 7.
   Case "gen".
     pick fresh a. edestruct (H0 a) as [[e1 ?] | ?]...
     left.
