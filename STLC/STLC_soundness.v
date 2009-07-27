@@ -8,12 +8,12 @@ Ltac gather_atoms ::=
   let D1 := gather_atoms_with (fun x => fv_term x) in
   constr:(A \u B \u C \u D1).
 
-(* Mutual induction principles *)
+(** Mutual induction principles *)
 Scheme pval_mut_ind_aux := Induction for pval Sort Prop
 with   val_mut_ind_aux  := Induction for val  Sort Prop.
 Combined Scheme pval_val_mut_ind from pval_mut_ind_aux, val_mut_ind_aux.
 
-(* Administrative lemmas *)
+(** Administrative lemmas *)
 Lemma var_subst : forall e x, subst_term e x (term_var_f x) = e.
 Proof.
 intros e x; simpl; destruct (x == x); congruence.
@@ -74,7 +74,7 @@ pick fresh x. assert (uniq ([(x, t1)] ++ G)) as H1 by auto. inversion H1; auto.
 Qed.
 Hint Resolve wfterm_env_uniq.
 
-(* Lemmas about values *)
+(** Lemmas about values *)
 Lemma value_is_normal_aux :
   (forall v, pval v → ~ exists e, v ⇝ e) ∧
   (forall v, val v → ~ exists e, v ⇝ e).
@@ -91,7 +91,7 @@ Proof.
 destruct value_is_normal_aux as [_ Th]. intuition auto.
 Qed.
 
-(* Renaming lemmas *)
+(** Renaming lemmas *)
 Lemma pval_val_renaming : forall x y,
   (forall v, pval v → pval (subst_term (term_var_f y) x v)) ∧
   (forall v, val v → val (subst_term (term_var_f y) x v)).
@@ -110,7 +110,7 @@ intros x y v H. destruct (pval_val_renaming x y); auto.
 Qed.
 Hint Resolve val_renaming.
 
-(* Lemmas about red0, red1 *)
+(** Lemmas about [red0], [red1] *)
 Lemma red0_subst : forall x e'' e e', lc_term e'' → red0 e e' →
   red0 (subst_term e'' x e) (subst_term e'' x e').
 Proof.
@@ -146,7 +146,7 @@ rewrite subst_term_intro with (x1 := x) (e1 := e'); auto.
 Qed.
 Hint Resolve red1_open.
 
-(* Lemmas about wfterm *)
+(** Lemmas about [wfterm] *)
 Lemma wfterm_fv : forall Γ e τ,
   wfterm Γ e τ → fv_term e [<=] dom Γ.
 Proof.
