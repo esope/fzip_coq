@@ -34,6 +34,7 @@ LNGENFLAGS = ## --coq-admitted
 INCDIRS = \
 	. \
 	metatheory \
+	PLC \
 
 ## Directory where generated HTML documentation should go.
 
@@ -50,6 +51,7 @@ FILES = \
 	F_init \
 	F_soundness \
 	F_dec \
+	F_sim \
 #	F_normalization \
 
 ## Lists calculated from the above.
