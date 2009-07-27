@@ -531,17 +531,27 @@ assert (fv_term e [<=] fv_term (e ^ x)) by auto with lngen.
 assert (fv_term e [<=] {{x}} ∪ dom G). simpl in *; fsetdec.
 fsetdec.
 Qed.
+*)
 
 Lemma wfterm_uniqueness : forall Γ e τ τ',
   wfterm Γ e τ → wfterm Γ e τ' → τ = τ'.
 Proof.
 intros Γ e τ τ' H1 H2. generalize dependent τ'.
 induction H1; intros τ' H2; inversion H2; subst.
-eauto using binds_unique.
+Case "var".
+assert (Some t = Some τ'). eapply binds_unique; eauto. congruence.
+Case "app".
 assert (typ_arrow t2 t1 = typ_arrow t3 τ') by auto; congruence.
+Case "abs".
 pick fresh x; assert (t2 = t3) by eauto; congruence.
+Case "inst".
+assert (typ_forall t' = typ_forall t'0) by auto; congruence.
+Case "gen".
+pick fresh a. assert (open_typ_wrt_typ t (typ_var_f a) = open_typ_wrt_typ t0 (typ_var_f a)) by auto.
+f_equal; eapply open_typ_wrt_typ_inj; eauto.
 Qed.
 
+(*
 Lemma wfterm_strengthening : forall Γ₁ Γ₂ x τ τ' e,
   x ∉ fv_term e →
   wfterm (Γ₁ ++ x ~ τ' ++ Γ₂) e τ →
