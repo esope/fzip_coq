@@ -49,7 +49,7 @@ LNGEN_FILES = \
 FILES = \
 	F_init \
 	F_soundness \
-#	F_dec \
+	F_dec \
 #	F_normalization \
 
 ## Lists calculated from the above.
