@@ -1,7 +1,7 @@
 Add LoadPath "PLC".
 Add LoadPath "metatheory".
-Require PLC_init.
-Require Export F_init.
+Require PLC_confluence.
+Require Export F_soundness.
 
 Ltac gather_atoms ::=
   let A := gather_atoms_with (fun x : vars => x) in
@@ -37,6 +37,13 @@ Inductive erase : term -> PLC_ott.term -> Prop :=
 .
 Hint Constructors erase.
 
+Lemma id_regular : PLC_ott.lc_term (PLC_ott.term_abs (PLC_ott.term_var_b 0)).
+Proof.
+constructor; intros;
+unfold PLC_ott.open_term_wrt_term; simpl; auto.
+Qed.
+Hint Immediate id_regular.
+
 Lemma erase_regular1 : forall e e',
   erase e e' → lc_term e.
 Proof.
@@ -49,9 +56,6 @@ Lemma erase_regular2 : forall e e',
 Proof.
 intros e e' H.
 induction H; auto.
-constructor; auto.
-constructor; intros;
-unfold PLC_ott.open_term_wrt_term; simpl; auto.
 Qed.
 Hint Resolve erase_regular1 erase_regular2.
 
@@ -170,9 +174,107 @@ inversion H; subst; inversion H0; subst.
 Case "beta".
 inversion H6; subst. pick fresh x. eauto.
 Case "beta_t".
-inversion H7; subst. pick fresh x.
-exists (PLC_ott.open_term_wrt_term e'0 (PLC_ott.term_abs (PLC_ott.term_var_b 0))).
-apply PLC_ott.red0_beta. eauto.
-constructor; intros; unfold PLC_ott.open_term_wrt_term; simpl; auto.
+inversion H7; subst. pick fresh x. eauto.
 Qed.
 
+Lemma erase_red1 : forall e₁ e₂ e₁',
+  e₁ ⇝ e₂ → erase e₁ e₁' → exists e₂', PLC_ott.red1 e₁' e₂'.
+Proof.
+intros e₁ e₂ e₁' Hred Herase.
+generalize dependent e₁'.
+induction Hred; intros; try solve [inversion Herase; subst; edestruct IHHred; eauto].
+Case "empty". destruct (erase_red0 e e' e₁'); eauto.
+Case "abs". inversion Herase; subst. pick fresh x. edestruct H1; eauto.
+exists (PLC_ott.term_abs (PLC_inf.close_term_wrt_term x x0)).
+apply PLC_ott.red1_abs with (L := L ∪ {{x}}); intros.
+rewrite <- PLC_inf.subst_term_spec.
+rewrite (PLC_inf.subst_term_intro x); auto.
+Case "gen". inversion Herase; subst. pick fresh x. edestruct H0; eauto.
+exists (PLC_ott.term_abs (PLC_inf.close_term_wrt_term x x0)).
+apply PLC_ott.red1_abs with (L := L ∪ {{x}}); intros.
+rewrite <- PLC_inf.subst_term_spec.
+rewrite (PLC_inf.subst_term_intro x); auto.
+Qed.
+
+Lemma erase_red0_inv : forall Γ τ e₁' e₂' e₁,
+  PLC_ott.red0 e₁' e₂' →
+  erase e₁ e₁' →
+  wfterm Γ e₁ τ →
+  exists e₂, red0 e₁ e₂.
+Proof.
+intros Γ τ e₁' e₂' e₁ Hred Herase Hwfterm.
+inversion Hred; subst.
+inversion Herase; subst.
+Case "app". inversion H4; subst.
+SCase "abs". eauto.
+SCase "gen". inversion Hwfterm; subst. inversion H7.
+Case "inst". inversion H5; subst.
+SCase "abs". inversion Hwfterm; subst. inversion H10.
+SCase "gen". eauto.
+Qed.
+
+Lemma erase_id :
+erase (term_abs (typ_forall (typ_var_b 0)) (term_var_b 0))
+     (PLC_ott.term_abs (PLC_ott.term_var_b 0)).
+Proof.
+pick fresh x. apply erase_abs with (L := {{x}}); intros.
+constructor; intros; unfold open_typ_wrt_typ; simpl; auto.
+unfold open_term_wrt_term; unfold PLC_ott.open_term_wrt_term; simpl.
+auto.
+Qed.
+Hint Immediate erase_id.
+
+Lemma wftyp_id : forall Γ, wfenv Γ → wftyp Γ (typ_forall (typ_var_b 0)).
+Proof.
+intros Γ H. apply wftyp_forall with (L := dom Γ); intros.
+unfold open_typ_wrt_typ; simpl; simpl_env; auto.
+Qed.
+Hint Immediate wftyp_id.
+
+Lemma wfterm_id : forall Γ, wfenv Γ →
+wfterm Γ (term_abs (typ_forall (typ_var_b 0)) (term_var_b 0)) (typ_arrow (typ_forall (typ_var_b 0)) (typ_forall (typ_var_b 0))).
+Proof.
+intros Γ H.
+apply wfterm_abs with (L := dom Γ); intros.
+unfold open_term_wrt_term; simpl; simpl_env; auto.
+Qed.
+Hint Resolve wfterm_id.
+
+Lemma erase_red1_inv : forall Γ τ e₁' e₂' e₁,
+  PLC_ott.red1 e₁' e₂' →
+  erase e₁ e₁' →
+  wfterm Γ e₁ τ →
+  exists e₂, e₁ ⇝ e₂.
+Proof.
+intros Γ τ e₁' e₂' e₁ Hred Herase Hwfterm.
+generalize dependent e₁. generalize dependent τ. generalize dependent Γ.
+induction Hred; intros.
+Case "empty". edestruct erase_red0_inv; eauto.
+Case "appL". inversion Herase; subst; inversion Hwfterm; subst; edestruct IHHred; eauto.
+Case "appR". inversion Herase; subst; inversion Hwfterm; subst.
+SCase "app". edestruct IHHred; eauto.
+SCase "inst". edestruct IHHred with (e₁ := term_abs (typ_forall (typ_var_b 0)) (term_var_b 0)); eauto.
+inversion H0; subst. inversion H1. pick fresh x. assert (term_var_b 0 ^ x ⇝ e' ^ x) as H1 by auto.
+unfold open_term_wrt_term in H1; simpl in H1; inversion H1; subst. inversion H2.
+Case "abs". inversion Herase; subst; inversion Hwfterm; subst.
+SCase "abs". pick fresh x. edestruct (H0 x); eauto.
+exists (term_abs τ0 (close_term_wrt_term x x0)).
+apply red1_abs with (L := {{x}}); intros; auto.
+rewrite <- subst_term_spec.
+rewrite (subst_term_intro x); auto.
+SCase "gen". pick fresh x. edestruct (H0 x); eauto.
+exists (term_gen (close_term_wrt_typ x x0)).
+apply red1_gen with (L := {{x}}); intros; auto.
+rewrite <- tsubst_term_spec.
+rewrite (tsubst_term_intro x); auto.
+Qed.
+
+Lemma simulation : forall Γ τ e₁ e₁',
+  wfterm Γ e₁ τ →
+  erase e₁ e₁' →
+  ((exists e₂, e₁ ⇝ e₂) ↔ (exists e₂', PLC_ott.red1 e₁' e₂')).
+Proof.
+intros Γ τ e₁ e₁' Hwfterm Herase; split; intro H; destruct H.
+edestruct erase_red1; eauto.
+edestruct erase_red1_inv; eauto.
+Qed.
