@@ -88,6 +88,9 @@ force:
 	touch *.ott
 	+make
 
+check:	coq
+	coqchk $(INCFLAGS) $(FILES)
+
 ############################################################################
 
 %.vo: %.v Makefile
