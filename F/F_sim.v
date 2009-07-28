@@ -166,34 +166,50 @@ autorewrite with lngen. auto.
 Case "inst". destruct IHlc_term as [e' H1]. eauto.
 Qed.
 
-Lemma erase_red0 : forall e₁ e₂ e₁',
-  red0 e₁ e₂ → erase e₁ e₁' → exists e₂', PLC_ott.red0 e₁' e₂'.
+Lemma erase_red0 : forall e₁ e₂ e₁' e₂',
+  red0 e₁ e₂ → erase e₁ e₁' →
+  erase e₂ e₂' → PLC_ott.red0 e₁' e₂'.
 Proof.
-intros e₁ e₂ e₁' H H0.
-inversion H; subst; inversion H0; subst.
+intros e₁ e₂ e₁' e₂' Hred H1 H2.
+inversion Hred; subst; inversion H1; subst.
 Case "beta".
-inversion H6; subst. pick fresh x. eauto.
+inversion H6; subst. assert (e₂' = PLC_ott.open_term_wrt_term e' e₂'0).
+eapply erase_uniqueness; eauto.
+pick fresh x. rewrite (subst_term_intro x); auto.
+rewrite (PLC_inf.subst_term_intro x); auto.
+subst; eauto.
 Case "beta_t".
-inversion H7; subst. pick fresh x. eauto.
+inversion H7; subst. assert (e₂' = PLC_ott.open_term_wrt_term e'0 (PLC_ott.term_abs (PLC_ott.term_var_b 0))).
+eapply erase_uniqueness; eauto.
+pick fresh x. rewrite (tsubst_term_intro x); auto.
+rewrite (PLC_inf.subst_term_intro x); auto.
+assert (x ∉ PLC_ott.fv_term (PLC_ott.open_term_wrt_term e'0 (PLC_ott.term_var_f x))).
+assert (fv_term (open_term_wrt_typ e (typ_var_f x)) [=] PLC_ott.fv_term (PLC_ott.open_term_wrt_term e'0 (PLC_ott.term_var_f x))) by eauto using erase_fv.
+assert (fv_term (open_term_wrt_typ e (typ_var_f x)) [<=] fv_term e) by auto with lngen.
+fsetdec.
+autorewrite with lngen. auto.
+subst; eauto.
 Qed.
 
-Lemma erase_red1 : forall e₁ e₂ e₁',
-  e₁ ⇝ e₂ → erase e₁ e₁' → exists e₂', PLC_ott.red1 e₁' e₂'.
+Lemma erase_red1 : forall e₁ e₂ e₁' e₂',
+  e₁ ⇝ e₂ → erase e₁ e₁' →
+  erase e₂ e₂' → PLC_ott.red1 e₁' e₂'.
 Proof.
-intros e₁ e₂ e₁' Hred Herase.
-generalize dependent e₁'.
-induction Hred; intros; try solve [inversion Herase; subst; edestruct IHHred; eauto].
-Case "empty". destruct (erase_red0 e e' e₁'); eauto.
-Case "abs". inversion Herase; subst. pick fresh x. edestruct H1; eauto.
-exists (PLC_ott.term_abs (PLC_inf.close_term_wrt_term x x0)).
-apply PLC_ott.red1_abs with (L := L ∪ {{x}}); intros.
-rewrite <- PLC_inf.subst_term_spec.
-rewrite (PLC_inf.subst_term_intro x); auto.
-Case "gen". inversion Herase; subst. pick fresh x. edestruct H0; eauto.
-exists (PLC_ott.term_abs (PLC_inf.close_term_wrt_term x x0)).
-apply PLC_ott.red1_abs with (L := L ∪ {{x}}); intros.
-rewrite <- PLC_inf.subst_term_spec.
-rewrite (PLC_inf.subst_term_intro x); auto.
+intros e₁ e₂ e₁' e₂' Hred Herase1 Herase2.
+generalize dependent e₁'. generalize dependent e₂'.
+induction Hred; intros.
+Case "empty". eauto using erase_red0.
+Case "appL". inversion Herase1; subst; inversion Herase2; subst.
+replace e₂'1 with e₂'0 by eauto using erase_uniqueness; eauto.
+Case "appR". inversion Herase1; subst; inversion Herase2; subst.
+replace e₁' with e₁'0 by eauto using erase_uniqueness; eauto.
+Case "abs". inversion Herase1; subst; inversion Herase2; subst.
+pick fresh x.
+apply PLC_ott.red1_abs with (L := L ∪ L0 ∪ L1 ∪ {{x}}); intros; eauto.
+Case "inst". inversion Herase1; subst; inversion Herase2; subst; eauto.
+Case "gen". inversion Herase1; subst; inversion Herase2; subst.
+pick fresh x.
+apply PLC_ott.red1_abs with (L := L ∪ L0 ∪ L1 ∪ {{x}}); intros; eauto.
 Qed.
 
 Lemma erase_red0_inv : forall Γ τ e₁' e₂' e₁,
@@ -274,7 +290,7 @@ Lemma simulation : forall Γ τ e₁ e₁',
   erase e₁ e₁' →
   ((exists e₂, e₁ ⇝ e₂) ↔ (exists e₂', PLC_ott.red1 e₁' e₂')).
 Proof.
-intros Γ τ e₁ e₁' Hwfterm Herase; split; intro H; destruct H.
-edestruct erase_red1; eauto.
+intros Γ τ e₁ e₁' Hwfterm Herase; split; intros [e H].
+destruct (erase_exists e); eauto using erase_red1.
 edestruct erase_red1_inv; eauto.
 Qed.
