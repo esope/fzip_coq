@@ -1,0 +1,29 @@
+542,546c542,547
+<  | red0_sigma_inst : forall (L:vars) (b:typvar) (t:typ) (e:term) (t':typ) (a:typvar),
+<      lc_typ t ->
+<      lc_typ (term_sigma (typ_var_f b) t  ( (term_inst e  (open_typ_wrt_typ  t'   (typ_var_f b) ) ) ) ) ->
+<       ( forall a , a \notin  L  -> result  ( open_term_wrt_typ e (typ_var_f a) )  )  ->
+<       ( forall a , a \notin  L  -> red0 (term_inst  ( (term_sigma (typ_var_f b) t e) )   ( open_typ_wrt_typ t' (typ_var_f a) ) ) (term_sigma (typ_var_f b) t  ( (term_inst e  (open_typ_wrt_typ  t'   (typ_var_f b) ) ) ) ) ) 
+---
+>  | red0_sigma_inst : forall (L:vars) (b:typvar) (t:typ) (e:term) (t' t'':typ) (a:typvar),
+>      lc_term (term_sigma (typ_var_f b) t e) ->
+>      lc_typ t' ->
+>      ( forall a , a \notin  L  -> tsubst_typ (typ_var_f a) b t' = open_typ_wrt_typ t'' (typ_var_f a)) ->
+>      ( forall a , a \notin  L  -> result  ( open_term_wrt_typ e (typ_var_f a) )  )  ->
+>      red0 (term_inst (term_sigma (typ_var_f b) t e) t') (term_sigma (typ_var_f b) t (term_inst e t''))
+551,556c552,559
+<  | red0_sigma_sigma : forall (L:vars) (b1:typvar) (t1:typ) (b2:typvar) (t2:typ) (e:term) (a1:typvar),
+<      lc_typ (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) ->
+<      lc_typ (term_sigma (typ_var_f b2)  (open_typ_wrt_typ  t2   t1 )  (term_sigma (typ_var_f b1) t1 e)) ->
+<       a1  <>  b2  ->
+<       ( forall a1 , a1 \notin  L  ->  ( forall a2 , a2 \notin   L  \u {{ a1 }}  -> result  ( open_term_wrt_typ  ( open_term_wrt_typ e (typ_var_f a2) )  (typ_var_f a1) )  )  )  ->
+<       ( forall a2 , a2 \notin  L  -> red0 (term_sigma (typ_var_f b1)  ( open_typ_wrt_typ t1 (typ_var_f a2) )  (term_sigma (typ_var_f b2) t2 e)) (term_sigma (typ_var_f b2)  (open_typ_wrt_typ  t2    ( open_typ_wrt_typ t1 (typ_var_f a2) )  )  (term_sigma (typ_var_f b1) t1 e)) ) .
+---
+>  | red0_sigma_sigma : forall (L:vars) (b1:typvar) (t1 t1':typ) (b2:typvar) (t2:typ) (e e':term) (a1:typvar),
+>      lc_term (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) ->
+>      a1  <>  b2  ->
+>      ( forall a1, a1 \notin L -> t1 = open_typ_wrt_typ t1' (typ_var_f a1))  ->
+>      ( forall a1, a1 \notin L -> forall a2, a2 \notin L \u {{a1}} ->
+>        open_term_wrt_typ (open_term_wrt_typ e  (typ_var_f a2)) (typ_var_f a1) =
+>        open_term_wrt_typ (open_term_wrt_typ e' (typ_var_f a1)) (typ_var_f a2))  ->
+>      red0 (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) (term_sigma (typ_var_f b2) (open_typ_wrt_typ t2 t1) (term_sigma (typ_var_f b1) t1' e')).

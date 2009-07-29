@@ -1,0 +1,479 @@
+embed
+{{ coq
+Inductive tag {A : Set} : Set :=
+  | T : A -> tag
+  | U : tag
+  | E : tag
+  | Eq : A -> tag.
+}}
+
+metavar termvar, x, y, z ::= {{ repr-locally-nameless }}
+metavar typvar, a, b, c  ::= {{ repr-locally-nameless }}
+
+grammar
+
+typ, t :: typ_ ::=
+  | a              ::   :: var
+  | t1 -> t2       ::   :: arrow
+  | t1 * t2        ::   :: prod
+  | forall a . t   ::   :: forall (+ bind a in t +)
+  | exists a . t   ::   :: exists (+ bind a in t +)
+  | ( t )          :: S :: paren {{ coq [[t]] }}
+  | { t2 / a } t1  :: M :: subst {{ coq (open_typ_wrt_typ [[a t1]] [[t2]]) }}
+
+term, e, f, g :: term_ ::=
+  | x              ::   :: var
+  | \ ( x : t ) e  ::   :: abs (+ bind x in e +)
+  | e1 e2          ::   :: app
+  | ( e1 , e2 )    ::   :: pair
+  | fst e          ::   :: fst
+  | snd e          ::   :: snd
+  | /\ a . e       ::   :: gen (+ bind a in e +)
+  | e [ t ]        ::   :: inst
+  | ex a . e       ::   :: exists (+ bind a in e +)
+  | open < t > e   ::   :: open
+  | nu a . e       ::   :: nu (+ bind a in e +)
+  | sig < t1 > ( a = t2 ) e :: :: sigma (+ bind a in e +) 
+  | ( e : t )      ::   :: coerce
+  | ( e )          :: S :: paren  {{ coq ([[e]]) }}
+  | { e2 / x } e1  :: M :: subst {{ coq (open_term_wrt_term [[x e1]] [[e2]]) }}
+  | { t  / a } e   :: M :: tsubst {{ coq (open_term_wrt_typ  [[a e]]  [[t]]) }}
+
+substitutions
+  single e x :: subst
+  single t a :: tsubst
+
+freevars
+  e x :: fv
+  t a :: ftv
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+grammar
+
+typing_env, G :: '' ::=           {{ coq list (atom * @tag typ) }}
+  | empty          ::   :: empty  {{ coq nil }}
+  | G , x : t      ::   :: cons_T {{ coq ([[x]]~(T [[t]]) ++ [[G]]) }}
+  | G , U a        ::   :: cons_U {{ coq ([[a]]~U ++ [[G]]) }}
+  | G , E a        ::   :: cons_E {{ coq ([[a]]~E ++ [[G]]) }}
+  | G , a = t      ::   :: cons_Eq {{ coq ([[a]]~(Eq [[t]]) ++ [[G]]) }}
+  | G1 , G2        :: S :: app {{ coq (([[G2]]) ++ ([[G1]])) }}
+  | ( G )          :: S :: paren {{ coq ([[G]]) }}
+
+formula :: formula_ ::=
+  | judgement      :: :: judgement
+  | x : t in G     :: :: binds_T {{ coq binds ([[x]]) (T ([[t]])) ([[G]]) }}
+  | U a in G       :: :: binds_U {{ coq binds ([[a]]) U ([[G]]) }}
+  | E a in G       :: :: binds_E {{ coq binds ([[a]]) E ([[G]]) }}
+  | a = t in G     :: :: binds_Eq {{ coq binds ([[a]]) (Eq ([[t]])) ([[G]]) }}
+  | a in G         :: :: binds_a  {{ coq (binds ([[a]]) U ([[G]]) \/ binds ([[a]]) E ([[G]]) \/ exists t, binds ([[a]]) (Eq t) ([[G]])) }}
+  | a not in dom G :: :: free_dom_a {{ coq [[a]] `notin` dom [[G]] }}
+  | x not in dom G :: :: free_dom_x {{ coq [[x]] `notin` dom [[G]] }}
+  | pure G         :: :: pure {{ coq forall a, ~ binds a E ([[G]]) }}
+  | a not in ftv t :: :: free_ftv_typ {{ coq [[a]] `notin` ftv_typ ([[t]]) }}
+  | a not in ftv e :: :: free_ftv_term {{ coq [[a]] `notin` ftv_term ([[e]]) }}
+  | e not coercion :: :: not_coerce {{ coq forall e' t, ([[e]]) <> term_coerce e' t }}
+  | a <> b         :: :: neq_atom {{ coq [[a]] <> [[b]] }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jval :: '' ::=
+
+defn
+e val
+:: :: val :: val_ by
+
+------------ :: abs
+\(x:t) e val
+
+--------- :: gen
+/\a.e val
+
+  e1 val
+  e2 val
+----------- :: pair
+(e1,e2) val
+
+     e val
+e not coercion
+--------------- :: coerce
+   (e:t) val
+
+          e val
+--------------------------- :: exists
+ex b. sig <b> (a = t) e val
+
+defn
+e result
+:: :: result :: result_ by
+
+ e val
+-------- :: val
+e result
+
+       e result
+------------------------ :: sigma
+sig <b> (a = t) e result
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jzip :: '' ::=
+
+defn
+G1 zip G2 = G3
+:: :: zip :: zip_ by
+
+----------------------- :: empty
+empty zip empty = empty
+
+      G1 zip G2 = G
+------------------------- :: TT
+G1,x:t zip G2,x:t = G,x:t
+
+      G1 zip G2 = G
+------------------------- :: UU
+G1,U a zip G2,U a = G,U a
+
+      G1 zip G2 = G
+------------------------- :: EU
+G1,E a zip G2,U a = G,E a
+
+     a not in dom G1
+      G1 zip G2 = G
+------------------------- :: E
+G1 zip G2,E a = G,E a
+
+      G1 zip G2 = G
+------------------------- :: EqEq
+G1,a=t zip G2,a=t = G,a=t
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+  Jwf_env_typ :: '' ::=
+
+defn
+    G |- ok :: :: wfenv :: wfenv_ by
+
+----------- :: empty
+empty |- ok
+
+x not in dom G
+  G |- t ok
+-------------- :: cons_T
+ G, x:t |- ok
+
+a not in dom G
+   G |- ok
+-------------- :: cons_U
+ G, U a |- ok
+
+a not in dom G
+   G |- ok
+-------------- :: cons_E
+ G, E a |- ok
+
+a not in dom G
+   G |- t ok
+--------------- :: cons_Eq
+ G, a = t |- ok
+
+defn
+    G |- t ok :: :: wftyp :: wftyp_ by
+
+  a in G
+ G |- ok
+--------- :: var
+G |- a ok
+
+   G |- t1 ok
+   G |- t2 ok
+---------------- :: arrow
+G |- t1 -> t2 ok
+
+  G |- t1 ok
+  G |- t2 ok
+--------------- :: pair
+G |- t1 * t2 ok
+
+  G, U a |- t ok
+------------------- :: forall
+G |- forall a. t ok
+
+  G, U a |- t ok
+------------------- :: exists
+G |- exists a. t ok
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+  Jwftypeq :: '' ::=
+
+defn
+    G |- t1 = t2 :: :: wftypeq :: wftypeq_ by
+
+  a in G
+ G |- ok
+---------- :: var
+G |- a = a
+
+a = t in G
+ G |- ok
+---------- :: eq
+G |- a = t
+
+    G |- t1 = t1'
+    G |- t2 = t2'
+----------------------- :: arrow
+G |- t1->t2 = t1'-> t2'
+
+     G,U a |- t1 = t2
+-------------------------------- :: forall
+G |- forall a. t1 = forall a. t2
+
+     G,U a |- t1 = t2
+-------------------------------- :: exists
+G |- exists a. t1 = exists a. t2
+
+G |- t2 = t2
+------------ :: sym
+G |- t1 = t2
+
+G |- t1 = t2
+G |- t2 = t3
+------------ :: trans
+G |- t1 = t3
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+  Jwfterm :: '' ::=
+
+defn
+    G |- e : t :: :: wfterm :: wfterm_ by
+
+pure G
+G |- ok
+x:t in G
+---------- :: val
+G |- x : t
+
+G1 zip G2 = G
+G1 |- e1 : t2->t1
+G2 |- e2 : t2
+----------------- :: app
+G |- e1 e2 : t1
+
+pure G
+G, x:t1 |- e : t2
+---------------------- :: abs
+G |- \(x:t1)e : t1->t2
+
+    G1 zip G2 = G
+    G1 |- e1 : t1
+    G2 |- e2 : t2
+----------------------- :: pair
+G |- (e1, e2) : t1 * t2
+
+G |- e : t1 * t2
+---------------- :: fst
+G |- fst e : t1
+
+G |- e : t1 * t2
+---------------- :: snd
+G |- snd e : t2
+
+     G |- t ok
+G |- e : forall a.t'
+-------------------- :: inst
+G |- e [t] : {t/a}t'
+
+        pure G
+    G, U a |- e : t
+----------------------- :: gen
+G |- /\a.e : forall a.t
+
+      G, E a |- e : t
+-------------------------- :: exists
+G |- ex a. e : exists a. t
+
+      b not in dom (G1,G2)
+    G1,G2 |- e : exists a. t
+---------------------------------- :: open
+(G1,E b),G2 |- open <b> e : {b/a}t
+
+G, E a |- e : t
+---------------- :: nu
+G |- nu a. e : t
+
+         b not in dom (G1,G2)
+      (G1, G2), a = t' |- e : t
+-------------------------------------------- :: sigma
+(G1, E b), G2 |- sig <b> (a = t') e : {b/a}t
+
+   G |- t' = t
+   G |- e : t'
+---------------- :: coerce
+G |- (e : t) : t
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jred0 :: '' ::=
+
+defn
+e1 --> e2
+:: :: red0 :: red0_ by
+
+           e2 val
+----------------------------- :: beta_v
+(\(x:t)e1) e2 --> {e2 / x} e1
+
+    (e1, e2) val
+------------------- :: pi_fst
+fst (e1, e2) --> e1
+
+    (e1, e2) val
+------------------- :: pi_snd
+snd (e1, e2) --> e2
+
+------------------------- :: beta_t
+(/\a.e) [t] --> {t / a} e
+
+          e result
+---------------------------- :: open_exists
+open <b> ex a. e -->  {b/a}e
+
+         b not in ftv t
+         b not in ftv e
+           e result
+---------------------------------- :: nu_sigma
+nu b. sig <b> (a = t) e --> {t/a}e
+
+                       e2 val
+------------------------------------------------------------- :: coerce_app
+(\(x:t2') e1 : t2->t1) e2 --> ((\(x:t2') e1) (e2 : t2') : t1)
+
+                   (e1, e2) val
+------------------------------------------------ :: coerce_fst
+fst ((e1, e2) : t1 * t2) --> (fst (e1, e2) : t1)
+
+                   (e1, e2) val
+------------------------------------------------ :: coerce_snd
+snd ((e1, e2) : t1 * t2) --> (snd (e1, e2) : t2)
+
+---------------------------------------------------------- :: coerce_inst
+(/\a. e : forall a. t1) [t2] --> ((/\a.e) [t2] : {t2/a}t1)
+
+                         ex a. e val
+---------------------------------------------------------------- :: coerce_open
+open <b> (ex a. e : exists a. t) --> (open <b> ex a. e : {b/a}t)
+
+        (e : t1) val
+---------------------------- :: coerce_coerce
+((e : t1) : t2) --> (e : t2)
+
+                       e1 result
+                       e2 result
+---------------------------------------------------------- :: sigma_appL
+(sig <b> (a = t) e1) e2 --> sig <b> (a = t) (e1 ({a/b}e2))
+
+                        e1 val
+                       e2 result
+---------------------------------------------------------- :: sigma_appR
+e1 (sig <b> (a = t) e2) --> sig <b> (a = t) (({a/b}e1) e2)
+
+                       e1 result
+                       e2 result
+---------------------------------------------------------- :: sigma_pairL
+(sig <b> (a = t) e1, e2) --> sig <b> (a = t) (e1, {a/b}e2)
+
+                        e1 val
+                       e2 result
+---------------------------------------------------------- :: sigma_pairR
+(e1, sig <b> (a = t) e2) --> sig <b> (a = t) ({a/b}e1, e2)
+
+
+                    e result
+----------------------------------------------- :: sigma_fst
+fst sig <b> (a = t) e --> sig <b> (a = t) fst e
+
+                    e result
+----------------------------------------------- :: sigma_snd
+snd sig <b> (a = t) e --> sig <b> (a = t) snd e
+
+                      e result
+---------------------------------------------------------- :: sigma_inst
+(sig <b> (a = t) e) [t'] --> sig <b> (a = t) (e [{b/a}t'])
+
+                      e result
+--------------------------------------------------------- :: sigma_open
+open <c> sig <b> (a = t) e --> sig <b> (a = t) open <c> e
+
+                                         a1 <> b2
+                                         e result
+------------------------------------------------------------------------------------------ :: sigma_sigma
+sig <b1> (a1 = t1) sig <b2> (a2 = t2) e --> sig <b2> (a2 = {t1/a1}t2) sig <b1> (a1 = t1) e
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+Jred1 :: '' ::=
+
+defn
+e1 ---> e2
+:: :: red1 :: red1_ by
+
+e --> e'
+---------- :: empty
+e ---> e'
+
+   e1 ---> e1'
+----------------- :: appL
+e1 e2 ---> e1' e2
+
+   e2 ---> e2'
+----------------- :: appR
+e1 e2 ---> e1 e2'
+
+      e1 ---> e1'
+----------------------- :: pairL
+(e1, e2) ---> (e1', e2)
+
+      e2 ---> e2'
+----------------------- :: pairR
+(e1, e2) ---> (e1, e2')
+
+    e ---> e'
+----------------- :: fst
+fst e ---> fst e'
+
+    e ---> e'
+----------------- :: snd
+snd e ---> snd e'
+
+    e ---> e'
+----------------- :: inst
+e [t] ---> e' [t]
+
+      e ---> e'
+--------------------- :: exists
+ex a. e ---> ex a. e'
+
+         e ---> e'
+--------------------------- :: open
+open <b> e ---> open <b> e'
+
+      e ---> e'
+--------------------- :: nu
+nu a. e ---> nu a. e'
+
+                e ---> e'
+----------------------------------------- :: sigma
+sig <b> (a = t) e ---> sig <b> (a = t) e'
+
+      e ---> e'
+--------------------- :: coerce
+(e : t) ---> (e' : t)

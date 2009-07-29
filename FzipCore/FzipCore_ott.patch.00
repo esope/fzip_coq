@@ -1,0 +1,15 @@
+295,298c295,303
+<  | val_exists : forall (L:vars) (t:typ) (e:term) (b:typvar),
+<      lc_typ (term_exists (term_sigma (typ_var_f b) t e)) ->
+<       ( forall b , b \notin  L  ->  ( forall a , a \notin   L  \u {{ b }}  -> val  ( open_term_wrt_typ  ( open_term_wrt_typ e (typ_var_f a) )  (typ_var_f b) )  )  )  ->
+<      val (term_exists (term_sigma (typ_var_f b) t e))
+---
+>  | val_exists : forall (L:vars) (t:typ) (e e':term),
+>      (forall b, b \notin L -> lc_typ (open_typ_wrt_typ t (typ_var_f b))) ->
+>      (forall b, b \notin L ->
+>        open_term_wrt_typ e (typ_var_f b) =
+>        open_term_wrt_typ (term_sigma (typ_var_b 0) t e') (typ_var_f b)) ->
+>      (forall b, b \notin L -> forall a, a \notin L \u {{ b }} ->
+>        val (open_term_wrt_typ (open_term_wrt_typ e' (typ_var_f a)) (typ_var_f b))) ->
+>      val (term_exists e)
+> 
