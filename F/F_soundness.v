@@ -432,7 +432,7 @@ intros a b v H. destruct (pval_val_trenaming a b); auto.
 Qed.
 Hint Resolve val_trenaming.
 
-(** Lemmas about [red0], [red1] *)
+(** Lemmas about red0, red1 *)
 Lemma red0_subst : forall x e'' e e', lc_term e'' → red0 e e' →
   red0 (subst_term e'' x e) (subst_term e'' x e').
 Proof.
