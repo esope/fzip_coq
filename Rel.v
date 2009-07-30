@@ -9,7 +9,7 @@ Implicit Arguments clos_trans [A].
 Hint Resolve t_trans t_step.
 
 Definition concat (R1 R2: relation A) x y :=
-  exists z, R1 x z ∧ R2 z y.
+  ∃ z, R1 x z ∧ R2 z y.
 Inductive union (R1 R2: relation A) (x y: A): Prop :=
 | Left : R1 x y → union R1 R2 x y
 | Right : R2 x y → union R1 R2 x y.
@@ -17,10 +17,10 @@ Hint Constructors union.
 Notation "R ; S" := (concat R S) (at level 30).
 Notation "R ∪ S" := (union R S) (at level 30).
 Notation "R ⋆" := (clos_refl_trans R) (at level 29).
-Notation "R ≡ S" := (forall x y, R x y <-> S x y) (at level 31).
+Notation "R ≡ S" := (forall x y, R x y ↔ S x y) (at level 31).
 
 Lemma concat_wf_equiv (R1 R2: relation A):
-  well_founded (R1 ; R2) -> well_founded (R2 ; R1).
+  well_founded (R1 ; R2) → well_founded (R2 ; R1).
 Proof.
 intros R1 R2 H.
 intro x.
@@ -64,9 +64,9 @@ rewrite <- star_equiv in Hzy.
 exists z; split; auto.
 Qed.
 
-Theorem r_u_s_wf (R1 R2: relation A):
-  well_founded (R1⋆ ; R2) ->
-  well_founded (R2⋆ ; R1) ->
+Theorem union_wf (R1 R2: relation A):
+  well_founded (R1⋆ ; R2) →
+  well_founded (R2⋆ ; R1) →
   well_founded (R1 ∪ R2).
 Proof.
 intros R1 R2 HR1R2 HR2R1.
