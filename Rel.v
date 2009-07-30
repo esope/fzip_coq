@@ -45,7 +45,7 @@ destruct Hzy as [t [Hzt Hty]].
 exists t; split; auto. exists z; split; auto.
 Qed.
 
-Lemma concat_star (R: relation A):
+Lemma star_equiv (R: relation A):
   R⋆ ≡ R⋆ ; R⋆.
 Proof.
 intros; split; intro H.
@@ -53,14 +53,14 @@ exists y; split; auto.
 destruct H as [z [Hxz Hzy]]; eauto.
 Qed.
 
-Lemma concat_star2 (R1 R2: relation A):
+Lemma concat_star_equiv (R1 R2: relation A):
   (R1; R2⋆) ≡ (R1; R2⋆) ; R2⋆.
 Proof.
 intros R1 R2 x y; split; intro H.
 exists y; split; auto.
 rewrite concat_assoc in H.
 destruct H as [z [Hxz Hzy]].
-rewrite <- concat_star in Hzy.
+rewrite <- star_equiv in Hzy.
 exists z; split; auto.
 Qed.
 
@@ -80,7 +80,7 @@ destruct Hy as [Hy | Hy].
 eapply H0; exists x; split; auto.
 eapply H2; auto. exists x; split; auto.
 intros z Hz.
-eapply H0; eauto. rewrite concat_star2.
+eapply H0; eauto. rewrite concat_star_equiv.
 exists y; split; auto.
 Qed.
 
