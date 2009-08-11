@@ -117,17 +117,6 @@ apply H13 in H0.
 destruct H0 as [? [? ?]]; eauto.
 Qed.
 
-(*
-Lemma commute_union2 (R1 R2: relation A):
-  
-  commute R1 R2 ->
-  commute (R1 ∪ R2) (R1 ∪ R2).
-Proof.
-intros R1 R2 H.
-apply commute_union.
-apply commute_sym. apply commute_union.
-*)
-
 Lemma transp_star_commute (R: relation A):
   R⁻¹⋆ ≡ R⋆⁻¹.
 Proof.
@@ -256,6 +245,21 @@ assert (((R ⋆) ⁻¹; R ⋆) t u) as [v [Hvt Hvu]].
 unfold transp in Hvt; eauto 7.
 Qed.
 
+Lemma diamond_union (R1 R2: relation A):
+  commute R1 R2 ->
+  diamond R1 ->
+  diamond R2 ->
+  diamond (R1 ∪ R2).
+Proof.
+intros R1 R2 Hcomm HR1 HR2 x y [z [Hxz Hyz]].
+destruct Hxz; destruct Hyz.
+  assert ((R1⁻¹; R1) x y) as [? [? ?]] by eauto; eauto 7.
+  assert (commute R2 R1) as Hcomm' by auto using commute_sym.
+    assert ((R2⁻¹; R1) x y) as [? [? ?]] by eauto; eauto 7.
+  assert ((R1⁻¹; R2) x y) as [? [? ?]] by eauto; eauto 7.
+  assert ((R2⁻¹; R2) x y) as [? [? ?]] by eauto; eauto 7.
+Qed.
+
 Inductive my_rt_clos (R: relation A) : nat -> A -> A -> Prop :=
 | my_rt_refl : forall x, my_rt_clos R 0 x x
 | my_rt_trans : forall x y z n,
@@ -296,17 +300,14 @@ induction H; auto.
 assert False by omega; contradiction.
 Qed.
 
-Lemma hindley_rosen_1 (R1 R2: relation A):
-  commute R1 R2 →
-  diamond R1 →
-  diamond R2 →
-  confluent (R1 ∪ R2).
+Lemma diamond_confluent (R: relation A) :
+  diamond R -> confluent R.
 Proof.
-intros R1 R2 Hcomm HR1 HR2.
+intros R Hdiamond.
 assert (forall p n m x y z, n ≤ p -> m ≤ p ->
-  my_rt_clos (R1∪R2) m x z ->
-  my_rt_clos (R1∪R2) n y z ->
-  exists t, my_rt_clos (R1∪R2) n t x ∧ my_rt_clos (R1∪R2) m t y).
+  my_rt_clos R m x z ->
+  my_rt_clos R n y z ->
+  exists t, my_rt_clos R n t x ∧ my_rt_clos R m t y).
 intro p; induction p; intros n m x y z Hn Hm Hx Hy.
 (* case p = 0 *)
 assert (n = 0) by omega; assert (m = 0) by omega; subst.
@@ -316,14 +317,8 @@ subst; eauto.
 (* case p > 0 *)
 destruct Hx; eauto.
 destruct Hy; eauto.
-assert ((((R1∪R2)⁻¹); (R1∪R2)) y y0) as [t [Htx Hty]].
-  destruct H; destruct H0.
-    assert ((R1⁻¹; R1) y y0) as [? [? ?]] by eauto; eauto 7.
-    assert ((R1⁻¹; R2) y y0) as [? [? ?]] by eauto; eauto 7.
-    assert (commute R2 R1) as Hcomm' by auto using commute_sym.
-      assert ((R2⁻¹; R1) y y0) as [? [? ?]] by eauto; eauto 7.
-    assert ((R2⁻¹; R2) y y0) as [? [? ?]] by eauto; eauto 7.
-assert (exists u, my_rt_clos (R1∪R2) 1 u x0 ∧ my_rt_clos (R1∪R2) n u t) as [u [Hux0 Hut]].
+assert ((R⁻¹; R) y y0) as [t [Htx Hty]] by eauto 7.
+assert (exists u, my_rt_clos R 1 u x0 ∧ my_rt_clos R n u t) as [u [Hux0 Hut]].
   destruct n.
   (* n = 0 *)
   assert (x0 = y) by eauto using my_rt_clos_0_self; subst.
@@ -331,7 +326,7 @@ assert (exists u, my_rt_clos (R1∪R2) 1 u x0 ∧ my_rt_clos (R1∪R2) n u t) as
   (* n > 0 *)
   apply IHp with (z := y); try omega; eauto.
     replace 1 with (1+0) by reflexivity; eauto.
-assert (exists v, my_rt_clos (R1∪R2) 1 v x ∧ my_rt_clos (R1∪R2) n0 v t) as [v [Hvx Hvt]].
+assert (exists v, my_rt_clos R 1 v x ∧ my_rt_clos R n0 v t) as [v [Hvx Hvt]].
   destruct n0.
   (* n0 = 0 *)
   assert (x = y0) by eauto using my_rt_clos_0_self; subst.
@@ -339,7 +334,7 @@ assert (exists v, my_rt_clos (R1∪R2) 1 v x ∧ my_rt_clos (R1∪R2) n0 v t) as
   (* n0 > 0 *)
   apply IHp with (z := y0); try omega; eauto.
     replace 1 with (1+0) by reflexivity; eauto.
-assert (exists w, my_rt_clos (R1∪R2) n0 w u ∧ my_rt_clos (R1∪R2) n w v) as [w [Hwu Hwv]].
+assert (exists w, my_rt_clos R n0 w u ∧ my_rt_clos R n w v) as [w [Hwu Hwv]].
   apply IHp with (z := t); try omega; eauto.
 exists w; split.
 replace (1+n) with (n+1) by omega; eauto using my_rt_clos_transitivity.
@@ -363,13 +358,24 @@ replace (1+n0) with (n0+1) by omega; eauto using my_rt_clos_transitivity.
            \ /
             w
 *)
-intros x y [z [Hxz Hyz]]. unfold transp in Hyz.
+intros x y [z [Hxz Hyz]].
+unfold transp in Hyz.
 rewrite my_rt_clos_equiv in * |-.
 destruct Hxz as [n Hxz].
 destruct Hyz as [m Hyz].
-assert (exists t, my_rt_clos (R1∪R2) m t x ∧ my_rt_clos (R1∪R2) n t y) as [t [Htx Hty]].
+assert (exists t, my_rt_clos R m t x ∧ my_rt_clos R n t y) as [t [Htx Hty]].
   eapply (H (n+m)); try omega; eauto.
 exists t; split; unfold transp; rewrite my_rt_clos_equiv; eauto.
+Qed.
+
+Lemma hindley_rosen_1 (R1 R2: relation A):
+  commute R1 R2 →
+  diamond R1 →
+  diamond R2 →
+  confluent (R1 ∪ R2).
+Proof.
+intros R1 R2 Hcomm HR1 HR2.
+eauto using diamond_confluent, diamond_union.
 Qed.
 
 Lemma hindley_rosen_2 (R1 R2: relation A):
