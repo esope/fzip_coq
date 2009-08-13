@@ -717,10 +717,13 @@ Lemma DPG_diagram2 (R1 R2: relation A):
   well_founded R1 -> DPG R1 R2 ->
   nf_unique R2 ->
   preserves_nf R1 R2 ->
-  forall y z t, (R2⋆; R1⁻¹) y z -> nf R2 y -> (R2⋆) t z -> nf R2 t ->
-    (R1⁺) t y.
+  nf_commute R1 R2.
+(*  forall y z t, (R2⋆; R1⁻¹) y z -> nf R2 y -> (R2⋆) t z -> nf R2 t ->
+    (R1⁺) t y.*)
 Proof.
-intros R1 R2 Hwf HDPG Huniq Hnf y z t [x [Hyx Hzx]] Hnfy Htz Hnft.
+intros R1 R2 Hwf HDPG Huniq Hnf.
+unfold nf_commute.
+intros z x t y [Hnft Htz] [Hnfy Hyx] Hxy.
 assert (commute (R1⁺) (R2⋆)) by auto using commutation_condition_DPG_plus.
 assert (((R1⁺)⁻¹; R2⋆) y z) as [t' [? ?]] by eauto 7.
 assert (nf R2 t'). apply (preserves_nf_star R1 R2 Hnf t' y); auto using plus_star_included.
