@@ -701,9 +701,9 @@ auto using commute_plus_star, commutation_condition_DPG_plus.
 Qed.
 
 Lemma DPG_diagram1 (R1 R2: relation A):
-  well_founded R1 -> DPG R1 R2 ->
-  preserves_nf R1 R2 ->
-  forall y z, (R2⋆; R1⋆⁻¹) y z -> nf R2 y ->
+  well_founded R1 → DPG R1 R2 →
+  preserves_nf R1 R2 →
+  forall y z, (R2⋆; R1⋆⁻¹) y z → nf R2 y →
     exists t, (R1⋆) t y ∧ (R2⋆) t z ∧ nf R2 t.
 Proof.
 intros R1 R2 Hwf HDPG Hnf y z [x [Hyx Hzx]] Hnfy.
@@ -714,11 +714,11 @@ apply (preserves_nf_star R1 R2 Hnf t y); auto.
 Qed.
 
 Lemma DPG_diagram2 (R1 R2: relation A):
-  well_founded R1 -> DPG R1 R2 ->
-  nf_unique R2 ->
-  preserves_nf R1 R2 ->
+  well_founded R1 → DPG R1 R2 →
+  nf_unique R2 →
+  preserves_nf R1 R2 →
   nf_commute R1 R2.
-(*  forall y z t, (R2⋆; R1⁻¹) y z -> nf R2 y -> (R2⋆) t z -> nf R2 t ->
+(*  forall y z t, (R2⋆; R1⁻¹) y z → nf R2 y → (R2⋆) t z → nf R2 t →
     (R1⁺) t y.*)
 Proof.
 intros R1 R2 Hwf HDPG Huniq Hnf.
