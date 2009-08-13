@@ -146,6 +146,20 @@ intros R1 R2 H.
 auto using commute_star1, commute_star2.
 Qed.
 
+Lemma commute_plus_star (R1 R2: relation A):
+  commute (R1⁺) R2 → commute (R1⋆) R2.
+Proof.
+intros R1 R2 H.
+apply commute_star1 in H.
+intros y z [x [Hyx Hzx]].
+unfold transp in Hzx.
+rewrite <- plus_star_star_equiv in Hzx.
+assert (((R1 ⁺⋆) ⁻¹; R2) y z) as [? [H0 ?]] by eauto.
+unfold transp in H0.
+rewrite plus_star_star_equiv in H0.
+eauto.
+Qed.
+
 Lemma commute_union (R1 R2 R3: relation A):
   commute R1 R2 →
   commute R1 R3 →
@@ -634,9 +648,9 @@ Qed.
 Definition DPG (R1 R2: relation A) :=
   (R2;R1⁻¹) ⊆ (R1⁺⁻¹;R2⋆).
 
-Lemma commutation_condition_DPG (R1 R2: relation A):
+Lemma commutation_condition_DPG_plus (R1 R2: relation A):
   well_founded R1 → DPG R1 R2 →
-  commute (R1⋆) (R2⋆).
+  commute (R1⁺) (R2⋆).
 Proof.
 intros R1 R2 Hwf HDPG y.
 rewrite <- wf_plus_equiv in Hwf.
@@ -646,11 +660,20 @@ intros z [x [Hyx Hzx]]. unfold transp in Hzx.
 generalize dependent z.
 rewrite rtn1_trans_equiv in Hyx; induction Hyx; try rewrite <- rtn1_trans_equiv in *|-; intros.
 eauto 7.
-rewrite rtn1_trans_equiv in Hzx; destruct Hzx; try rewrite <- rtn1_trans_equiv in *|-; eauto.
-eauto 7.
+rewrite tn1_trans_equiv in Hzx; destruct Hzx; try rewrite <- tn1_trans_equiv in *|-; eauto.
+assert ((R1⁺⁻¹;R2⋆) y0 z0) as [t [Hty0 Htz0]] by eauto;
+apply IHHyx in Hty0; destruct Hty0 as [? [? ?]]; eauto.
 assert ((R1⁺⁻¹;R2⋆) y0 y1) as [t [Hty0 Hty1]] by eauto.
 unfold transp in Hty0.
-assert (((R1 ⋆) ⁻¹; R2 ⋆) y t) as [u [Huy Hut]] by auto using plus_star_included.
+assert (((R1 ⁺) ⁻¹; R2 ⋆) y t) as [u [Huy Hut]] by auto.
 unfold transp in Huy.
-assert (((R1 ⋆) ⁻¹; R2 ⋆) u z0) as [v [Hvu Hvz0]]; eauto 6.
-  apply H0; eauto.
+assert (((R1 ⁺) ⁻¹; R2 ⋆) u z0) as [v [Hvu Hvz0]]; eauto 6.
+Qed.
+
+Lemma commutation_condition_DPG (R1 R2: relation A):
+  well_founded R1 → DPG R1 R2 →
+  commute (R1⋆) (R2⋆).
+Proof.
+intros R1 R2 Hwf HDPG.
+auto using commute_plus_star, commutation_condition_DPG_plus.
+Qed.
