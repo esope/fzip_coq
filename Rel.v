@@ -12,13 +12,17 @@ Hint Resolve t_trans t_step.
 Hint Unfold transp.
 
 (** Definitions and notations *)
-Definition concat (R1 R2: relation A) x y :=
-  ∃ z, R1 x z ∧ R2 z y.
-Hint Unfold concat.
-Inductive union (R1 R2: relation A) (x y: A): Prop :=
-| Left : R1 x y → union R1 R2 x y
-| Right : R2 x y → union R1 R2 x y.
+Inductive union A (R1 R2: relation A) (x y: A): Prop :=
+| Left : R1 x y → union A R1 R2 x y
+| Right : R2 x y → union A R1 R2 x y.
 Hint Constructors union.
+Implicit Arguments union [A].
+Definition concat A (R1 R2: relation A) x y :=
+  ∃ z, R1 x z ∧ R2 z y.
+Implicit Arguments concat [A].
+Hint Unfold concat.
+Definition sub_rel A (R S: relation A) := forall x y, R x y → S x y.
+Definition eq_rel A (R S: relation A) := forall x y, R x y ↔ S x y.
 Notation "R ; S" := (concat R S) (at level 30).
 Notation "R ∪ S" := (union R S) (at level 30).
 Notation "R '⋆'" := (clos_refl_trans R) (at level 29).
@@ -33,6 +37,73 @@ Definition confluent (R: relation A) := diamond (R⋆).
 Definition weakly_confluent (R: relation A) := (R; R⁻¹) ⊆ (R⋆⁻¹; R⋆).
 Definition commute (R1 R2: relation A) := (R2 ; R1⁻¹) ⊆ (R1⁻¹ ; R2).
 Hint Unfold diamond confluent weakly_confluent commute.
+
+(** Infrastructure  to allow rewriting on relations *)
+Lemma eq_rel_refl A (R: relation A): R ≡ R.
+Proof.
+intros B R x y; tauto.
+Qed.
+
+Lemma eq_rel_sym A (R1 R2: relation A): R1 ≡ R2 → R2 ≡ R1.
+Proof.
+intros B R1 R2 H x y; rewrite (H x y); tauto.
+Qed.
+
+Lemma eq_rel_trans A (R1 R2 R3: relation A): R1 ≡ R2 → R2 ≡ R3 → R1 ≡ R3.
+Proof.
+intros B R1 R2 R3 H1 H2 x y; rewrite (H1 x y); rewrite (H2 x y); tauto.
+Qed.
+
+Require Export Setoid.
+Add Parametric Relation A : (relation A) (fun (R1 R2: relation A) => forall x y, R1 x y <-> R2 x y)
+  reflexivity  proved by (eq_rel_refl A)
+  symmetry     proved by (eq_rel_sym A)
+  transitivity proved by (eq_rel_trans A)
+as eq_rel_setoid.
+
+Add Parametric Morphism A : (@union A) with
+  signature (eq_rel A) ==> (eq_rel A) ==> (eq_rel A) as union_mor.
+Proof.
+intros R1 R2 H12 R3 R4 H34; split; intro H; destruct H.
+left; rewrite <- (H12 x y); auto.
+right; rewrite <- (H34 x y); auto.
+left; rewrite (H12 x y); auto.
+right; rewrite (H34 x y); auto.
+Qed.
+
+Add Parametric Morphism A : (@concat A) with
+  signature (eq_rel A) ==> (eq_rel A) ==> (eq_rel A) as concat_mor.
+Proof.
+intros R1 R2 H12 R3 R4 H34; split; intro H; destruct H as [z [H1 H2]]; exists z; split.
+rewrite <- (H12 x z); auto.
+rewrite <- (H34 z y); auto.
+rewrite (H12 x z); auto.
+rewrite (H34 z y); auto.
+Qed.
+
+Add Parametric Morphism A : (@clos_refl_trans A) with
+  signature (eq_rel A) ==> (eq_rel A) as clos_refl_trans_mor.
+Proof.
+intros R1 R2 H12; split; intro H; induction H; eauto.
+rewrite (H12 x y) in H; auto.
+rewrite <- (H12 x y) in H; auto.
+Qed.
+
+Add Parametric Morphism A : (@clos_trans A) with
+  signature (eq_rel A) ==> (eq_rel A) as clos_trans_mor.
+Proof.
+intros R1 R2 H12; split; intro H; induction H; eauto.
+rewrite (H12 x y) in H; auto.
+rewrite <- (H12 x y) in H; auto.
+Qed.
+
+Add Parametric Morphism A : (@transp A) with
+  signature (eq_rel A) ==> (eq_rel A) as transp_mor.
+Proof.
+intros R1 R2 H12; split; intro H; unfold transp in *.
+rewrite <- (H12 y x); auto.
+rewrite (H12 y x); auto.
+Qed.
 
 (** Some lemmas about operations on relations *)
 Lemma star_involutive (R: relation A):
