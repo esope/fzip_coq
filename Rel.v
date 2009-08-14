@@ -23,14 +23,16 @@ Implicit Arguments concat [A].
 Hint Unfold concat.
 Definition sub_rel A (R S: relation A) := forall x y, R x y → S x y.
 Definition eq_rel A (R S: relation A) := forall x y, R x y ↔ S x y.
+Implicit Arguments sub_rel [A].
 Implicit Arguments eq_rel [A].
+Hint Unfold sub_rel eq_rel.
 Notation "R ; S" := (concat R S) (at level 30).
 Notation "R ∪ S" := (union R S) (at level 30).
 Notation "R '⋆'" := (clos_refl_trans R) (at level 29).
 Notation "R '⁺'" := (clos_trans R) (at level 29).
 Notation "R '⁻¹'" := (transp R) (at level 29).
 Notation "R '?'" := (@eq A ∪ R) (at level 29).
-Notation "R ⊆ S" := (forall x y, R x y → S x y) (at level 31).
+Notation "R ⊆ S" := (sub_rel R S) (at level 31).
 Notation "R ≡ S" := (eq_rel R S) (*(forall x y, R x y ↔ S x y)*) (at level 31).
 
 Definition diamond (R: relation A) := (R; R⁻¹) ⊆ (R⁻¹; R).
@@ -62,6 +64,34 @@ Add Parametric Relation A : (relation A) (@eq_rel A)
   transitivity proved by (eq_rel_trans A)
 as eq_rel_setoid.
 
+(* Morphisms for relation application *)
+Add Parametric Morphism A : (@id (relation A)) with
+  signature (@eq_rel A) ==> pointwise_relation A (pointwise_relation A iff) as rel_apply_mor.
+Proof.
+intros R1 R2 H12 x y.
+unfold id in *.
+rewrite (H12 _ _). tauto.
+Qed.
+
+Add Parametric Morphism A : (fun (R: relation A) (x y: A) => R x y) with
+  signature (@eq_rel A) ==> (@eq A) ==> (@eq A) ==> iff as rel_apply2_mor.
+Proof.
+intros R1 R2 H12 x y.
+setoid_rewrite H12. tauto.
+Qed.
+
+(* Morphisms for sub_rel *)
+Add Parametric Morphism A : (@sub_rel A) with
+  signature (@eq_rel A) ==> (@eq_rel A) ==> iff as sub_rel_mor.
+Proof.
+intros R1 R2 H12 R3 R4 H34.
+unfold sub_rel.
+split; intros H x y H'.
+setoid_rewrite <- H34; apply H; setoid_rewrite H12; auto.
+setoid_rewrite H34; apply H; setoid_rewrite <- H12; auto.
+Qed.
+
+(* Morphisms for union *)
 Add Parametric Morphism A : (@union A) with
   signature (@eq_rel A) ==> (@eq_rel A) ==> (@eq_rel A) as union_mor.
 Proof.
@@ -72,6 +102,17 @@ left; rewrite (H12 x y); auto.
 right; rewrite (H34 x y); auto.
 Qed.
 
+Add Parametric Morphism A : (@union A) with
+  signature (@eq_rel A) ==> (@eq_rel A) ==> (@eq A) ==> (@eq A) ==> iff as union_ext_mor.
+Proof.
+intros R1 R2 H12 R3 R4 H34 x y.
+assert (R1∪R3 ≡ R2∪R4). rewrite H12. rewrite H34. reflexivity.
+remember (R1∪R3) as R.
+setoid_rewrite H.
+reflexivity.
+Qed.
+
+(* Morphisms for concat *)
 Add Parametric Morphism A : (@concat A) with
   signature (@eq_rel A) ==> (@eq_rel A) ==> (@eq_rel A) as concat_mor.
 Proof.
@@ -82,46 +123,110 @@ rewrite (H12 x z); auto.
 rewrite (H34 z y); auto.
 Qed.
 
+Add Parametric Morphism A : (@concat A) with
+  signature (@eq_rel A) ==> (@eq_rel A) ==> (@eq A) ==> (@eq A) ==> iff as concat_ext_mor.
+Proof.
+intros R1 R2 H12 R3 R4 H34.
+assert ((R1;R3) ≡ (R2;R4)). rewrite H12; rewrite H34; reflexivity.
+remember (R1;R3) as R.
+setoid_rewrite H.
+reflexivity.
+Qed.
+
+(* Morphisms for clos_refl_trans *)
 Add Parametric Morphism A : (@clos_refl_trans A) with
   signature (@eq_rel A) ==> (@eq_rel A) as clos_refl_trans_mor.
 Proof.
 intros R1 R2 H12; split; intro H; induction H; eauto.
-rewrite (H12 x y) in H; auto.
-rewrite <- (H12 x y) in H; auto.
+setoid_rewrite H12 in H; auto.
+setoid_rewrite <- H12 in H; auto.
 Qed.
 
+Add Parametric Morphism A : (@clos_refl_trans A) with
+  signature (@eq_rel A) ==> (@eq A) ==> (@eq A) ==> iff as clos_refl_trans_ext_mor.
+Proof.
+intros R1 R2 H12 x y; split; intro H; induction H; eauto.
+setoid_rewrite H12 in H; auto.
+setoid_rewrite <- H12 in H; auto.
+Qed.
+
+(* Morphisms for clos_trans *)
 Add Parametric Morphism A : (@clos_trans A) with
   signature (@eq_rel A) ==> (@eq_rel A) as clos_trans_mor.
 Proof.
 intros R1 R2 H12; split; intro H; induction H; eauto.
-rewrite (H12 x y) in H; auto.
-rewrite <- (H12 x y) in H; auto.
+setoid_rewrite H12 in H; auto.
+setoid_rewrite <- H12 in H; auto.
 Qed.
 
+Add Parametric Morphism A : (@clos_trans A) with
+  signature (@eq_rel A) ==> (@eq A) ==> (@eq A) ==> iff as clos_trans_ext_mor.
+Proof.
+intros R1 R2 H12 x y; split; intro H; induction H; eauto.
+setoid_rewrite H12 in H; auto.
+setoid_rewrite <- H12 in H; auto.
+Qed.
+
+(* Morphisms for transp *)
 Add Parametric Morphism A : (@transp A) with
   signature (@eq_rel A) ==> (@eq_rel A) as transp_mor.
 Proof.
-intros R1 R2 H12; split; intro H; unfold transp in *.
-rewrite <- (H12 y x); auto.
-rewrite (H12 y x); auto.
+intros R1 R2 H12; unfold transp; intros x y; setoid_rewrite H12; tauto.
+Qed.
+
+Add Parametric Morphism A : (@transp A) with
+  signature (@eq_rel A) ==> (@eq A) ==> (@eq A) ==> iff as transp_ext_mor.
+Proof.
+intros R1 R2 H12 x y; unfold transp; setoid_rewrite H12; tauto.
+Qed.
+
+(* Morphisms for Acc *)
+Add Parametric Morphism A : (@Acc A) with
+  signature (@eq_rel A) ==> (@eq A) ==> iff as acc_mor.
+Proof.
+intros R1 R2 H12 x; split; intro H.
+assert (Acc R1 x) as H0 by auto; induction H0.
+constructor; intros. setoid_rewrite <- H12 in H2.
+auto.
+assert (Acc R2 x) as H0 by auto; induction H0.
+constructor; intros. setoid_rewrite H12 in H2.
+auto.
+Qed.
+
+(* Morphisms for well_founded *)
+Add Parametric Morphism A : (@well_founded A) with
+  signature (@eq_rel A) ==> iff as wf_mor.
+Proof.
+intros R1 R2 H12; split; intros H x.
+rewrite <- H12; auto.
+rewrite H12; auto.
+Qed.
+
+(* Morphisms for commute *)
+Add Parametric Morphism : commute with
+  signature (@eq_rel A) ==> (@eq_rel A) ==> iff as commute_mor.
+Proof.
+intros R1 R2 H12 R3 R4 H34.
+unfold commute.
+rewrite H12; rewrite H34; tauto.
 Qed.
 
 (** Some lemmas about operations on relations *)
-Lemma star_involutive (R: relation A):
+Lemma star_idempotent (R: relation A):
   R⋆⋆ ≡ R⋆.
 Proof.
 intros R x y; split; intro H; induction H; eauto.
 Qed.
-Hint Rewrite star_involutive : rel.
-Hint Resolve star_involutive : rel.
+Hint Rewrite star_idempotent : rel.
+Hint Resolve star_idempotent : rel.
 
-Lemma plus_involutive (R: relation A):
+Lemma plus_idempotent (R: relation A):
   R⁺⁺ ≡ R⁺.
 Proof.
 intros R x y; split; intro H; induction H; eauto.
 Qed.
-Hint Rewrite plus_involutive : rel.
-Hint Resolve plus_involutive : rel.
+Hint Rewrite plus_idempotent : rel.
+Hint Resolve plus_idempotent : rel.
 
 Lemma plus_star_equiv (R: relation A):
   R⋆⁺ ≡ R⁺⋆.
@@ -187,6 +292,14 @@ destruct H as [z [Hxz Hzy]]; eauto.
 Qed.
 Hint Rewrite <- star_equiv : rel.
 Hint Resolve star_equiv : rel.
+
+Lemma transp_involutive (R: relation A):
+  R⁻¹⁻¹ ≡ R.
+Proof.
+intros; split; auto.
+Qed.
+Hint Rewrite transp_involutive : rel.
+Hint Resolve transp_involutive : rel.
 
 Lemma transp_concat_commute (R1 R2: relation A):
   (R1; R2)⁻¹ ≡ (R2⁻¹; R1⁻¹).
@@ -267,7 +380,7 @@ Lemma union_star_equiv2 (R1 R2: relation A):
 Proof.
 intros R1 R2 x y; split; intro H; induction H; eauto.
 destruct H; eauto.
-destruct H; eauto using union_star_included1, union_star_included2.
+destruct H. apply union_star_included1; auto. apply union_star_included2; auto.
 Qed.
 Hint Resolve union_star_equiv : rel.
 
@@ -290,7 +403,7 @@ Lemma union_plus_equiv2 (R1 R2: relation A):
 Proof.
 intros R1 R2 x y; split; intro H; induction H; eauto.
 destruct H; eauto.
-destruct H; eauto using union_plus_included1, union_plus_included2.
+destruct H. apply union_plus_included1; auto. apply union_plus_included2; auto.
 Qed.
 Hint Resolve union_plus_equiv2 : rel.
 
@@ -305,14 +418,14 @@ Qed.
 Hint Rewrite <- concat_star_equiv : rel.
 Hint Resolve concat_star_equiv : rel.
 
-Inductive my_rt_clos (R: relation A) : nat → A → A → Prop :=
-| my_rt_refl : forall x, my_rt_clos R 0 x x
-| my_rt_trans : forall x y z n,
-  my_rt_clos R n x y → R y z → my_rt_clos R (1+n) x z.
-Hint Constructors my_rt_clos.
+Inductive rt_length_clos (R: relation A) : nat → A → A → Prop :=
+| rt_length_refl : forall x, rt_length_clos R 0 x x
+| rt_length_trans : forall x y z n,
+  rt_length_clos R n x y → R y z → rt_length_clos R (1+n) x z.
+Hint Constructors rt_length_clos.
 
-Lemma my_rt_clos_equiv (R: relation A) :
-  R⋆ ≡ (fun x y => exists n, my_rt_clos R n x y).
+Lemma rt_length_clos_equiv (R: relation A) :
+  R⋆ ≡ (fun x y => exists n, rt_length_clos R n x y).
 Proof.
 intros R x y; rewrite rtn1_trans_equiv; split; intro H.
 induction H; eauto.
@@ -321,13 +434,13 @@ destruct H as [n H]; induction H; rewrite <- rtn1_trans_equiv in *; eauto.
 Qed.
 
 Require Import Omega.
-Lemma my_rt_clos_transitivity (R: relation A) : forall n m x y z,
-  my_rt_clos R n x y →
-  my_rt_clos R m y z →
-  my_rt_clos R (n+m) x z.
+Lemma rt_length_clos_transitivity (R: relation A) : forall n m x y z,
+  rt_length_clos R n x y →
+  rt_length_clos R m y z →
+  rt_length_clos R (n+m) x z.
 Proof.
 intro R.
-assert (forall n x y z, my_rt_clos R n x y → R y z → my_rt_clos R (1+n) x z).
+assert (forall n x y z, rt_length_clos R n x y → R y z → rt_length_clos R (1+n) x z).
   intros n x y z Hn; induction Hn; intros; eauto.
 intros n m x y z Hn Hm.
 generalize dependent x. generalize dependent n.
@@ -336,8 +449,8 @@ replace (n+0) with n by auto; auto.
 replace (n0+(1+n)) with (1+(n0+n)) by omega; eauto.
 Qed.
 
-Lemma my_rt_clos_0_self (R: relation A) :
-  forall x y, my_rt_clos R 0 x y → x = y.
+Lemma rt_length_clos_0_self (R: relation A) :
+  forall x y, rt_length_clos R 0 x y → x = y.
 Proof.
 intros R x y H.
 remember 0 as n.
@@ -353,9 +466,8 @@ intros R1 R2 Hcomm.
 intros x y H.
 assert (((R1; R2⁻¹)⁻¹) y x) as H' by auto.
 rewrite (transp_concat_commute _ _ _ _) in H'.
-assert ((R2; R1 ⁻¹) y x). destruct H' as [? [? ?]]; eauto.
-apply Hcomm in H0. destruct H0 as [? [? ?]].
-assert ((R2⁻¹) x x0) by auto.
+autorewrite with rel in H'.
+apply Hcomm in H'. destruct H' as [? [? ?]].
 eauto.
 Qed.
 
@@ -480,40 +592,40 @@ Lemma diamond_confluent (R: relation A) :
 Proof.
 intros R Hdiamond.
 assert (forall p n m x y z, n ≤ p → m ≤ p →
-  my_rt_clos R m x z →
-  my_rt_clos R n y z →
-  exists t, my_rt_clos R n t x ∧ my_rt_clos R m t y).
+  rt_length_clos R m x z →
+  rt_length_clos R n y z →
+  exists t, rt_length_clos R n t x ∧ rt_length_clos R m t y).
 intro p; induction p; intros n m x y z Hn Hm Hx Hy.
 (* case p = 0 *)
 assert (n = 0) by omega; assert (m = 0) by omega; subst.
-assert (x = z) by eauto using my_rt_clos_0_self;
-assert (y = z) by eauto using my_rt_clos_0_self;
+assert (x = z) by eauto using rt_length_clos_0_self;
+assert (y = z) by eauto using rt_length_clos_0_self;
 subst; eauto.
 (* case p > 0 *)
 destruct Hx; eauto.
 destruct Hy; eauto.
 assert ((R⁻¹; R) y y0) as [t [Htx Hty]] by eauto 7.
-assert (exists u, my_rt_clos R 1 u x0 ∧ my_rt_clos R n u t) as [u [Hux0 Hut]].
+assert (exists u, rt_length_clos R 1 u x0 ∧ rt_length_clos R n u t) as [u [Hux0 Hut]].
   destruct n.
   (* n = 0 *)
-  assert (x0 = y) by eauto using my_rt_clos_0_self; subst.
+  assert (x0 = y) by eauto using rt_length_clos_0_self; subst.
   replace 1 with (1+0) by reflexivity; eauto.
   (* n > 0 *)
   apply IHp with (z := y); try omega; eauto.
     replace 1 with (1+0) by reflexivity; eauto.
-assert (exists v, my_rt_clos R 1 v x ∧ my_rt_clos R n0 v t) as [v [Hvx Hvt]].
+assert (exists v, rt_length_clos R 1 v x ∧ rt_length_clos R n0 v t) as [v [Hvx Hvt]].
   destruct n0.
   (* n0 = 0 *)
-  assert (x = y0) by eauto using my_rt_clos_0_self; subst.
+  assert (x = y0) by eauto using rt_length_clos_0_self; subst.
   replace 1 with (1+0) by reflexivity; eauto.
   (* n0 > 0 *)
   apply IHp with (z := y0); try omega; eauto.
     replace 1 with (1+0) by reflexivity; eauto.
-assert (exists w, my_rt_clos R n0 w u ∧ my_rt_clos R n w v) as [w [Hwu Hwv]].
+assert (exists w, rt_length_clos R n0 w u ∧ rt_length_clos R n w v) as [w [Hwu Hwv]].
   apply IHp with (z := t); try omega; eauto.
 exists w; split.
-replace (1+n) with (n+1) by omega; eauto using my_rt_clos_transitivity.
-replace (1+n0) with (n0+1) by omega; eauto using my_rt_clos_transitivity.
+replace (1+n) with (n+1) by omega; eauto using rt_length_clos_transitivity.
+replace (1+n0) with (n0+1) by omega; eauto using rt_length_clos_transitivity.
 (*
             z
            / \
@@ -535,13 +647,13 @@ replace (1+n0) with (n0+1) by omega; eauto using my_rt_clos_transitivity.
 *)
 intros x y [z [Hxz Hyz]].
 unfold transp in Hyz.
-rewrite (my_rt_clos_equiv R x z)  in Hxz.
-rewrite (my_rt_clos_equiv R y z)  in Hyz.
+rewrite (rt_length_clos_equiv R x z)  in Hxz.
+rewrite (rt_length_clos_equiv R y z)  in Hyz.
 destruct Hxz as [n Hxz].
 destruct Hyz as [m Hyz].
-assert (exists t, my_rt_clos R m t x ∧ my_rt_clos R n t y) as [t [Htx Hty]].
+assert (exists t, rt_length_clos R m t x ∧ rt_length_clos R n t y) as [t [Htx Hty]].
   eapply (H (n+m)); try omega; eauto.
-exists t; split; unfold transp; rewrite (my_rt_clos_equiv _ _ _) ; eauto.
+exists t; split; unfold transp; rewrite (rt_length_clos_equiv _ _ _) ; eauto.
 Qed.
 
 Lemma hindley_rosen1 (R1 R2: relation A):
@@ -697,7 +809,7 @@ intros R1 R2 Hc2 Hwf2 Hnf y x y' x' Hy'y Hx'x Hyx.
 generalize dependent y'. generalize dependent x'.
 rewrite t1n_trans_equiv in Hyx; induction Hyx; try rewrite <- t1n_trans_equiv in *|-; intros.
 destruct H.
-  eauto using plus_star_included.
+  apply plus_star_included; eauto.
   assert (x' = y'); subst; auto.
     destruct Hx'x; destruct Hy'y.
     assert ((R2⋆⁻¹; R2⋆) y' x') as [t [? ?]] by eauto 8.
@@ -709,7 +821,7 @@ destruct H.
   destruct (well_founded_nf_exists R2 y Hwf2) as [t Hty].
     assert ((R1⁺) x' t) by eauto.
     apply IHHyx with (y' := y') in Hty; auto.
-    eauto using plus_star_included.
+    apply plus_star_included in H0; eauto.
   destruct Hx'x; eauto 6.
 Qed.
 
@@ -865,7 +977,7 @@ unfold nf_commute.
 intros z x t y [Hnft Htz] [Hnfy Hyx] Hxy.
 assert (commute (R1⁺) (R2⋆)) by auto using commutation_condition_DPG_plus.
 assert (((R1⁺)⁻¹; R2⋆) y z) as [t' [? ?]] by eauto 7.
-assert (nf R2 t'). apply (preserves_nf_star R1 R2 Hnf t' y); auto using plus_star_included.
+assert (nf R2 t'). apply (preserves_nf_star R1 R2 Hnf t' y); apply plus_star_included in H0; auto.
 assert (t = t') by eauto 6; subst; auto.
 Qed.
 
