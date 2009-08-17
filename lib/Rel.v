@@ -47,12 +47,12 @@ Notation "R '⁺'" := (clos_trans R) (at level 29).
 Notation "R '⁻¹'" := (transp R) (at level 29).
 Notation "R '?'" := (@eq A ∪ R) (at level 29).
 Notation "R ⊆ S" := (sub_rel R S) (at level 31).
-Notation "R ≡ S" := (eq_rel R S) (*(forall x y, R x y ↔ S x y)*) (at level 31).
+Notation "R ≡ S" := (eq_rel R S) (at level 31).
 
-Definition diamond (R: relation A) := (R; R⁻¹) ⊆ (R⁻¹; R).
-Definition confluent (R: relation A) := diamond (R ⋆).
-Definition weakly_confluent (R: relation A) := (R; R⁻¹) ⊆ (R ⋆ ⁻¹; R ⋆).
-Definition commute (R1 R2: relation A) := (R2 ; R1⁻¹) ⊆ (R1⁻¹ ; R2).
+Definition diamond {A} (R: relation A) := (R; R⁻¹) ⊆ (R⁻¹; R).
+Definition confluent {A} (R: relation A) := diamond (R ⋆).
+Definition weakly_confluent {A} (R: relation A) := (R; R⁻¹) ⊆ (R ⋆ ⁻¹; R ⋆).
+Definition commute {A} (R1 R2: relation A) := (R2 ; R1⁻¹) ⊆ (R1⁻¹ ; R2).
 Hint Unfold diamond confluent weakly_confluent commute.
 
 (** * Infrastructure  to allow rewriting on relations *)
@@ -1025,3 +1025,14 @@ auto using akama_confluence, DPG_diagram2, confluent_nf_unique.
 Qed.
 
 End Rel.
+
+(** begin hide *)
+Notation "R ; S" := (concat _ R S) (at level 30).
+Notation "R ∪ S" := (union _ R S) (at level 30).
+Notation "R '⋆'" := (clos_refl_trans _ R) (at level 29).
+Notation "R '⁺'" := (clos_trans _ R) (at level 29).
+Notation "R '⁻¹'" := (transp _ R) (at level 29).
+Notation "R '?'" := (@eq _ ∪ R) (at level 29).
+Notation "R ⊆ S" := (sub_rel _ R S) (at level 31).
+Notation "R ≡ S" := (eq_rel _ R S) (at level 31).
+(** end hide *)

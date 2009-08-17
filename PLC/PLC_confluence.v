@@ -314,14 +314,14 @@ inversion Hcan; subst.
   apply para_red_subst; auto.
 Qed.
 
-Lemma para_red_diamond : diamond _ (transp _ para_red).
+Lemma para_red_diamond : diamond (para_red⁻¹).
 Proof.
 intros e1 e2 [e [H1 H2]]. unfold transp in *|-.
 destruct (can_total e) as [e' H']; eauto.
 exists e'; unfold transp; split; eauto using para_red_canonize.
 Qed.
 
-Lemma para_red_plus_diamond : diamond _ (clos_trans _ (transp _ para_red)).
+Lemma para_red_plus_diamond : diamond (para_red⁻¹⁺).
 Proof.
 auto using diamond_plus, para_red_diamond.
 Qed.
