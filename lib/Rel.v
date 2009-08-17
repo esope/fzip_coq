@@ -1026,7 +1026,7 @@ Qed.
 
 End Rel.
 
-(** begin hide *)
+(* begin hide *)
 Notation "R ; S" := (concat _ R S) (at level 30).
 Notation "R ∪ S" := (union _ R S) (at level 30).
 Notation "R '⋆'" := (clos_refl_trans _ R) (at level 29).
@@ -1035,4 +1035,4 @@ Notation "R '⁻¹'" := (transp _ R) (at level 29).
 Notation "R '?'" := (@eq _ ∪ R) (at level 29).
 Notation "R ⊆ S" := (sub_rel _ R S) (at level 31).
 Notation "R ≡ S" := (eq_rel _ R S) (at level 31).
-(** end hide *)
+(* end hide *)
