@@ -1,4 +1,4 @@
-Add LoadPath "metatheory".
+Add LoadPath "../metatheory".
 Require Export PLC_init.
 
 (* Administrative lemmas *)

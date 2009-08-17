@@ -33,7 +33,7 @@ LNGENFLAGS = ## --coq-admitted
 
 INCDIRS = \
 	. \
-	metatheory \
+	../metatheory \
 
 ## Directory where generated HTML documentation should go.
 
