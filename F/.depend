@@ -1,5 +1,5 @@
-F_inf.vo: F_inf.v metatheory/Metatheory.vo metatheory/LibLNgen.vo F_ott.vo
-F_ott.vo: F_ott.v metatheory/Metatheory.vo
+F_inf.vo: F_inf.v ../metatheory/Metatheory.vo ../metatheory/LibLNgen.vo F_ott.vo
+F_ott.vo: F_ott.v ../metatheory/Metatheory.vo
 F_init.vo: F_init.v F_inf.vo
 F_soundness.vo: F_soundness.v F_init.vo
 F_dec.vo: F_dec.v F_soundness.vo

@@ -1,4 +1,4 @@
-Add LoadPath "metatheory".
+Add LoadPath "../metatheory".
 Require Export F_init.
 
 Ltac gather_atoms ::=

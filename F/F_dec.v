@@ -1,4 +1,4 @@
-Add LoadPath "metatheory".
+Add LoadPath "../metatheory".
 Require Export F_soundness.
 
 Lemma eq_typ_dec : forall (τ₁ τ₂: typ), {τ₁ = τ₂} + {τ₁ ≠ τ₂}.
