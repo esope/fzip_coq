@@ -15,37 +15,30 @@
 Require Import Utf8.
 Require Import Relations.
 
-Section Rel.
-Hypothesis A : Type.
-
 Implicit Arguments clos_refl_trans [A].
 Implicit Arguments clos_trans [A].
 Implicit Arguments transp [A].
-Hint Resolve rt_refl rt_trans rt_step.
-Hint Resolve t_trans t_step.
+Hint Resolve rt_refl rt_trans rt_step : rel.
+Hint Resolve t_trans t_step : rel.
 Hint Unfold transp.
 
 (** * Definitions and notations *)
-Inductive union A (R1 R2: relation A) (x y: A): Prop :=
-| Left : R1 x y → union A R1 R2 x y
-| Right : R2 x y → union A R1 R2 x y.
+Inductive union {A} (R1 R2: relation A) (x y: A): Prop :=
+| Left : R1 x y → union R1 R2 x y
+| Right : R2 x y → union R1 R2 x y.
 Hint Constructors union.
-Implicit Arguments union [A].
-Definition concat A (R1 R2: relation A) x y :=
+Definition concat {A} (R1 R2: relation A) x y :=
   ∃ z, R1 x z ∧ R2 z y.
-Implicit Arguments concat [A].
 Hint Unfold concat.
-Definition sub_rel A (R S: relation A) := forall x y, R x y → S x y.
-Definition eq_rel A (R S: relation A) := forall x y, R x y ↔ S x y.
-Implicit Arguments sub_rel [A].
-Implicit Arguments eq_rel [A].
+Definition sub_rel {A} (R S: relation A) := forall x y, R x y → S x y.
+Definition eq_rel {A} (R S: relation A) := forall x y, R x y ↔ S x y.
 Hint Unfold sub_rel eq_rel.
 Notation "R ; S" := (concat R S) (at level 30).
 Notation "R ∪ S" := (union R S) (at level 30).
 Notation "R '⋆'" := (clos_refl_trans R) (at level 29).
 Notation "R '⁺'" := (clos_trans R) (at level 29).
 Notation "R '⁻¹'" := (transp R) (at level 29).
-Notation "R '?'" := (@eq A ∪ R) (at level 29).
+Notation "R '?'" := (@eq _ ∪ R) (at level 29).
 Notation "R ⊆ S" := (sub_rel R S) (at level 31).
 Notation "R ≡ S" := (eq_rel R S) (at level 31).
 
@@ -151,34 +144,34 @@ Qed.
 Add Parametric Morphism A : (@clos_refl_trans A) with
   signature (@eq_rel A) ==> (@eq_rel A) as clos_refl_trans_mor.
 Proof.
-intros R1 R2 H12; split; intro H; induction H; eauto.
-setoid_rewrite H12 in H; auto.
-setoid_rewrite <- H12 in H; auto.
+intros R1 R2 H12; split; intro H; induction H; eauto with rel.
+setoid_rewrite H12 in H; auto with rel.
+setoid_rewrite <- H12 in H; auto with rel.
 Qed.
 
 Add Parametric Morphism A : (@clos_refl_trans A) with
   signature (@eq_rel A) ==> (@eq A) ==> (@eq A) ==> iff as clos_refl_trans_ext_mor.
 Proof.
-intros R1 R2 H12 x y; split; intro H; induction H; eauto.
-setoid_rewrite H12 in H; auto.
-setoid_rewrite <- H12 in H; auto.
+intros R1 R2 H12 x y; split; intro H; induction H; eauto with rel.
+setoid_rewrite H12 in H; auto with rel.
+setoid_rewrite <- H12 in H; auto with rel.
 Qed.
 
 (** Morphisms for clos_trans *)
 Add Parametric Morphism A : (@clos_trans A) with
   signature (@eq_rel A) ==> (@eq_rel A) as clos_trans_mor.
 Proof.
-intros R1 R2 H12; split; intro H; induction H; eauto.
-setoid_rewrite H12 in H; auto.
-setoid_rewrite <- H12 in H; auto.
+intros R1 R2 H12; split; intro H; induction H; eauto with rel.
+setoid_rewrite H12 in H; auto with rel.
+setoid_rewrite <- H12 in H; auto with rel.
 Qed.
 
 Add Parametric Morphism A : (@clos_trans A) with
   signature (@eq_rel A) ==> (@eq A) ==> (@eq A) ==> iff as clos_trans_ext_mor.
 Proof.
-intros R1 R2 H12 x y; split; intro H; induction H; eauto.
-setoid_rewrite H12 in H; auto.
-setoid_rewrite <- H12 in H; auto.
+intros R1 R2 H12 x y; split; intro H; induction H; eauto with rel.
+setoid_rewrite H12 in H; auto with rel.
+setoid_rewrite <- H12 in H; auto with rel.
 Qed.
 
 (** Morphisms for transp *)
@@ -217,7 +210,7 @@ rewrite H12; auto.
 Qed.
 
 (** Morphisms for commute *)
-Add Parametric Morphism : commute with
+Add Parametric Morphism A : (@commute A) with
   signature (@eq_rel A) ==> (@eq_rel A) ==> iff as commute_mor.
 Proof.
 intros R1 R2 H12 R3 R4 H34.
@@ -225,11 +218,14 @@ unfold commute.
 rewrite H12; rewrite H34; tauto.
 Qed.
 
+Section Rel.
+Hypothesis A : Type.
+
 (** * Some lemmas about operations on relations *)
 Lemma star_idempotent (R: relation A):
   R ⋆⋆ ≡ R ⋆.
 Proof.
-intros R x y; split; intro H; induction H; eauto.
+intros R x y; split; intro H; induction H; eauto with rel.
 Qed.
 Hint Rewrite star_idempotent : rel.
 Hint Resolve star_idempotent : rel.
@@ -237,7 +233,7 @@ Hint Resolve star_idempotent : rel.
 Lemma plus_idempotent (R: relation A):
   R ⁺⁺ ≡ R ⁺.
 Proof.
-intros R x y; split; intro H; induction H; eauto.
+intros R x y; split; intro H; induction H; eauto with rel.
 Qed.
 Hint Rewrite plus_idempotent : rel.
 Hint Resolve plus_idempotent : rel.
@@ -245,7 +241,7 @@ Hint Resolve plus_idempotent : rel.
 Lemma plus_star_equiv (R: relation A):
   R ⋆⁺ ≡ R⁺ ⋆.
 Proof.
-intros R x y; split; intro H; induction H; eauto; induction H; eauto.
+intros R x y; split; intro H; induction H; eauto with rel; induction H; eauto with rel.
 Qed.
 Hint Rewrite plus_star_equiv : rel.
 Hint Resolve plus_star_equiv : rel.
@@ -253,7 +249,7 @@ Hint Resolve plus_star_equiv : rel.
 Lemma star_plus_star_equiv (R: relation A):
   R ⋆⁺ ≡ R ⋆.
 Proof.
-intros R x y; split; intro H; induction H; eauto.
+intros R x y; split; intro H; induction H; eauto with rel.
 Qed.
 Hint Rewrite star_plus_star_equiv : rel.
 Hint Resolve star_plus_star_equiv : rel.
@@ -272,11 +268,11 @@ Lemma plus_star_concat_equiv (R: relation A):
   R⁺ ≡ R ⋆; R.
 Proof.
 intros R x y; split; intro H.
-rewrite tn1_trans_equiv in H; induction H; try rewrite <- tn1_trans_equiv in *|-; eauto.
+rewrite tn1_trans_equiv in H; induction H; try rewrite <- tn1_trans_equiv in *|-; eauto with rel.
 destruct IHclos_trans_n1 as [? [? ?]].
-eauto 6.
+eauto 6 with rel.
 destruct H as [? [? ?]]. generalize dependent y.
-rewrite rtn1_trans_equiv in H; induction H; try rewrite <- rtn1_trans_equiv in *|-; eauto.
+rewrite rtn1_trans_equiv in H; induction H; try rewrite <- rtn1_trans_equiv in *|-; eauto with rel.
 Qed.
 Hint Resolve plus_star_concat_equiv : rel.
 
@@ -284,7 +280,7 @@ Lemma plus_star_included (R: relation A):
   R⁺ ⊆ R ⋆.
 Proof.
 intros R x y H.
-induction H; eauto.
+induction H; eauto with rel.
 Qed.
 Hint Resolve plus_star_included : rel.
 
@@ -301,8 +297,8 @@ Hint Resolve concat_assoc : rel.
 Lemma star_equiv (R: relation A):
   R ⋆ ≡ R ⋆ ; R ⋆.
 Proof.
-intros; split; intro H; eauto.
-destruct H as [z [Hxz Hzy]]; eauto.
+intros; split; intro H; eauto with rel.
+destruct H as [z [Hxz Hzy]]; eauto with rel.
 Qed.
 Hint Rewrite <- star_equiv : rel.
 Hint Resolve star_equiv : rel.
@@ -328,8 +324,8 @@ Lemma transp_star_commute (R: relation A):
   R⁻¹ ⋆ ≡ R ⋆ ⁻¹.
 Proof.
 intro R. split; intro H.
-induction H; unfold transp in *; eauto.
-unfold transp in H. induction H; eauto.
+induction H; unfold transp in *; eauto with rel.
+unfold transp in H. induction H; eauto with rel.
 Qed.
 Hint Rewrite transp_star_commute : rel.
 Hint Resolve transp_star_commute : rel.
@@ -338,8 +334,8 @@ Lemma transp_plus_commute (R: relation A):
   R⁻¹⁺ ≡ R⁺ ⁻¹.
 Proof.
 intro R. split; intro H.
-induction H; unfold transp in *; eauto.
-unfold transp in H. induction H; eauto.
+induction H; unfold transp in *; eauto with rel.
+unfold transp in H. induction H; eauto with rel.
 Qed.
 Hint Rewrite transp_plus_commute : rel.
 Hint Resolve transp_plus_commute : rel.
@@ -348,14 +344,14 @@ Lemma union_star_equiv (R1 R2: relation A):
   (R1 ∪ R2)⋆ ≡ (R1 ⋆; R2 ⋆)⋆.
 Proof.
 intros R1 R2 x y; split; intro H.
-induction H; eauto.
-destruct H; apply rt_step; eauto.
-induction H; eauto.
+induction H; eauto with rel.
+destruct H; apply rt_step; eauto with rel.
+induction H; eauto with rel.
 destruct H as [z [Hxz Hzy]].
-generalize dependent y. induction Hxz; intros; eauto.
-apply rt_trans with (y := y); auto.
-clear H; induction Hzy; eauto.
-induction Hzy; eauto.
+generalize dependent y. induction Hxz; intros; eauto with rel.
+apply rt_trans with (y := y); auto with rel.
+clear H; induction Hzy; eauto with rel.
+induction Hzy; eauto with rel.
 Qed.
 Hint Resolve union_star_equiv : rel.
 
@@ -363,7 +359,7 @@ Lemma concat_star_included1 (R1 R2: relation A):
   R1 ⋆ ⊆ (R1; R2 ⋆)⋆.
 Proof.
 intros R1 R2 x y H.
-induction H; eauto.
+induction H; eauto with rel.
 Qed.
 Hint Resolve concat_star_included1 : rel.
 
@@ -371,29 +367,29 @@ Lemma concat_star_included2 (R1 R2: relation A):
   R2 ⋆ ⊆ (R1 ⋆; R2)⋆.
 Proof.
 intros R1 R2 x y H.
-induction H; eauto.
+induction H; eauto with rel.
 Qed.
 Hint Resolve concat_star_included2 : rel.
 
 Lemma union_star_included1 (R1 R2: relation A):
   R1 ⋆ ⊆ (R1 ∪ R2)⋆.
 Proof.
-intros R1 R2 x y H. induction H; eauto.
+intros R1 R2 x y H. induction H; eauto with rel.
 Qed.
 Hint Resolve union_star_included1 : rel.
 
 Lemma union_star_included2 (R1 R2: relation A):
   R2 ⋆ ⊆ (R1 ∪ R2)⋆.
 Proof.
-intros R1 R2 x y H. induction H; eauto.
+intros R1 R2 x y H. induction H; eauto with rel.
 Qed.
 Hint Resolve union_star_included2 : rel.
 
 Lemma union_star_equiv2 (R1 R2: relation A):
   (R1 ∪ R2)⋆ ≡ (R1 ⋆ ∪ R2 ⋆)⋆.
 Proof.
-intros R1 R2 x y; split; intro H; induction H; eauto.
-destruct H; eauto.
+intros R1 R2 x y; split; intro H; induction H; eauto with rel.
+destruct H; eauto with rel.
 destruct H. apply union_star_included1; auto. apply union_star_included2; auto.
 Qed.
 Hint Resolve union_star_equiv : rel.
@@ -401,22 +397,22 @@ Hint Resolve union_star_equiv : rel.
 Lemma union_plus_included1 (R1 R2: relation A):
   R1⁺ ⊆ (R1 ∪ R2)⁺.
 Proof.
-intros R1 R2 x y H. induction H; eauto.
+intros R1 R2 x y H. induction H; eauto with rel.
 Qed.
 Hint Resolve union_plus_included1 : rel.
 
 Lemma union_plus_included2 (R1 R2: relation A):
   R2⁺ ⊆ (R1 ∪ R2)⁺.
 Proof.
-intros R1 R2 x y H. induction H; eauto.
+intros R1 R2 x y H. induction H; eauto with rel.
 Qed.
 Hint Resolve union_plus_included2 : rel.
 
 Lemma union_plus_equiv2 (R1 R2: relation A):
   (R1 ∪ R2)⁺ ≡ (R1⁺ ∪ R2⁺)⁺.
 Proof.
-intros R1 R2 x y; split; intro H; induction H; eauto.
-destruct H; eauto.
+intros R1 R2 x y; split; intro H; induction H; eauto with rel.
+destruct H; eauto with rel.
 destruct H. apply union_plus_included1; auto. apply union_plus_included2; auto.
 Qed.
 Hint Resolve union_plus_equiv2 : rel.
@@ -444,7 +440,7 @@ Proof.
 intros R x y; rewrite tn1_trans_equiv; split; intro H.
 induction H; eauto.
   destruct IHclos_trans_n1; eauto.
-destruct H as [n H]; induction H; rewrite <- tn1_trans_equiv in *; eauto.
+destruct H as [n H]; induction H; rewrite <- tn1_trans_equiv in *; eauto with rel.
 Qed.
 
 Require Import Omega.
@@ -492,10 +488,10 @@ intros R1 R2 Hcomm x y H.
 destruct H as [z [Hxz Hyz]].
 unfold transp in Hyz.
 rewrite rt1n_trans_equiv in Hyz.
-generalize dependent x; induction Hyz; intros; eauto.
+generalize dependent x; induction Hyz; intros; eauto with rel.
 apply IHHyz in Hxz. destruct Hxz as [? [? ?]].
 assert ((R2; R1⁻¹) x1 x) by eauto. apply Hcomm in H2.
-destruct H2 as [? [? ?]]; eauto 7.
+destruct H2 as [? [? ?]]; eauto 7 with rel.
 Qed.
 
 Lemma commute_star2 (R1 R2:relation A):
@@ -553,17 +549,17 @@ assert (R1; R2 ⋆ ⁻¹ ⊆ (R2 ⋆) ⁻¹; R1 ⋆) as Hcomm2.
   intros x y [z [Hxz Hyz]]. unfold transp in Hyz.
   generalize dependent x.
   rewrite rtn1_trans_equiv in Hyz; induction Hyz; try rewrite <- rtn1_trans_equiv in *|-; intros.
-   eauto 7.
+   eauto 7 with rel.
    assert (((R2 ⋆) ⁻¹; R1 ?) x y0) as [t [Htx Hty0]] by eauto.
    destruct Hty0; subst.
-     eauto 6.
-     apply IHHyz in H0; destruct H0 as [? [? ?]]; eauto 6.
+     eauto 6 with rel.
+     apply IHHyz in H0; destruct H0 as [? [? ?]]; eauto 6 with rel.
 intros x y [z [Hxz Hyz]].
 unfold transp in Hyz.
-generalize dependent x; rewrite rtn1_trans_equiv in Hyz; induction Hyz; try rewrite <- rtn1_trans_equiv in *|-; intros; eauto.
+generalize dependent x; rewrite rtn1_trans_equiv in Hyz; induction Hyz; try rewrite <- rtn1_trans_equiv in *|-; intros; eauto with rel.
 assert (((R2 ⋆) ⁻¹; R1 ⋆) y0 x) as [t [Hty0 Htx]] by eauto.
 apply IHHyz in Hty0. destruct Hty0 as [? [? ?]].
-eauto 6.
+eauto 6 with rel.
 Qed.
 
 (** * Lemmas about [confluent] *)
@@ -660,7 +656,7 @@ Proof.
 intros R Hdiamond x y [z [Hxz Hyz]].
 unfold transp in Hyz.
 rewrite rtn1_trans_equiv in Hxz; rewrite rtn1_trans_equiv in Hyz;
-destruct Hxz; destruct Hyz; try rewrite <- rtn1_trans_equiv in *|-; eauto 7.
+destruct Hxz; destruct Hyz; try rewrite <- rtn1_trans_equiv in *|-; eauto 7 with rel.
 assert ((R⁺) x z). rewrite (plus_star_concat_equiv _ _); eauto.
 assert ((R⁺) y z). rewrite (plus_star_concat_equiv _ _); eauto.
 destruct (diamond_plus R Hdiamond x y) as [? [? ?]]; eauto using plus_star_included.
@@ -715,10 +711,10 @@ generalize dependent y1; generalize dependent y2.
 induction H; intros.
 generalize dependent y2.
 induction Hxy1; intros; eauto.
-rewrite <- rtn1_trans_equiv in * |-; eauto.
+rewrite <- rtn1_trans_equiv in * |-; eauto with rel.
 generalize dependent y1; generalize dependent y.
 induction Hxy2; intros; eauto.
-rewrite <- rtn1_trans_equiv in * |-; eauto 7.
+rewrite <- rtn1_trans_equiv in * |-; eauto 7 with rel.
 assert (((R ⋆) ⁻¹; R ⋆) y y0) as [x [Hxy Hxy0]] by eauto.
 unfold transp in Hxy.
 assert (((R ⋆) ⁻¹; R ⋆) x y1) as [t [Htx Hty1]].
@@ -730,9 +726,9 @@ assert (((R ⋆) ⁻¹; R ⋆) y2 x) as [u [Huy2 Hux]].
 unfold transp in Htx. unfold transp in Huy2.
 assert (((R ⋆) ⁻¹; R ⋆) t u) as [v [Hvt Hvu]].
   eapply H0; eauto.
-  rewrite <- rtn1_trans_equiv; eauto.
-  rewrite <- rtn1_trans_equiv; eauto.
-unfold transp in Hvt; eauto 7.
+  rewrite <- rtn1_trans_equiv; eauto with rel.
+  rewrite <- rtn1_trans_equiv; eauto with rel.
+unfold transp in Hvt; eauto 7 with rel.
 Qed.
 
 (** * Definitions about normal forms *)
@@ -795,8 +791,8 @@ intros R x Hwf.
 assert (Acc R x) as Hacc by auto; induction Hacc.
 Require Import Classical.
 destruct (classic (exists y, R y x)) as [[y Hy] | ?].
-assert (exists z, is_nf_of R z y) as [z [Hyz Hz]] by auto; eauto 7.
-eauto 8.
+assert (exists z, is_nf_of R z y) as [z [Hyz Hz]] by auto; eauto 7 with rel.
+eauto 8 with rel.
 Qed.
 
 Lemma preserves_nf_plus (R1 R2: relation A):
@@ -824,9 +820,9 @@ generalize dependent y'. generalize dependent x'.
 rewrite t1n_trans_equiv in Hyx; induction Hyx; try rewrite <- t1n_trans_equiv in *|-; intros.
 destruct H.
   apply plus_star_included; eauto.
-  assert (x' = y'); subst; auto.
+  assert (x' = y'); subst; auto with rel.
     destruct Hx'x; destruct Hy'y.
-    assert ((R2 ⋆ ⁻¹; R2 ⋆) y' x') as [t [? ?]] by eauto 8.
+    assert ((R2 ⋆ ⁻¹; R2 ⋆) y' x') as [t [? ?]] by eauto 8 with rel.
     unfold transp in *|-.
     assert (t = y') by eauto using nf_star_eq.
     assert (t = x') by eauto using nf_star_eq.
@@ -835,8 +831,8 @@ destruct H.
   destruct (well_founded_nf_exists R2 y Hwf2) as [t Hty].
     assert ((R1⁺) x' t) by eauto.
     apply IHHyx with (y' := y') in Hty; auto.
-    apply plus_star_included in H0; eauto.
-  destruct Hx'x; eauto 6.
+    apply plus_star_included in H0; eauto with rel.
+  destruct Hx'x; eauto 6 with rel.
 Qed.
 
 Lemma nf_commute_star (R1 R2: relation A):
@@ -847,7 +843,7 @@ Lemma nf_commute_star (R1 R2: relation A):
 Proof.
 intros R1 R2 Hc2 Hwf2 Hnf y x y' x' Hy'y Hx'x Hyx.
 rewrite rtn1_trans_equiv in Hyx; destruct Hyx; try rewrite <- rtn1_trans_equiv in *|-.
-assert (y' = x'). eapply confluent_nf_unique; eauto. subst; auto.
+assert (y' = x'). eapply confluent_nf_unique; eauto. subst; auto with rel.
 eapply nf_commute_plus; eauto. rewrite (plus_star_concat_equiv _ _ _); eauto.
 Qed.
 
@@ -858,13 +854,13 @@ Proof.
 intro R; split; intros H x.
 (* → *)
 assert (Acc (R⁺) x) by auto; induction H0.
-constructor; intros; eauto.
+constructor; intros; eauto with rel.
 (* ← *)
 constructor.
 assert (Acc R x) as H0 by auto; induction H0.
 intros y H2; rewrite tn1_trans_equiv in H2; induction H2; constructor; intros.
   eauto.
-  rewrite <- tn1_trans_equiv in H3; eauto.
+  rewrite <- tn1_trans_equiv in H3; eauto with rel.
 Qed.
 
 Lemma union_wf (R1 R2: relation A):
@@ -878,10 +874,10 @@ assert (well_founded (R2 ; (R1)⋆)) as wfR2R1 by auto using concat_wf_equiv.
 intro x.
 assert (Acc (R1 ; (R2)⋆) x) as Hx1 by auto; induction Hx1.
 assert (Acc (R2 ; (R1)⋆) x) as Hx2 by auto; induction Hx2.
-constructor; intros y [Hy | Hy]; eauto.
-eapply H2; eauto.
+constructor; intros y [Hy | Hy]; eauto with rel.
+eapply H2; eauto with rel.
 intros z Hz.
-eapply H0; eauto. rewrite (concat_star_equiv _ _ _); eauto.
+eapply H0; eauto. rewrite (concat_star_equiv _ _ _); eauto with rel.
 Qed.
 
 (** Akama's lemmas, from 'On Mints' Reduction for ccc-Calculus', Yohji Akama, TLCA '93 *)
@@ -908,7 +904,7 @@ assert ((R1⁺) z' y) by eauto; eauto.
 destruct (well_founded_nf_exists R2 z Hwf2) as [z' Hz'].
 eapply H0; intros; eauto.
 destruct Hx.
-assert ((R2 ⋆ ⁻¹; R2 ⋆) y z) as [t [? ?]] by eauto 7.
+assert ((R2 ⋆ ⁻¹; R2 ⋆) y z) as [t [? ?]] by eauto 7 with rel.
 assert (t = y) by eauto using nf_star_eq; subst.
 assert (y = z'); subst. eapply confluent_nf_unique; eauto.
 destruct Hz'; eauto.
@@ -927,7 +923,7 @@ destruct (well_founded_nf_exists R2 z Hwf2) as [z' [Hnfz' Hz'z]].
 assert ((R1 ⋆) y' x') by eauto 6 using nf_commute_star.
 assert ((R1 ⋆) z' x') by eauto 6 using nf_commute_star.
 assert ((R1 ⋆ ⁻¹; R1 ⋆) y' z') as [t [Hty' Htz']] by eauto.
-assert ((((R1 ⋆ ∪ R2 ⋆) ⋆) ⁻¹; (R1 ⋆ ∪ R2 ⋆) ⋆) y z) as [u [Hu1 Hu2]]. exists t; unfold transp; split; eauto 6.
+assert ((((R1 ⋆ ∪ R2 ⋆) ⋆) ⁻¹; (R1 ⋆ ∪ R2 ⋆) ⋆) y z) as [u [Hu1 Hu2]]. exists t; unfold transp; split; eauto 6 with rel.
 unfold transp in *|-.
 rewrite <- (union_star_equiv2 _ _ _) in Hu1.
 rewrite <- (union_star_equiv2 _ _ _) in Hu2.
@@ -951,15 +947,15 @@ rename x into y.
 intros z [x [Hyx Hzx]]. unfold transp in Hzx.
 generalize dependent z.
 rewrite rtn1_trans_equiv in Hyx; induction Hyx; try rewrite <- rtn1_trans_equiv in *|-; intros.
-eauto 7.
+eauto 7 with rel.
 rewrite tn1_trans_equiv in Hzx; destruct Hzx; try rewrite <- tn1_trans_equiv in *|-; eauto.
 assert ((R1⁺ ⁻¹;R2 ⋆) y0 z0) as [t [Hty0 Htz0]] by eauto;
-apply IHHyx in Hty0; destruct Hty0 as [? [? ?]]; eauto.
+apply IHHyx in Hty0; destruct Hty0 as [? [? ?]]; eauto with rel.
 assert ((R1⁺ ⁻¹;R2 ⋆) y0 y1) as [t [Hty0 Hty1]] by eauto.
 unfold transp in Hty0.
 assert (((R1 ⁺) ⁻¹; R2 ⋆) y t) as [u [Huy Hut]] by auto.
 unfold transp in Huy.
-assert (((R1 ⁺) ⁻¹; R2 ⋆) u z0) as [v [Hvu Hvz0]]; eauto 6.
+assert (((R1 ⁺) ⁻¹; R2 ⋆) u z0) as [v [Hvu Hvz0]]; eauto 6 with rel.
 Qed.
 
 Lemma commutation_condition_DPG (R1 R2: relation A):
@@ -992,7 +988,7 @@ intros R1 R2 Hwf HDPG Huniq Hnf.
 unfold nf_commute.
 intros z x t y [Hnft Htz] [Hnfy Hyx] Hxy.
 assert (commute (R1⁺) (R2 ⋆)) by auto using commutation_condition_DPG_plus.
-assert (((R1⁺)⁻¹; R2 ⋆) y z) as [t' [? ?]] by eauto 7.
+assert (((R1⁺)⁻¹; R2 ⋆) y z) as [t' [? ?]] by eauto 7 with rel.
 assert (nf R2 t'). apply (preserves_nf_star R1 R2 Hnf t' y); apply plus_star_included in H0; auto.
 assert (t = t') by eauto 6; subst; auto.
 Qed.
@@ -1025,14 +1021,3 @@ auto using akama_confluence, DPG_diagram2, confluent_nf_unique.
 Qed.
 
 End Rel.
-
-(* begin hide *)
-Notation "R ; S" := (concat _ R S) (at level 30).
-Notation "R ∪ S" := (union _ R S) (at level 30).
-Notation "R '⋆'" := (clos_refl_trans _ R) (at level 29).
-Notation "R '⁺'" := (clos_trans _ R) (at level 29).
-Notation "R '⁻¹'" := (transp _ R) (at level 29).
-Notation "R '?'" := (@eq _ ∪ R) (at level 29).
-Notation "R ⊆ S" := (sub_rel _ R S) (at level 31).
-Notation "R ≡ S" := (eq_rel _ R S) (at level 31).
-(* end hide *)
