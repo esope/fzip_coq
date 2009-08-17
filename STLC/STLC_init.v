@@ -1,4 +1,4 @@
-Add LoadPath "metatheory".
+Add LoadPath "../metatheory".
 Require Export Relations.
 Require Export STLC_inf.
 Require Export Utf8.

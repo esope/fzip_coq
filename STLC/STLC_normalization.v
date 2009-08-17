@@ -1,4 +1,4 @@
-Add LoadPath "metatheory".
+Add LoadPath "../metatheory".
 Require Export STLC_soundness.
 
 Inductive sn (e : term) : Prop :=
