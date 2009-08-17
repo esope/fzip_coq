@@ -16,7 +16,7 @@ Require Import Utf8.
 Require Import Relations.
 
 Section Rel.
-Parameter A : Type.
+Hypothesis A : Type.
 
 Implicit Arguments clos_refl_trans [A].
 Implicit Arguments clos_trans [A].
@@ -472,6 +472,45 @@ induction H; auto.
 assert False by omega; contradiction.
 Qed.
 
+Inductive t_length_clos (R: relation A) : nat → A → A → Prop :=
+| t_length_step : forall x y, R x y → t_length_clos R 1 x y
+| t_length_trans : forall x y z n,
+  t_length_clos R n x y → R y z → t_length_clos R (1+n) x z.
+Hint Constructors t_length_clos.
+
+Lemma t_length_clos_equiv (R: relation A) :
+  R ⁺ ≡ (fun x y => exists n, t_length_clos R n x y).
+Proof.
+intros R x y; rewrite tn1_trans_equiv; split; intro H.
+induction H; eauto.
+  destruct IHclos_trans_n1; eauto.
+destruct H as [n H]; induction H; rewrite <- tn1_trans_equiv in *; eauto.
+Qed.
+
+Lemma t_length_clos_transitivity (R: relation A) : forall n m x y z,
+  t_length_clos R n x y →
+  t_length_clos R m y z →
+  t_length_clos R (n+m) x z.
+Proof.
+intro R.
+assert (forall n x y z, t_length_clos R n x y → R y z → t_length_clos R (1+n) x z).
+  intros n x y z Hn; induction Hn; intros; eauto.
+intros n m x y z Hn Hm.
+generalize dependent x. generalize dependent n.
+induction Hm; intros.
+replace (n+1) with (1+n) by omega; eauto.
+replace (n0+(1+n)) with (1+(n0+n)) by omega; eauto.
+Qed.
+
+Lemma t_length_clos_1_step (R: relation A) :
+  forall x y, t_length_clos R 1 x y → R x y.
+Proof.
+intros R x y H.
+remember 1 as n.
+induction H; auto.
+assert (n=0) by omega; subst; inversion H.
+Qed.
+
 (** * Lemmas about [commute] *)
 Lemma commute_sym (R1 R2: relation A):
   commute R1 R2 → commute R2 R1.
@@ -601,8 +640,11 @@ destruct Hxz; destruct Hyz.
   assert ((R2⁻¹; R2) x y) as [? [? ?]] by eauto; eauto 7.
 Qed.
 
-Lemma diamond_confluent (R: relation A) :
-  diamond R → confluent R.
+Lemma diamond_rt_length (R: relation A) :
+  diamond R →
+  forall n m x y z, rt_length_clos R m x z →
+  rt_length_clos R n y z →
+  exists t, rt_length_clos R n t x ∧ rt_length_clos R m t y.
 Proof.
 intros R Hdiamond.
 assert (forall p n m x y z, n ≤ p → m ≤ p →
@@ -659,15 +701,75 @@ replace (1+n0) with (n0+1) by omega; eauto using rt_length_clos_transitivity.
            \ /
             w
 *)
-intros x y [z [Hxz Hyz]].
+intros n m x y z H0 H1.
+eapply (H (n+m)); eauto; omega.
+Qed.
+
+Lemma diamond_confluent (R: relation A) :
+  diamond R → confluent R.
+Proof.
+intros R Hdiamond x y [z [Hxz Hyz]].
 unfold transp in Hyz.
 rewrite (rt_length_clos_equiv R x z)  in Hxz.
 rewrite (rt_length_clos_equiv R y z)  in Hyz.
 destruct Hxz as [n Hxz].
 destruct Hyz as [m Hyz].
 assert (exists t, rt_length_clos R m t x ∧ rt_length_clos R n t y) as [t [Htx Hty]].
-  eapply (H (n+m)); try omega; eauto.
+  eapply diamond_rt_length; eauto.
 exists t; split; unfold transp; rewrite (rt_length_clos_equiv _ _ _) ; eauto.
+Qed.
+
+Lemma diamond_t_length (R: relation A) :
+  diamond R →
+  forall n m x y z, t_length_clos R m x z →
+  t_length_clos R n y z →
+  exists t, t_length_clos R n t x ∧ t_length_clos R m t y.
+Proof.
+intros R Hdiamond.
+assert (forall p n m x y z, n + m ≤ p →
+  t_length_clos R m x z →
+  t_length_clos R n y z →
+  exists t, t_length_clos R n t x ∧ t_length_clos R m t y).
+intro p; induction p; intros n m x y z Hp Hx Hy.
+(* case p = 0 *)
+assert (n = 0) by omega; assert (m = 0) by omega; subst.
+inversion Hx.
+(* case p > 0 *)
+destruct Hx; eauto.
+(* n0 = 1 *)
+destruct Hy; eauto.
+(* n = 1 *)
+assert ((R⁻¹; R) x x0) as [t [Htx Hty]] by eauto 7.
+unfold transp in Htx. apply (t_length_step _ _ _) in Htx.
+apply (t_length_step _ _ _) in Hty. eauto.
+(* n > 1 *)
+assert ((R⁻¹; R) x y) as [t [Htx Hty]] by eauto 7.
+assert (exists t0, t_length_clos R n t0 t ∧ t_length_clos R 1 t0 x0) as [? [? ?]].
+  apply IHp with (z := y); try omega; eauto.
+eauto using t_length_clos_transitivity.
+(* n0 > 1 *)
+assert (exists t, t_length_clos R n t y0 ∧ t_length_clos R 1 t y) as [t [? ?]].
+  apply IHp with (z := z); try omega; eauto.
+  inversion Hx; subst; omega.
+assert (exists u, t_length_clos R n u x ∧ t_length_clos R n0 u t) as [u [? ?]].
+  apply IHp with (z := y0); try omega; eauto.
+exists u; split; auto.
+replace (1+n0) with (n0+1) by omega; eauto using t_length_clos_transitivity.
+intros n m x y z; apply (H (n+m)); auto.
+Qed.
+
+Lemma diamond_plus (R: relation A) :
+  diamond R → diamond (R⁺).
+Proof.
+intros R Hdiamond x y [z [Hxz Hyz]].
+unfold transp in Hyz.
+rewrite (t_length_clos_equiv R x z)  in Hxz.
+rewrite (t_length_clos_equiv R y z)  in Hyz.
+destruct Hxz as [n Hxz].
+destruct Hyz as [m Hyz].
+assert (exists t, t_length_clos R m t x ∧ t_length_clos R n t y) as [t [Htx Hty]].
+  eapply diamond_t_length; eauto.
+exists t; split; unfold transp; rewrite (t_length_clos_equiv _ _ _) ; eauto.
 Qed.
 
 (** Hindley-Rosen lemma, from 'The λ-calculus, its Syntax and
