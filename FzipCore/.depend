@@ -1,2 +1,2 @@
-FzipCore_inf.vo: FzipCore_inf.v metatheory/Metatheory.vo metatheory/LibLNgen.vo FzipCore_ott.vo
-FzipCore_ott.vo: FzipCore_ott.v metatheory/Metatheory.vo
+FzipCore_inf.vo: FzipCore_inf.v ../metatheory/Metatheory.vo ../metatheory/LibLNgen.vo FzipCore_ott.vo
+FzipCore_ott.vo: FzipCore_ott.v ../metatheory/Metatheory.vo
