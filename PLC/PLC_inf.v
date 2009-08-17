@@ -1,4 +1,4 @@
-Add LoadPath "metatheory".
+Add LoadPath "../metatheory".
 Require Import Coq.Arith.Wf_nat.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Program.Equality.
