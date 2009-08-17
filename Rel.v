@@ -7,9 +7,10 @@
 (*                                                                            *)
 (******************************************************************************)
 
-(* This file provides some proofs of properties on relations (confluence,     *)
-(* well-foundedness) formalized in the Coq proof assistant (version 8.2-1).   *)
-(* Version: August 2009                                                       *)
+(** This file provides some proofs of properties on relations (notably
+    combination for confluence and well-foundedness) formalized in the
+    Coq proof assistant (version 8.2-1).                                       *)
+(** Version: August 2009                                                       *)
 
 Require Import Utf8.
 Require Import Relations.
@@ -24,7 +25,7 @@ Hint Resolve rt_refl rt_trans rt_step.
 Hint Resolve t_trans t_step.
 Hint Unfold transp.
 
-(** Definitions and notations *)
+(** * Definitions and notations *)
 Inductive union A (R1 R2: relation A) (x y: A): Prop :=
 | Left : R1 x y → union A R1 R2 x y
 | Right : R2 x y → union A R1 R2 x y.
@@ -54,7 +55,7 @@ Definition weakly_confluent (R: relation A) := (R; R⁻¹) ⊆ (R⋆⁻¹; R⋆)
 Definition commute (R1 R2: relation A) := (R2 ; R1⁻¹) ⊆ (R1⁻¹ ; R2).
 Hint Unfold diamond confluent weakly_confluent commute.
 
-(** Infrastructure  to allow rewriting on relations *)
+(** * Infrastructure  to allow rewriting on relations *)
 Lemma eq_rel_refl A (R: relation A): R ≡ R.
 Proof.
 intros B R x y; tauto.
@@ -77,7 +78,7 @@ Add Parametric Relation A : (relation A) (@eq_rel A)
   transitivity proved by (eq_rel_trans A)
 as eq_rel_setoid.
 
-(* Morphisms for relation application *)
+(** Morphisms for relation application *)
 Add Parametric Morphism A : (@id (relation A)) with
   signature (@eq_rel A) ==> pointwise_relation A (pointwise_relation A iff) as rel_apply_mor.
 Proof.
@@ -93,7 +94,7 @@ intros R1 R2 H12 x y.
 setoid_rewrite H12. tauto.
 Qed.
 
-(* Morphisms for sub_rel *)
+(** Morphisms for sub_rel *)
 Add Parametric Morphism A : (@sub_rel A) with
   signature (@eq_rel A) ==> (@eq_rel A) ==> iff as sub_rel_mor.
 Proof.
@@ -104,7 +105,7 @@ setoid_rewrite <- H34; apply H; setoid_rewrite H12; auto.
 setoid_rewrite H34; apply H; setoid_rewrite <- H12; auto.
 Qed.
 
-(* Morphisms for union *)
+(** Morphisms for union *)
 Add Parametric Morphism A : (@union A) with
   signature (@eq_rel A) ==> (@eq_rel A) ==> (@eq_rel A) as union_mor.
 Proof.
@@ -125,7 +126,7 @@ setoid_rewrite H.
 reflexivity.
 Qed.
 
-(* Morphisms for concat *)
+(** Morphisms for concat *)
 Add Parametric Morphism A : (@concat A) with
   signature (@eq_rel A) ==> (@eq_rel A) ==> (@eq_rel A) as concat_mor.
 Proof.
@@ -146,7 +147,7 @@ setoid_rewrite H.
 reflexivity.
 Qed.
 
-(* Morphisms for clos_refl_trans *)
+(** Morphisms for clos_refl_trans *)
 Add Parametric Morphism A : (@clos_refl_trans A) with
   signature (@eq_rel A) ==> (@eq_rel A) as clos_refl_trans_mor.
 Proof.
@@ -163,7 +164,7 @@ setoid_rewrite H12 in H; auto.
 setoid_rewrite <- H12 in H; auto.
 Qed.
 
-(* Morphisms for clos_trans *)
+(** Morphisms for clos_trans *)
 Add Parametric Morphism A : (@clos_trans A) with
   signature (@eq_rel A) ==> (@eq_rel A) as clos_trans_mor.
 Proof.
@@ -180,7 +181,7 @@ setoid_rewrite H12 in H; auto.
 setoid_rewrite <- H12 in H; auto.
 Qed.
 
-(* Morphisms for transp *)
+(** Morphisms for transp *)
 Add Parametric Morphism A : (@transp A) with
   signature (@eq_rel A) ==> (@eq_rel A) as transp_mor.
 Proof.
@@ -193,7 +194,7 @@ Proof.
 intros R1 R2 H12 x y; unfold transp; setoid_rewrite H12; tauto.
 Qed.
 
-(* Morphisms for Acc *)
+(** Morphisms for Acc *)
 Add Parametric Morphism A : (@Acc A) with
   signature (@eq_rel A) ==> (@eq A) ==> iff as acc_mor.
 Proof.
@@ -206,7 +207,7 @@ constructor; intros. setoid_rewrite H12 in H2.
 auto.
 Qed.
 
-(* Morphisms for well_founded *)
+(** Morphisms for well_founded *)
 Add Parametric Morphism A : (@well_founded A) with
   signature (@eq_rel A) ==> iff as wf_mor.
 Proof.
@@ -215,7 +216,7 @@ rewrite <- H12; auto.
 rewrite H12; auto.
 Qed.
 
-(* Morphisms for commute *)
+(** Morphisms for commute *)
 Add Parametric Morphism : commute with
   signature (@eq_rel A) ==> (@eq_rel A) ==> iff as commute_mor.
 Proof.
@@ -224,7 +225,7 @@ unfold commute.
 rewrite H12; rewrite H34; tauto.
 Qed.
 
-(** Some lemmas about operations on relations *)
+(** * Some lemmas about operations on relations *)
 Lemma star_idempotent (R: relation A):
   R⋆⋆ ≡ R⋆.
 Proof.
@@ -471,7 +472,7 @@ induction H; auto.
 assert False by omega; contradiction.
 Qed.
 
-(** Lemmas about [commute] *)
+(** * Lemmas about [commute] *)
 Lemma commute_sym (R1 R2: relation A):
   commute R1 R2 → commute R2 R1.
 Proof.
@@ -565,7 +566,7 @@ apply IHHyz in Hty0. destruct Hty0 as [? [? ?]].
 eauto 6.
 Qed.
 
-(** Lemmas about [confluent] *)
+(** * Lemmas about [confluent] *)
 Lemma confluent_commute_star_refl_equiv (R: relation A):
   confluent R ↔ commute (R⋆) (R⋆).
 Proof.
@@ -669,6 +670,8 @@ assert (exists t, rt_length_clos R m t x ∧ rt_length_clos R n t y) as [t [Htx 
 exists t; split; unfold transp; rewrite (rt_length_clos_equiv _ _ _) ; eauto.
 Qed.
 
+(** Hindley-Rosen lemma, from 'The λ-calculus, its Syntax and
+Semantics', H.P. Barendregt, Ch. 3 § 3 *)
 Lemma hindley_rosen1 (R1 R2: relation A):
   commute R1 R2 →
   diamond R1 →
@@ -735,12 +738,12 @@ assert (((R ⋆) ⁻¹; R ⋆) t u) as [v [Hvt Hvu]].
 unfold transp in Hvt; eauto 7.
 Qed.
 
-(** Definitions about normal forms *)
+(** * Definitions about normal forms *)
 Definition nf (R: relation A) (x: A) :=
   forall y, ~(R y x).
 Hint Unfold nf.
 
-(* x is a normal form of y *)
+(** x is a normal form of y *)
 Definition is_nf_of (R: relation A) (x y: A) :=
   nf R x ∧ (R⋆) x y.
 Hint Unfold is_nf_of.
@@ -750,7 +753,7 @@ Definition nf_unique (R: relation A) :=
     y = z.
 Hint Unfold nf_unique.
 
-(* R1 commutes with R2' normal forms *)
+(** R1 commutes with R2' normal forms *)
 Definition nf_commute (R1 R2: relation A) :=
   forall x y x' y',
     is_nf_of R2 x' x → is_nf_of R2 y' y →
@@ -758,12 +761,12 @@ Definition nf_commute (R1 R2: relation A) :=
     (R1⁺) x' y'.
 Hint Unfold nf_commute.
 
-(* R1 preserves R2's normal forms *)
+(** R1 preserves R2's normal forms *)
 Definition preserves_nf (R1 R2: relation A) :=
   forall x y, nf R2 y → R1 x y → nf R2 x.
 Hint Unfold preserves_nf.
 
-(** Lemmas about [nf], [is_nf_of], [nf_unique], [nf_commute] and [preserve_nf] *)
+(** * Lemmas about [nf], [is_nf_of], [nf_unique], [nf_commute] and [preserve_nf] *)
 Lemma nf_star_eq (R: relation A):
   forall x y, nf R x → (R⋆) y x → y = x.
 Proof.
@@ -787,6 +790,7 @@ assert (t = z).
 congruence.
 Qed.
 
+(** This lemma requires classical logic. *)
 Lemma well_founded_nf_exists (R: relation A) (x: A) :
   well_founded R → exists y, is_nf_of R y x.
 Proof.
@@ -850,7 +854,7 @@ assert (y' = x'). eapply confluent_nf_unique; eauto. subst; auto.
 eapply nf_commute_plus; eauto. rewrite (plus_star_concat_equiv _ _ _); eauto.
 Qed.
 
-(** Lemmas about [well_founded] *)
+(** * Lemmas about [well_founded] *)
 Lemma wf_plus_equiv (R: relation A):
   well_founded (R⁺) ↔ well_founded R.
 Proof.
@@ -883,7 +887,7 @@ intros z Hz.
 eapply H0; eauto. rewrite (concat_star_equiv _ _ _); eauto.
 Qed.
 
-(** Akama's lemmas *)
+(** Akama's lemmas, from 'On Mints' Reduction for ccc-Calculus', Yohji Akama, TLCA '93 *)
 Lemma akama_well_founded (R1 R2: relation A):
   confluent R1 → confluent R2 →
   well_founded R1 → well_founded R2 →
@@ -933,6 +937,8 @@ rewrite <- (union_star_equiv2 _ _ _) in Hu2.
 eauto.
 Qed.
 
+(** * Results about Di Cosmo-Piperno-Geser's condition, from 'On the
+Power of Simple Diagrams', Roberto Di Cosmo, RTA '96 *)
 (** Definition of [DPG] and some lemmas about it *)
 Definition DPG (R1 R2: relation A) :=
   (R2;R1⁻¹) ⊆ (R1⁺⁻¹;R2⋆).
