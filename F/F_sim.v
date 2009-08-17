@@ -1,5 +1,6 @@
 Add LoadPath "PLC".
 Add LoadPath "../metatheory".
+Add LoadPath "../lib".
 Require PLC_confluence.
 Require Export F_soundness.
 
