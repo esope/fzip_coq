@@ -937,8 +937,8 @@ rewrite <- (union_star_equiv2 _ _ _) in Hu2.
 eauto.
 Qed.
 
-(** * Results about Di Cosmo-Piperno-Geser's condition, from 'On the
-Power of Simple Diagrams', Roberto Di Cosmo, RTA '96 *)
+(** * Results about Di Cosmo-Piperno-Geser's condition *)
+(** from 'On the Power of Simple Diagrams', Roberto Di Cosmo, RTA '96 *)
 (** Definition of [DPG] and some lemmas about it *)
 Definition DPG (R1 R2: relation A) :=
   (R2;R1⁻¹) ⊆ (R1⁺ ⁻¹;R2 ⋆).
