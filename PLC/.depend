@@ -1,5 +1,5 @@
 PLC_inf.vo: PLC_inf.v ../metatheory/Metatheory.vo ../metatheory/LibLNgen.vo PLC_ott.vo
 PLC_ott.vo: PLC_ott.v ../metatheory/Metatheory.vo
 PLC_init.vo: PLC_init.v PLC_inf.vo
-PLC_confluence.vo: PLC_confluence.v PLC_init.vo
+PLC_confluence.vo: PLC_confluence.v PLC_init.vo ../lib/Rel.vo
 PLC_other.vo: PLC_other.v PLC_init.vo

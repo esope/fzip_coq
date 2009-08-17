@@ -34,6 +34,7 @@ LNGENFLAGS = --coq-loadpath=../metatheory ## --coq-admitted
 INCDIRS = \
 	. \
 	../metatheory \
+	../lib \
 
 ## Directory where generated HTML documentation should go.
 

@@ -1,5 +1,7 @@
 Add LoadPath "../metatheory".
 Require Export PLC_init.
+Add LoadPath "../lib".
+Require Export Rel.
 
 (* Administrative lemmas *)
 Lemma var_subst : forall e x, subst_term e x (term_var_f x) = e.
@@ -54,12 +56,12 @@ intros e1 e2 H; induction H; eauto.
 Qed.
 Hint Resolve para_red_regular1 para_red_regular2.
 
-Lemma can_regular1 : forall e1 e2, e1⋆ = e2 → lc_term e1.
+Lemma can_regular1 : forall e1 e2, e1↓ = e2 → lc_term e1.
 Proof.
 intros e1 e2 H; induction H; auto.
 Qed.
 
-Lemma can_regular2 : forall e1 e2, e1⋆ = e2 → lc_term e2.
+Lemma can_regular2 : forall e1 e2, e1↓ = e2 → lc_term e2.
 Proof.
 intros e1 e2 H; induction H; auto.
 pick fresh x; auto with lngen.
@@ -67,8 +69,8 @@ Qed.
 Hint Resolve can_regular1 can_regular2.
 
 Lemma can_renaming : forall e1 e2 x y,
-  e1 ⋆ = e2 →
-  (subst_term (term_var_f y) x e1) ⋆ = (subst_term (term_var_f y) x e2).
+  e1 ↓ = e2 →
+  (subst_term (term_var_f y) x e1) ↓ = (subst_term (term_var_f y) x e2).
 Proof.
 assert (forall n e1, size_term e1 <= n → forall e2 (x y: termvar),
   can e1 e2 → can (subst_term (term_var_f y) x e1) (subst_term (term_var_f y) x e2)) as Th.
@@ -126,11 +128,11 @@ apply rt_step; auto.
 apply rt_refl.
 eapply rt_trans; eauto.
 Qed.
-Hint Resolve red_star_renaming.  
+Hint Resolve red_star_renaming.
 
 (* Lemmas about canonize *)
 Lemma can_deterministic : forall e e1 e2,
-  e⋆ = e1 → e⋆ = e2 → e1 = e2.
+  e↓ = e1 → e↓ = e2 → e1 = e2.
 Proof.
 intros e e1 e2 H. generalize dependent e2. induction H; intros.
 inversion H; reflexivity.
@@ -145,7 +147,7 @@ inversion H2; subst.
   pick fresh x; eauto using open_term_wrt_term_inj.
 Qed.
 
-Lemma can_total : forall e1, lc_term e1 → exists e2, e1⋆ = e2.
+Lemma can_total : forall e1, lc_term e1 → exists e2, e1↓ = e2.
 Proof.
 intros e1 Hlc; induction Hlc; eauto.
 Case "abs". pick fresh x; destruct (H0 x) as [e2 H2].
@@ -161,7 +163,7 @@ inversion H1; subst. exists (e' ^^ e2'). apply can_app2 with (L := L); auto.
 Qed.
 
 (*
-Lemma can_fv : forall e1 e2, e1⋆ = e2 → fv_term e2 [<=] fv_term e1.
+Lemma can_fv : forall e1 e2, e1↓ = e2 → fv_term e2 [<=] fv_term e1.
 Proof.
 intros e1 e2 H; induction H; simpl; try fsetdec.
 Case "app1".
@@ -293,7 +295,7 @@ rewrite subst_term_open_term_wrt_term; eauto.
 Qed.
 
 Lemma para_red_canonize : forall e1 e2 e1',
-  e1 ⇒ e2 → e1 ⋆ = e1' → e2 ⇒ e1'.
+  e1 ⇒ e2 → e1 ↓ = e1' → e2 ⇒ e1'.
 Proof.
 intros e1 e2 e1' Hpara Hcan. generalize dependent e1'.
 induction Hpara; intros v Hcan.
@@ -312,12 +314,16 @@ inversion Hcan; subst.
   apply para_red_subst; auto.
 Qed.
 
-Lemma para_red_diamond : forall e e1 e2,
-  e ⇒ e1 → e ⇒ e2 → exists e', e1 ⇒ e' ∧ e2 ⇒ e'.
+Lemma para_red_diamond : diamond _ (transp _ para_red).
 Proof.
-intros e e1 e2 H1 H2.
+intros e1 e2 [e [H1 H2]]. unfold transp in *|-.
 destruct (can_total e) as [e' H']; eauto.
-eauto using para_red_canonize.
+exists e'; unfold transp; split; eauto using para_red_canonize.
+Qed.
+
+Lemma para_red_plus_diamond : diamond _ (clos_trans _ (transp _ para_red)).
+Proof.
+auto using diamond_plus, para_red_diamond.
 Qed.
 
 Lemma para_red_red_star : forall e1 e2, e1 ⇒ e2 → e1 ⇝⋆ e2.
@@ -331,71 +337,35 @@ apply rt_trans with (y := term_app (term_abs e1') e2'); eauto.
 apply rt_step; apply red1_empty; apply red0_beta; eauto.
 Qed.
 
-Reserved Notation "e1 '⇒[' n ] e2" (at level 68).
-Inductive para_red_plus : nat → term → term → Prop :=
-| parap_step : forall t t', para_red t t' → t ⇒[1] t'
-| parap_trans : forall n1 n2 t t' t'',
-  t ⇒[n1] t' → t' ⇒[n2] t'' → t ⇒[1 + n1 + n2] t''
-where "e1 '⇒[' n ] e2" := (para_red_plus n e1 e2).
-
 Lemma red_star_para_red_plus_equiv : forall t t',
-  (lc_term t ∧ t ⇝⋆ t') ↔ exists n, t ⇒[n] t'.
+  (lc_term t ∧ t ⇝⋆ t') ↔ t ⇒⁺ t'.
 Proof.
 intros t t'; split; intro H.
 destruct H. induction H0.
-  eauto using parap_step, red1_para_red.
-  eauto using parap_step, para_red_refl.
-  edestruct IHclos_refl_trans1 as [n1 H1]; eauto.
-  edestruct IHclos_refl_trans2 as [n2 H2]; eauto.
-  eauto using parap_trans.
-destruct H as [n H]. induction H; split; eauto.
+  eauto using t_step, red1_para_red.
+  eauto using t_step, para_red_refl.
+  eauto using t_trans.
+induction H; split; eauto.
   auto using para_red_red_star.
-  destruct IHpara_red_plus1; auto.
-  destruct IHpara_red_plus1; destruct IHpara_red_plus2; eauto using rt_trans.
+  intuition auto.
+  intuition eauto using rt_trans.
 Qed.
 
-Lemma CR_para : forall n1 n2 t t1 t2,
-  t ⇒[n1] t1 → t ⇒[n2] t2 →
-  exists t', t1 ⇒[n2] t' ∧ t2 ⇒[n1] t'.
-Proof.
-assert (forall n n1 n2, n1 + n2 <= n → forall t t1 t2,
-  t ⇒[n1] t1 → t ⇒[n2] t2 →
-  exists t' : term, t1 ⇒[n2] t' ∧ t2 ⇒[n1] t') as Th.
-intro n; induction n; intros.
-(* n = 0 *)
-assert (n1 = 0) by omega; subst; inversion H0.
-(* n >= 1 *)
-destruct H0.
-destruct H1.
-destruct (para_red_diamond t t' t'0 H0 H1) as [t1 [H2 H3]].
-  eauto using parap_step.
-assert (exists u, t' ⇒[n1] u ∧ t'0 ⇒[1] u) as Hu.
-  apply IHn with (t := t); auto using parap_step. omega.
-  destruct Hu as [u [Hu1 Hu2]].
-  assert (exists v, t'' ⇒[1] v ∧ u ⇒[n2] v) as Hv.
-    apply IHn with (t := t'0); auto using parap_step. omega.
-    destruct Hv as [v [Hv1 Hv2]].
-  eauto using parap_trans.
-assert (exists u, t' ⇒[n2] u ∧ t2 ⇒[n1] u) as Hu.
-  apply IHn with (t := t); auto using parap_step. omega.
-  destruct Hu as [u [Hu1 Hu2]].
-  assert (exists v, t'' ⇒[n2] v ∧ u ⇒[n0] v) as Hv.
-    apply IHn with (t := t'); auto using parap_step. omega.
-    destruct Hv as [v [Hv1 Hv2]].
-  eauto using parap_trans.
-intros; apply Th with (n := n1 + n2) (t := t); auto.
-Qed.
-
-Theorem church_rosser : forall  t t1 t2,
+Theorem church_rosser : forall t t1 t2,
   lc_term t → t ⇝⋆ t1 → t ⇝⋆ t2 →
   exists t', t1 ⇝⋆ t' ∧ t2 ⇝⋆ t'.
 Proof.
 intros t t1 t2 Hlc H1 H2.
-assert (exists n1, t ⇒[n1] t1) as H3. rewrite <- red_star_para_red_plus_equiv; auto.
-assert (exists n2, t ⇒[n2] t2) as H4. rewrite <- red_star_para_red_plus_equiv; auto.
-clear H1 H2. destruct H3 as [n1 H1]. destruct H4 as [n2 H2].
-destruct (CR_para _ _ _ _ _ H1 H2) as [t' [H1' H2']].
-assert (exists n, para_red_plus n t1 t') as H3 by eauto. rewrite <- red_star_para_red_plus_equiv in H3.
-assert (exists n, para_red_plus n t2 t') as H4 by eauto. rewrite <- red_star_para_red_plus_equiv in H4.
-exists t'; tauto.
+assert (t ⇒⁺ t1) as H3. rewrite <- red_star_para_red_plus_equiv; auto.
+assert (t ⇒⁺ t2) as H4. rewrite <- red_star_para_red_plus_equiv; auto.
+clear H1 H2.
+edestruct (para_red_plus_diamond t1 t2) as [t' [H1' H2']].
+exists t; split.
+  rewrite (transp_plus_commute _ _ _); auto.
+  unfold transp at 1; rewrite (transp_plus_commute _ _ _); auto.
+unfold transp at 1 in H1'; rewrite (transp_plus_commute _ _ _) in H1'.
+rewrite (transp_plus_commute _ _ _) in H2'.
+unfold transp in *|-.
+rewrite <- red_star_para_red_plus_equiv in *|-.
+intuition eauto.
 Qed.

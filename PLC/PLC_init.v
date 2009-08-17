@@ -11,7 +11,8 @@ Notation "e ^ x" := (e ^^ (term_var_f x)).
 Notation "e1 '⇝' e2" := (red1 e1 e2) (at level 68).
 Notation "e1 '⇝⋆' e2" := (clos_refl_trans _ red1 e1 e2) (at level 68).
 Notation "e1 '⇒' e2" := (para_red e1 e2) (at level 68).
-Notation "e1 '⋆' = e2" := (can e1 e2) (at level 68).
+Notation "e1 '⇒⁺' e2" := (clos_trans _ para_red e1 e2) (at level 68).
+Notation "e1 '↓' = e2" := (can e1 e2) (at level 68).
 
 (* Tactics *)
 Tactic Notation "absurdity" "with" tactic(tac) :=
