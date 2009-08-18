@@ -53,6 +53,7 @@ FILES = \
 	STLC_soundness \
 	STLC_sim \
 	STLC_dec \
+	STLC_confluence \
 #	STLC_normalization \
 
 ## Lists calculated from the above.
