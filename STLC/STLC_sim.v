@@ -1,7 +1,7 @@
 Add LoadPath "PLC".
 Add LoadPath "../metatheory".
-Add LoadPath "../lib".
-Require PLC_confluence.
+Require PLC_ott.
+Require PLC_inf.
 Require Export STLC_soundness.
 
 Ltac gather_atoms ::=

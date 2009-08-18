@@ -2,5 +2,5 @@ STLC_inf.vo: STLC_inf.v ../metatheory/Metatheory.vo ../metatheory/LibLNgen.vo ST
 STLC_ott.vo: STLC_ott.v ../metatheory/Metatheory.vo
 STLC_init.vo: STLC_init.v STLC_inf.vo
 STLC_soundness.vo: STLC_soundness.v STLC_init.vo
-STLC_sim.vo: STLC_sim.v PLC/PLC_confluence.vo STLC_soundness.vo
+STLC_sim.vo: STLC_sim.v PLC/PLC_ott.vo PLC/PLC_inf.vo STLC_soundness.vo
 STLC_dec.vo: STLC_dec.v STLC_soundness.vo
