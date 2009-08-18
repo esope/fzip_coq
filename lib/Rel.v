@@ -33,14 +33,15 @@ Hint Unfold concat.
 Definition sub_rel {A} (R S: relation A) := forall x y, R x y → S x y.
 Definition eq_rel {A} (R S: relation A) := forall x y, R x y ↔ S x y.
 Hint Unfold sub_rel eq_rel.
-Notation "R ; S" := (concat R S) (at level 30).
-Notation "R ∪ S" := (union R S) (at level 30).
-Notation "R '⋆'" := (clos_refl_trans R) (at level 29).
-Notation "R '⁺'" := (clos_trans R) (at level 29).
-Notation "R '⁻¹'" := (transp R) (at level 29).
-Notation "R '?'" := (@eq _ ∪ R) (at level 29).
-Notation "R ⊆ S" := (sub_rel R S) (at level 31).
-Notation "R ≡ S" := (eq_rel R S) (at level 31).
+Notation "R ; S" := (concat R S) (at level 65, right associativity) : rel_scope.
+Notation "R ∪ S" := (union R S) (at level 65, right associativity) : rel_scope.
+Notation "R '⋆'" := (clos_refl_trans R) (at level 29) : rel_scope.
+Notation "R '⁺'" := (clos_trans R) (at level 29) : rel_scope.
+Notation "R '⁻¹'" := (transp R) (at level 29) : rel_scope.
+Notation "R '?'" := (union (@eq _) R) (at level 29) : rel_scope.
+Notation "R ⊆ S" := (sub_rel R S) (at level 66) : rel_scope.
+Notation "R ≡ S" := (eq_rel R S) (at level 66) : rel_scope.
+Open Scope rel_scope.
 
 Definition diamond {A} (R: relation A) := (R; R⁻¹) ⊆ (R⁻¹; R).
 Definition confluent {A} (R: relation A) := diamond (R ⋆).
