@@ -49,6 +49,7 @@ LNGEN_FILES = \
 
 FILES = \
 	STLC_init \
+	STLC_other \
 	STLC_soundness \
 	STLC_sim \
 	STLC_dec \

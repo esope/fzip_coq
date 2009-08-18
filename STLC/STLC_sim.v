@@ -2,7 +2,7 @@ Add LoadPath "PLC".
 Add LoadPath "../metatheory".
 Require PLC_ott.
 Require PLC_inf.
-Require Export STLC_soundness.
+Require Export STLC_other.
 
 Ltac gather_atoms ::=
   let A := gather_atoms_with (fun x : vars => x) in
