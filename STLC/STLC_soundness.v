@@ -104,7 +104,7 @@ Qed.
 Theorem progress : forall Γ e τ,
   wfterm Γ e τ →
   (exists e', e ⇝ e') ∨ val e.
-Proof with eauto 10.
+Proof with eauto 7.
   intros Γ e τ H.
   dependent induction H; simpl...
   Case "typing_app".
