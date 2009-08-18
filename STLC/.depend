@@ -5,4 +5,4 @@ STLC_other.vo: STLC_other.v STLC_init.vo
 STLC_soundness.vo: STLC_soundness.v STLC_other.vo
 STLC_sim.vo: STLC_sim.v PLC/PLC_ott.vo PLC/PLC_inf.vo STLC_other.vo
 STLC_dec.vo: STLC_dec.v STLC_soundness.vo
-STLC_confluence.vo: STLC_confluence.v STLC_other.vo
+STLC_confluence.vo: STLC_confluence.v STLC_other.vo ../lib/Rel.vo

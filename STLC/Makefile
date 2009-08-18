@@ -7,10 +7,6 @@
 #    documentation - builds all html documentation
 #    clean         - removes generated files
 #
-#  Other targets (intended to be used by the developers of this library):
-#    gens          - builds generated .v files on demand
-#    dist          - builds a zip file for distribution
-#
 ############################################################################
 
 ## Paths to executables. Do not include options here.
@@ -18,7 +14,7 @@
 
 COQC = coqc
 COQDEP = coqdep
-COQDOC = coqdoc --utf8
+COQDOC = coqdoc --utf8 --light --quiet --noindex --html
 
 ## Paths for ott and lngen.
 
@@ -34,11 +30,12 @@ LNGENFLAGS = --coq-loadpath=../metatheory ## --coq-admitted
 INCDIRS = \
 	. \
 	../metatheory \
+	../lib \
 	PLC \
 
 ## Directory where generated HTML documentation should go.
 
-DOCDIR = html
+DOCDIR = doc/html
 
 ## List of files that are processed by LNgen.
 
@@ -79,7 +76,7 @@ doc:
 	+make documentation
 
 documentation: $(DOCDIR) $(VOFILES)
-	$(COQDOC) -g --quiet --noindex --html -d $(DOCDIR) $(VFILES)
+	$(COQDOC) -d $(DOCDIR) $(VFILES)
 	cp -f custom.css $(DOCDIR)/coqdoc.css
 
 clean:
@@ -95,14 +92,14 @@ check:	coq
 
 ############################################################################
 
-%.vo: %.v Makefile
+%.vo: %.v
 	$(COQC) -q $(INCFLAGS) $<
 
 %_ott.v: %.ott
 	$(OTT) -coq $*_ott.v $*.ott
 	for i in `ls $*_ott.patch.?? | sort`; do patch $*_ott.v $$i; done
 
-%_inf.v: %_ott.v $(LNGEN) Makefile
+%_inf.v: %_ott.v $(LNGEN)
 	$(LNGEN) $(LNGENFLAGS) --coq $*_inf.v --coq-ott $*_ott --coq-loadpath metatheory $*.ott
 
 $(DOCDIR):
