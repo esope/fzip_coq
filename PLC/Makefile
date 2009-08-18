@@ -74,9 +74,17 @@ documentation: $(DOCDIR) $(VOFILES)
 	$(COQDOC) -d $(DOCDIR) $(VFILES)
 	cp -f custom.css $(DOCDIR)/coqdoc.css
 
+doc-htmlized:
+	+make documentation-htmlized
+
+documentation-htmlized: $(DOCDIR) $(VOFILES)
+	mkdir -p doc/htmlized
+	emacs --kill --eval '(htmlize-many-files (file-expand-wildcards "*.v") "doc/htmlized")'
+
 clean:
 	rm -f *.vo *.glob *.cmi *.cmx *.o
 	rm -rf $(DOCDIR)
+	rm -rf doc/htmlized
 
 force:
 	touch *.ott

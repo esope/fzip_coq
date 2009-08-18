@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all clean doc doc-htmlized
 
 DIRS = \
 	lib \
@@ -18,4 +18,8 @@ clean:
 doc:
 	mkdir -p doc
 	$(foreach i, $(DIRS), $(MAKE) -C $(i) doc;\
-	 ln -f -s ../$(i)/doc/html doc/$(i);)
+	ln -f -s ../$(i)/doc/html doc/$(i);)
+
+doc-htmlized: doc
+	$(foreach i, $(DIRS), $(MAKE) -C $(i) doc-htmlized;\
+	ln -f -s ../htmlized doc/$(i)/htmlized;)
