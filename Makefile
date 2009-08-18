@@ -15,7 +15,7 @@ clean:
 	$(foreach i, $(DIRS), $(MAKE) -C $(i) clean;)
 	rm -rf doc
 
-doc: all
+doc:
 	mkdir -p doc
 	$(foreach i, $(DIRS), $(MAKE) -C $(i) doc;\
 	 ln -f -s ../$(i)/doc/html doc/$(i);)
