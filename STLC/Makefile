@@ -9,6 +9,11 @@
 #
 ############################################################################
 
+## encoding/decoding UTF8 due to a bug in coqdoc
+XCODEC = ../xcodec/xcodec.byte
+XENCODE = $(XCODEC) encode
+XDECODE = $(XCODEC) decode
+
 ## Paths to executables. Do not include options here.
 ## Modify these to suit your Coq installation, if necessary.
 
@@ -76,7 +81,12 @@ doc:
 	+make documentation
 
 documentation: $(DOCDIR) $(VOFILES)
-	$(COQDOC) -d $(DOCDIR) $(VFILES)
+	mkdir -p $(DOCDIR)
+	cp *.glob $(DOCDIR)
+	$(foreach i, $(VFILES), $(XENCODE) < $(i) > $(DOCDIR)/$(i); )
+	$(foreach i, $(FILES), $(COQDOC) -o $(DOCDIR)/tmp_$(i).html $(DOCDIR)/$(i).v; )
+	rm -f $(foreach i, $(VFILES), $(DOCDIR)/$(i)) $(DOCDIR)/*.glob
+	$(foreach i, $(FILES), $(XDECODE) < $(DOCDIR)/tmp_$(i).html > $(DOCDIR)/$(i).html && rm $(DOCDIR)/tmp_$(i).html; )
 	cp -f custom.css $(DOCDIR)/coqdoc.css
 
 doc-htmlized:
