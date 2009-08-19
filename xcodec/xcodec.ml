@@ -12,6 +12,9 @@
 (*                                                                        *)
 (**************************************************************************)
 
+(* The author would like to thank Nicolas Pouillard who wrote a piece     *)
+(* of code from which this file is inspired.                              *)
+
 let input = Stream.of_channel stdin
 
 let output_stream s =
