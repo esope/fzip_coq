@@ -23,7 +23,7 @@ doc: xcodec
 
 doc-htmlized: doc
 	$(foreach i, $(DIRS), $(MAKE) -C $(i) doc-htmlized;\
-	ln -f -s ../htmlized doc/$(i)/htmlized;)
+	ln -f -s ../../doc/htmlized doc/$(i)/htmlized;)
 
 xcodec:
 	make -C xcodec byte
