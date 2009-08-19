@@ -4,9 +4,9 @@ DIRS = \
 	lib \
 	metatheory \
 	PLC \
-#	STLC \
-#	F \
-#	FzipCore \
+	STLC \
+	F \
+	FzipCore \
 
 all: Makefile
 	$(foreach i, $(DIRS), $(MAKE) -C $(i) ;)
