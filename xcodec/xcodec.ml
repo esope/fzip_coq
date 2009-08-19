@@ -1,3 +1,17 @@
+(**************************************************************************)
+(*                                                                        *)
+(*  Copyright (C) Benoît Montagu <benoit.montagu@inria.fr>                *)
+(*                                                                        *)
+(*  This software is free software; you can redistribute it and/or        *)
+(*  modify it under the terms of the GNU General Public License           *)
+(*  version 3.0 or above.                                                 *)
+(*                                                                        *)
+(*  This software is distributed in the hope that it will be useful,      *)
+(*  but WITHOUT ANY WARRANTY; without even the implied warranty of        *)
+(*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *)
+(*                                                                        *)
+(**************************************************************************)
+
 let input = Stream.of_channel stdin
 
 let output_stream s =
