@@ -1,7 +1,12 @@
-.PHONY: all clean
+.PHONY: all clean opt byte
 
-all: xcodec.ml
+all: byte opt
+
+byte: xcodec.ml
 	ocamlbuild -tag camlp4o xcodec.byte
+
+opt: xcodec.ml
+	ocamlbuild -tag camlp4o xcodec.native
 
 clean:
 	ocamlbuild -clean

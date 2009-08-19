@@ -1,0 +1,15 @@
+Requirements:
+
+* ocaml version >= 3.10
+* make
+
+Build procedure:
+
+% make byte
+(for bytecode version)
+
+% make opt
+(for native version)
+
+% make all
+(for both versions)

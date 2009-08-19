@@ -26,4 +26,4 @@ doc-htmlized: doc
 	ln -f -s ../htmlized doc/$(i)/htmlized;)
 
 xcodec:
-	make -C xcodec
+	make -C xcodec byte
