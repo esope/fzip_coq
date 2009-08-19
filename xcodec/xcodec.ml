@@ -12,12 +12,10 @@ let stream_of_string s =
 
 let rec encode = parser
   | [< 'c when Char.code c > 255 ; _ >] -> assert false
-  | [< 'c when Char.code c > 128 ; t = encode >] ->
-      [< ''x' ; stream_of_string (Printf.sprintf "%x" (Char.code c)) ; t >]
-  | [< ''x' ; t = encode >] ->
-      [< ''x' ; ''x' ; t >]
-  | [< 'c ; t = encode >] ->
-      [< 'c ; t >]
+  | [< 'c when Char.code c > 128 ; t >] ->
+      [< ''x' ; stream_of_string (Printf.sprintf "%x" (Char.code c)) ; encode t >]
+  | [< ''x' ; t >] -> [< ''x' ; ''x' ; encode t >]
+  | [< 'c ; t >] -> [< 'c ; encode t >]
   | [< >] -> [< >]
 
 let is_hex_digit = function
@@ -40,7 +38,7 @@ let rec decode = parser
             then [< '(Char.chr (read_hex_from_two_chars i j)) ; s >]
             else [< ''x' ; 'i ; 'j ; s >]            
         | [< >] -> assert false) (decode s)
-  | [< 'a ; s = decode >] -> [< 'a ; s >]
+  | [< 'a ; s >] -> [< 'a ; decode s >]
   | [< >] -> [< >]
 
 let exit_usage n =
