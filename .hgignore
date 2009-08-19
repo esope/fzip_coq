@@ -9,3 +9,4 @@ syntax: glob
 doc
 _build
 *.byte
+*.native
