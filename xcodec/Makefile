@@ -3,10 +3,10 @@
 all: byte opt
 
 byte: xcodec.ml
-	ocamlbuild -tag camlp4o xcodec.byte
+	ocamlbuild xcodec.byte
 
 opt: xcodec.ml
-	ocamlbuild -tag camlp4o xcodec.native
+	ocamlbuild xcodec.native
 
 clean:
 	ocamlbuild -clean
