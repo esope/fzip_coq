@@ -22,4 +22,4 @@ doc: xcodec
 	ln -f -s ../$(i)/doc/html doc/$(i);)
 
 xcodec:
-	make -C xcodec byte
+	make -C xcodec opt
