@@ -10,7 +10,7 @@
 ############################################################################
 
 ## encoding/decoding UTF8 due to a bug in coqdoc
-XCODEC = ../xcodec/xcodec.byte
+XCODEC = ../xcodec/xcodec
 XENCODE = $(XCODEC) encode
 XDECODE = $(XCODEC) decode
 
