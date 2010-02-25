@@ -1,4 +1,4 @@
-(*******************************************************************************)
+(******************************************************************************)
 (*                                                                            *)
 (* Copyright (C) Benoît Montagu <benoit.montagu@inria.fr>                     *)
 (*                                                                            *)
@@ -9,11 +9,12 @@
 
 (** This file provides some proofs of properties on relations (notably
     combination for confluence and well-foundedness) formalized in the
-    Coq proof assistant (version 8.2-1).                                       *)
-(** Version: August 2009                                                       *)
+    Coq proof assistant (version 8.2-1).                                      *)
+(** Version: August 2009                                                      *)
 
 Require Import Utf8.
 Require Import Relations.
+Require Import Classes.Morphisms.
 
 Implicit Arguments clos_refl_trans [A].
 Implicit Arguments clos_trans [A].
