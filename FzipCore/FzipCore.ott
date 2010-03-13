@@ -72,7 +72,7 @@ formula :: formula_ ::=
   | pure G         :: :: pure {{ coq forall a, ~ binds a E ([[G]]) }}
   | a not in ftv t :: :: free_ftv_typ {{ coq [[a]] `notin` ftv_typ ([[t]]) }}
   | a not in ftv e :: :: free_ftv_term {{ coq [[a]] `notin` ftv_term ([[e]]) }}
-  | e not coercion :: :: not_coerce {{ coq forall e' t, ([[e]]) <> term_coerce e' t }}
+  | e not coercion :: :: not_coerce {{ coq (forall e' t, ([[e]]) <> term_coerce e' t) }}
   | a <> b         :: :: neq_atom {{ coq [[a]] <> [[b]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -375,45 +375,45 @@ open <b> (ex a. e : exists a. t) --> (open <b> ex a. e : {b/a}t)
 ---------------------------- :: coerce_coerce
 ((e : t1) : t2) --> (e : t2)
 
-                       e1 result
+                  sig <b> (a = t) e1 result
                        e2 result
 ---------------------------------------------------------- :: sigma_appL
 (sig <b> (a = t) e1) e2 --> sig <b> (a = t) (e1 ({a/b}e2))
 
                         e1 val
-                       e2 result
+              sig <b> (a = t) e2 result
 ---------------------------------------------------------- :: sigma_appR
 e1 (sig <b> (a = t) e2) --> sig <b> (a = t) (({a/b}e1) e2)
 
-                       e1 result
+               sig <b> (a = t) e1 result
                        e2 result
 ---------------------------------------------------------- :: sigma_pairL
 (sig <b> (a = t) e1, e2) --> sig <b> (a = t) (e1, {a/b}e2)
 
                         e1 val
-                       e2 result
+              sig <b> (a = t) e2 result
 ---------------------------------------------------------- :: sigma_pairR
 (e1, sig <b> (a = t) e2) --> sig <b> (a = t) ({a/b}e1, e2)
 
 
-                    e result
+            sig <b> (a = t) e result
 ----------------------------------------------- :: sigma_fst
 fst sig <b> (a = t) e --> sig <b> (a = t) fst e
 
-                    e result
+            sig <b> (a = t) e result
 ----------------------------------------------- :: sigma_snd
 snd sig <b> (a = t) e --> sig <b> (a = t) snd e
 
-                      e result
+              sig <b> (a = t) e result
 ---------------------------------------------------------- :: sigma_inst
 (sig <b> (a = t) e) [t'] --> sig <b> (a = t) (e [{b/a}t'])
 
-                      e result
+               sig <b> (a = t) e result
 --------------------------------------------------------- :: sigma_open
 open <c> sig <b> (a = t) e --> sig <b> (a = t) open <c> e
 
                                          a1 <> b2
-                                         e result
+                  sig <b1> (a1 = t1) sig <b2> (a2 = t2) e result
 ------------------------------------------------------------------------------------------ :: sigma_sigma
 sig <b1> (a1 = t1) sig <b2> (a2 = t2) e --> sig <b2> (a2 = {t1/a1}t2) sig <b1> (a1 = t1) e
 

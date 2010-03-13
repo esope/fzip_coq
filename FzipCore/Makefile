@@ -28,7 +28,7 @@ LNGEN = /opt/bin/lngen
 
 ## Flags to lngen.  Mainly for --coq-admitted.
 
-LNGENFLAGS = --coq-loadpath=../metatheory ## --coq-admitted
+LNGENFLAGS = --coq-loadpath=../metatheory --coq-admitted
 
 ## Include directories, one per line.
 
@@ -48,8 +48,8 @@ LNGEN_FILES = \
 ## List of other files that should be compiled.
 
 FILES = \
-#	FzipCore_init \
-#	FzipCore_soundness \
+	FzipCore_init \
+	FzipCore_soundness \
 #	FzipCore_dec \
 #	FzipCore_sim \
 #	FzipCore_normalization \
