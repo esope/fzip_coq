@@ -5084,5 +5084,5 @@ Hint Resolve tsubst_term_intro : lngen.
 (* *********************************************************************** *)
 (** * "Restore" tactics *)
 
-Ltac default_auto := auto; tauto.
-Ltac default_autorewrite := fail.
+Ltac default_auto ::= auto; tauto.
+Ltac default_autorewrite ::= fail.
