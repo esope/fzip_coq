@@ -69,7 +69,7 @@ formula :: formula_ ::=
   | a in G         :: :: binds_a  {{ coq (binds ([[a]]) U ([[G]]) \/ binds ([[a]]) E ([[G]]) \/ exists t, binds ([[a]]) (Eq t) ([[G]])) }}
   | a not in dom G :: :: free_dom_a {{ coq [[a]] `notin` dom [[G]] }}
   | x not in dom G :: :: free_dom_x {{ coq [[x]] `notin` dom [[G]] }}
-  | pure G         :: :: pure {{ coq forall a, ~ binds a E ([[G]]) }}
+  | pure G         :: :: pure {{ coq (forall a, ~ binds a E ([[G]])) }}
   | a not in ftv t :: :: free_ftv_typ {{ coq [[a]] `notin` ftv_typ ([[t]]) }}
   | a not in ftv e :: :: free_ftv_term {{ coq [[a]] `notin` ftv_term ([[e]]) }}
   | e not coercion :: :: not_coerce {{ coq (forall e' t, ([[e]]) <> term_coerce e' t) }}
