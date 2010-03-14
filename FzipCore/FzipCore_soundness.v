@@ -483,9 +483,9 @@ intros. eapply H2; eauto.
 Qed.
 Hint Resolve wftyp_subst.
 
-Lemma wfenv_wftyp_tsubst :
-  (forall Γ, wfenv Γ → forall Γ₁ Γ₂ a τ, Γ = Γ₁ ++ a ~ U ++ Γ₂ → wftyp Γ₂ τ → wfenv ((env_map (tsubst_typ τ a) Γ₁) ++ Γ₂)) ∧
-  (forall Γ τ, wftyp Γ τ → forall Γ₁ Γ₂ a τ', Γ = Γ₁ ++ a ~ U ++ Γ₂ → wftyp Γ₂ τ' → wftyp ((env_map (tsubst_typ τ' a) Γ₁) ++ Γ₂) (tsubst_typ τ' a τ)).
+Lemma wfenv_wftyp_instantiate :
+  (forall Γ, wfenv Γ → forall Γ₁ Γ₂ a τ, Γ = Γ₁ ++ a ~ U ++ Γ₂ → wftyp Γ₂ τ → wfenv (Γ₁ ++ a ~ Eq τ ++ Γ₂)) ∧
+  (forall Γ τ, wftyp Γ τ → forall Γ₁ Γ₂ a τ', Γ = Γ₁ ++ a ~ U ++ Γ₂ → wftyp Γ₂ τ' → wftyp (Γ₁ ++ a ~ Eq τ' ++ Γ₂) τ).
 Proof.
 apply wfenv_wftyp_mut_ind; intros.
 Case "wfenv_empty".
@@ -493,39 +493,109 @@ assert (binds a (@U typ) nil). rewrite H; auto. analyze_binds H1.
 Case "wfenv_cons_T".
 destruct Γ₁; simpl_env in *.
 inversion H0; subst; eauto.
-destruct p; destruct t; inversion H0; subst; simpl_env in *;
-simpl; simpl_env; constructor.
-unfold env_map; auto. eapply H; auto.
-unfold env_map; auto. eapply H; auto.
-unfold env_map; auto. eapply H; auto.
-unfold env_map; auto. eapply H; auto.
-unfold env_map; auto. eapply H; auto.
-unfold env_map; auto. eapply H; auto.
+destruct p; destruct t0; inversion H0; subst; auto.
 Case "wfenv_cons_U".
 destruct Γ₁; simpl_env in *.
-inversion H0; subst; eauto.
-destruct p; destruct t; inversion H0; subst; simpl_env in *.
-simpl; simpl_env; constructor. unfold env_map; auto. eapply H; auto.
+inversion H0; subst; auto.
+destruct p; destruct t; inversion H0; subst; auto.
 Case "wfenv_cons_E".
 destruct Γ₁; simpl_env in *.
+inversion H0; subst; auto.
+destruct p; destruct t; inversion H0; subst; auto.
+Case "wfenv_cons_Eq".
+destruct Γ₁; simpl_env in *.
+inversion H0; subst; auto.
+destruct p; destruct t; inversion H0; subst; auto.
+Case "wftyp_var".
+subst G.
+destruct (a == a0); subst.
+SCase "a = a0".
+constructor; auto.
+right; right; eauto.
+SCase "a ≠ a0".
+constructor; auto.
+destruct o. analyze_binds H0.
+destruct H0. analyze_binds H0.
+destruct H0. right; right; exists x. analyze_binds H0.
+Case "wftyp_arrow".
+subst G. constructor; auto.
+Case "wftyp_prod".
+subst G. constructor; auto.
+Case "wftyp_forall".
+subst G. apply wftyp_forall with (L := L ∪ {{a}}); intros.
+rewrite_env (([(a0, U)] ++ Γ₁) ++ a ~ Eq τ' ++ Γ₂); auto.
+Case "wftyp_exists".
+subst G. apply wftyp_exists with (L := L ∪ {{a}}); intros.
+rewrite_env (([(a0, U)] ++ Γ₁) ++ a ~ Eq τ' ++ Γ₂); auto.
+Qed.
+
+Lemma wfenv_instantiate :
+  forall Γ₁ Γ₂ a τ, wfenv (Γ₁ ++ a ~ U ++ Γ₂) → wftyp Γ₂ τ →
+    wfenv (Γ₁ ++ a ~ Eq τ ++ Γ₂).
+Proof.
+destruct wfenv_wftyp_instantiate as [H1 H2].
+intros Γ₁ Γ₂ x τ H. eapply H1; eauto.
+Qed.
+Hint Resolve wfenv_instantiate.
+
+Lemma wftyp_instantiate :
+forall Γ₁ Γ₂ τ a τ', wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ →
+wftyp Γ₂ τ' → wftyp (Γ₁ ++ a ~ Eq τ' ++ Γ₂) τ.
+Proof.
+destruct wfenv_wftyp_instantiate as [H1 H2].
+intros. eapply H2; eauto.
+Qed.
+Hint Resolve wftyp_instantiate.
+
+Lemma wfenv_strip :
+forall Γ' Γ, wfenv (Γ' ++ Γ) -> wfenv Γ.
+Proof.
+intro Γ'; induction Γ'; intros; auto.
+apply IHΓ'.
+simpl_env in H.
+inversion H; subst; auto.
+eapply wftyp_wfenv; eauto.
+eapply wftyp_wfenv; eauto.
+Qed.
+(* Hint Resolve wfenv_strip. *)
+
+Lemma wfenv_wftyp_subst_eq :
+  (forall Γ, wfenv Γ → forall Γ₁ Γ₂ a τ, Γ = Γ₁ ++ a ~ Eq τ ++ Γ₂ → wfenv ((env_map (tsubst_typ τ a) Γ₁) ++ Γ₂)) ∧
+  (forall Γ τ, wftyp Γ τ → forall Γ₁ Γ₂ a τ', Γ = Γ₁ ++ a ~ Eq τ' ++ Γ₂ → wftyp ((env_map (tsubst_typ τ' a) Γ₁) ++ Γ₂) (tsubst_typ τ' a τ)).
+Proof.
+apply wfenv_wftyp_mut_ind; intros.
+Case "wfenv_empty".
+assert (binds a (Eq τ) nil). rewrite H; auto. analyze_binds H0.
+Case "wfenv_cons_T".
+destruct Γ₁; simpl_env in *.
 inversion H0; subst; eauto.
+destruct p; destruct t0; inversion H0; subst; simpl_env in *;
+simpl; simpl_env; constructor; auto.
+unfold env_map; auto.
+Case "wfenv_cons_U".
+destruct Γ₁; simpl_env in *.
+inversion H0.
 destruct p; destruct t; inversion H0; subst; simpl_env in *.
-simpl; simpl_env; constructor. unfold env_map; auto. eapply H; auto.
+simpl; simpl_env; constructor. unfold env_map; auto. eauto.
+Case "wfenv_cons_E".
+destruct Γ₁; simpl_env in *.
+inversion H0.
+destruct p; destruct t; inversion H0; subst; simpl_env in *.
+simpl; simpl_env; constructor. unfold env_map; auto. eauto.
 Case "wfenv_cons_Eq".
 destruct Γ₁; simpl_env in *.
 inversion H0; subst; eauto.
-destruct p; destruct t; inversion H0; subst; simpl_env in *;
+destruct p; destruct t0; inversion H0; subst; simpl_env in *;
 simpl; simpl_env; constructor.
-unfold env_map; auto. eapply H; auto.
-unfold env_map; auto. eapply H; auto.
-unfold env_map; auto. eapply H; auto.
-unfold env_map; auto. eapply H; auto.
-unfold env_map; auto. eapply H; auto.
-unfold env_map; auto. eapply H; auto.
+unfold env_map; auto. auto.
 Case "wftyp_var".
 subst G. simpl.
 destruct (a == a0); subst.
+SCase "a = a0".
 rewrite_env (nil ++ env_map (tsubst_typ τ' a0) Γ₁ ++ Γ₂); apply wftyp_weakening; auto.
+simpl_env. apply wfenv_wftyp_Eq3 with (x := a0).
+eapply wfenv_strip; eauto.
+SCase "a ≠ a0".
 constructor; auto.
 destruct o.
 analyze_binds H0;
@@ -562,12 +632,30 @@ eapply H; simpl_env; eauto. eauto.
 autorewrite with lngen; auto.
 Qed.
 
+Lemma wfenv_subst_eq :
+  forall Γ₁ Γ₂ a τ, wfenv (Γ₁ ++ a ~ Eq τ ++ Γ₂) →
+    wfenv (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂).
+Proof.
+destruct wfenv_wftyp_subst_eq as [H1 H2].
+intros Γ₁ Γ₂ x τ H. eapply H1; eauto.
+Qed.
+Hint Resolve wfenv_subst_eq.
+
+Lemma wftyp_subst_eq :
+forall Γ₁ Γ₂ τ a τ', wftyp (Γ₁ ++ a ~ Eq τ' ++ Γ₂) τ →
+wftyp (env_map (tsubst_typ τ' a) Γ₁ ++ Γ₂) (tsubst_typ τ' a τ).
+Proof.
+destruct wfenv_wftyp_subst_eq as [H1 H2].
+intros. eapply H2; eauto.
+Qed.
+Hint Resolve wftyp_subst_eq.
+
 Lemma wfenv_tsubst :
   forall Γ₁ Γ₂ a τ, wfenv (Γ₁ ++ a ~ U ++ Γ₂) → wftyp Γ₂ τ →
     wfenv (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂).
 Proof.
-destruct wfenv_wftyp_tsubst as [H1 H2].
-intros Γ₁ Γ₂ x τ H. eapply H1; eauto.
+intros Γ₁ Γ₂ a τ H H0.
+auto.
 Qed.
 Hint Resolve wfenv_tsubst.
 
@@ -575,8 +663,8 @@ Lemma wftyp_tsubst :
 forall Γ₁ Γ₂ τ a τ', wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ →
 wftyp Γ₂ τ' → wftyp (env_map (tsubst_typ τ' a) Γ₁ ++ Γ₂) (tsubst_typ τ' a τ).
 Proof.
-destruct wfenv_wftyp_tsubst as [H1 H2].
-intros. eapply H2; eauto.
+intros Γ₁ Γ₂ τ a τ' H H0.
+auto.
 Qed.
 Hint Resolve wftyp_tsubst.
 
