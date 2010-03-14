@@ -688,18 +688,191 @@ fsetdec.
 Qed.
 Hint Resolve wftyp_fv.
 
-(** Lemmas about [zip] *)
+Lemma wfenv_wftyp_UE_aux :
+  (forall Γ, wfenv Γ ->
+    forall Γ₁ a Γ₂, Γ = Γ₁ ++ a ~ U ++ Γ₂ ->
+      wfenv (Γ₁ ++ a ~ E ++ Γ₂))
+  ∧ (forall Γ τ, wftyp Γ τ ->
+    forall Γ₁ a Γ₂, Γ = Γ₁ ++ a ~ U ++ Γ₂ ->
+      wftyp (Γ₁ ++ a ~ E ++ Γ₂) τ).
+Proof.
+apply wfenv_wftyp_mut_ind; intros; subst; auto.
+assert (binds a (@U typ) nil). rewrite H; auto.
+  analyze_binds H0.
+destruct Γ₁; inversion H0; simpl_env in *.
+  destruct p; destruct t0; inversion H2; subst.
+  auto.
+destruct Γ₁; inversion H0; simpl_env in *; subst; auto.
+destruct Γ₁; inversion H0; simpl_env in *; subst; auto.
+destruct Γ₁; inversion H0; simpl_env in *; subst; auto.
+destruct (a == a0); subst.
+  auto 7.
+  constructor; auto. destruct o. analyze_binds H0.
+    destruct H0. analyze_binds H0.
+    destruct H0. right; right; exists x. analyze_binds H0.
+apply wftyp_forall with (L := L ∪ {{a}}); intros.
+  rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ E ++ Γ₂). auto.
+apply wftyp_exists with (L := L ∪ {{a}}); intros.
+  rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ E ++ Γ₂). auto.
+Qed.
 
-ICI
+Lemma wfenv_wftyp_EU_aux :
+  (forall Γ, wfenv Γ ->
+    forall Γ₁ a Γ₂, Γ = Γ₁ ++ a ~ E ++ Γ₂ ->
+      wfenv (Γ₁ ++ a ~ U ++ Γ₂))
+  ∧ (forall Γ τ, wftyp Γ τ ->
+    forall Γ₁ a Γ₂, Γ = Γ₁ ++ a ~ E ++ Γ₂ ->
+      wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ).
+Proof.
+apply wfenv_wftyp_mut_ind; intros; subst; auto.
+assert (binds a (@E typ) nil). rewrite H; auto.
+  analyze_binds H0.
+destruct Γ₁; inversion H0; simpl_env in *.
+  destruct p; destruct t0; inversion H2; subst.
+  auto.
+destruct Γ₁; inversion H0; simpl_env in *; subst; auto.
+destruct Γ₁; inversion H0; simpl_env in *; subst; auto.
+destruct Γ₁; inversion H0; simpl_env in *; subst; auto.
+destruct (a == a0); subst.
+  auto 7.
+  constructor; auto. destruct o. analyze_binds H0.
+    destruct H0. analyze_binds H0.
+    destruct H0. right; right; exists x. analyze_binds H0.
+apply wftyp_forall with (L := L ∪ {{a}}); intros.
+  rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ U ++ Γ₂). auto.
+apply wftyp_exists with (L := L ∪ {{a}}); intros.
+  rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ U ++ Γ₂). auto.
+Qed.
+
+Lemma wfenv_UE :
+  forall Γ₁ a Γ₂, wfenv (Γ₁ ++ a ~ U ++ Γ₂) -> wfenv (Γ₁ ++ a ~ E ++ Γ₂).
+Proof.
+destruct wfenv_wftyp_UE_aux as [H _].
+intros. eapply H. eauto. auto.
+Qed.
+
+Lemma wfenv_EU :
+  forall Γ₁ a Γ₂, wfenv (Γ₁ ++ a ~ E ++ Γ₂) -> wfenv (Γ₁ ++ a ~ U ++ Γ₂).
+Proof.
+destruct wfenv_wftyp_EU_aux as [H _].
+intros. eapply H. eauto. auto.
+Qed.
+
+Lemma wftyp_UE :
+  forall Γ₁ a Γ₂ τ, wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ -> wftyp (Γ₁ ++ a ~ E ++ Γ₂) τ.
+Proof.
+destruct wfenv_wftyp_UE_aux as [_ H].
+intros. eapply H. eauto. auto.
+Qed.
+
+Lemma wftyp_EU :
+  forall Γ₁ a Γ₂ τ, wftyp (Γ₁ ++ a ~ E ++ Γ₂) τ -> wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ.
+Proof.
+destruct wfenv_wftyp_EU_aux as [_ H].
+intros. eapply H. eauto. auto.
+Qed.
+
+
+(** Lemmas about [zip] *)
+Lemma zip_dom1 :
+  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+  dom Γ₁ [<=] dom Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H. induction H; simpl in *; fsetdec.
+Qed.
+
+Lemma zip_dom2 :
+  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+  dom Γ₂ = dom Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H. induction H; simpl in *; congruence.
+Qed.
+
+Lemma wfenv_wftyp_zip_aux :
+  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+  (wfenv Γ₁ -> wfenv Γ₂ -> wfenv Γ₃)
+  ∧ (forall τ Γ, wftyp (Γ ++ Γ₁) τ -> wftyp (Γ ++ Γ₂) τ ->
+    wftyp (Γ ++ Γ₃) τ).
+Proof.
+intros Γ₁ Γ₂ Γ₃ H; induction H; try destruct IHzip as [IHzip1 IHzip2];
+  split; intros; auto.
+Case "wfenv_T".
+inversion H1; inversion H2; subst; auto.
+constructor; auto.
+  erewrite <- zip_dom2; eauto.
+  rewrite_env (nil ++ G); auto.
+Case "wftype_T".
+rewrite_env ((Γ ++ [(x, T t)]) ++ G); apply IHzip2; simpl_env; auto.
+Case "wfenv_U".
+inversion H0; inversion H1; subst; auto.
+constructor; auto.
+  erewrite <- zip_dom2; eauto.
+Case "wftype_U".
+rewrite_env ((Γ ++ [(a, U)]) ++ G); apply IHzip2; simpl_env; auto.
+Case "wfenv_E".
+inversion H0; inversion H1; subst; auto.
+constructor; auto.
+  erewrite <- zip_dom2; eauto.
+Case "wftype_E".
+rewrite_env ((Γ ++ [(a, E)]) ++ G); apply IHzip2; simpl_env; auto using wftyp_UE.
+Case "wfenv_E".
+inversion H2; subst. constructor; auto. erewrite <- zip_dom2; eauto.
+Case "wftyp_E".
+rewrite_env ((Γ ++ [(a, E)]) ++ G); apply IHzip2; simpl_env; auto.
+apply wftyp_weakening; auto.
+  constructor; auto. apply wfenv_strip with (Γ' := Γ); auto.
+  eauto.
+  apply uniq_app_3; apply uniq_app_1 with (F := G2); simpl_env; eauto. 
+Case "wfenv_Eq".
+inversion H1; inversion H2; subst; auto.
+constructor; auto.
+  erewrite <- zip_dom2; eauto.
+  rewrite_env (nil ++ G); auto.
+Case "wftype_Eq".
+rewrite_env ((Γ ++ [(a, Eq t)]) ++ G); apply IHzip2; simpl_env; auto.
+Qed.
+
+Lemma wfenv_zip:
+  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+    wfenv Γ₁ -> wfenv Γ₂ -> wfenv Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0 H1.
+destruct (wfenv_wftyp_zip_aux Γ₁ Γ₂ Γ₃ H) as [? _].
+auto.
+Qed.
+
+Lemma wftyp_zip:
+  forall Γ₁ Γ₂ Γ₃ τ, zip Γ₁ Γ₂ Γ₃ ->
+    wftyp Γ₁ τ -> wftyp Γ₂ τ -> wftyp Γ₃ τ.
+Proof.
+intros Γ₁ Γ₂ Γ₃ τ H H0 H1.
+destruct (wfenv_wftyp_zip_aux Γ₁ Γ₂ Γ₃ H) as [_ ?].
+rewrite_env (nil ++ Γ₃). auto.
+Qed.
 
 (** Lemmas about [wfterm] *)
 Lemma wfterm_wfenv : forall Γ e τ,
   wfterm Γ e τ → wfenv Γ.
 Proof.
 intros Γ e τ H.
-induction H; auto.
-pick fresh x; assert (wfenv ([(x, T t1)] ++ G)) by auto; inversion H1; subst; eauto.
-pick fresh a; assert (wfenv ([(a, None)] ++ G)) by auto; inversion H1; subst; eauto.
+induction H; auto; try solve [eapply wfenv_zip; eauto].
+Case "lam".
+pick fresh x. apply wfenv_strip with (Γ' := x ~ T t1). auto.
+Case "gen".
+pick fresh a. apply wfenv_strip with (Γ' := a ~ U). auto.
+Case "exists".
+pick fresh a. apply wfenv_strip with (Γ' := a ~ E). auto.
+Case "open".
+apply wfenv_weakening; auto. constructor; auto.
+  eapply wfenv_strip; eauto.
+Case "nu".
+pick fresh a. apply wfenv_strip with (Γ' := a ~ E). auto.
+Case "sigma".
+pick fresh a.
+assert (wfenv (G2 ++ G1)).
+  apply wfenv_strip with (Γ' := [(a, Eq t')]). auto.
+apply wfenv_weakening; auto.
+constructor; auto. apply wfenv_strip with (Γ' := G2). auto.
 Qed.
 Hint Resolve wfterm_wfenv.
 
