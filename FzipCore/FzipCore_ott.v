@@ -389,6 +389,10 @@ Inductive wftypeq : typing_env -> typ -> typ -> Prop :=    (* defn wftypeq *)
      wftypeq G t1 t1' ->
      wftypeq G t2 t2' ->
      wftypeq G (typ_arrow t1 t2) (typ_arrow t1' t2')
+ | wftypeq_prod : forall (G:typing_env) (t1 t2 t1' t2':typ),
+     wftypeq G t1 t1' ->
+     wftypeq G t2 t2' ->
+     wftypeq G (typ_prod t1 t2) (typ_prod t1' t2')
  | wftypeq_forall : forall (L:vars) (G:typing_env) (t1 t2:typ),
       ( forall a , a \notin  L  -> wftypeq  ( a ~U ++  G )   ( open_typ_wrt_typ t1 (typ_var_f a) )   ( open_typ_wrt_typ t2 (typ_var_f a) )  )  ->
      wftypeq G (typ_forall t1) (typ_forall t2)
