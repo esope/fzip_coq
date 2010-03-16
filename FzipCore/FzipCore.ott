@@ -237,7 +237,7 @@ G |- forall a. t1 = forall a. t2
 -------------------------------- :: exists
 G |- exists a. t1 = exists a. t2
 
-G |- t2 = t2
+G |- t2 = t1
 ------------ :: sym
 G |- t1 = t2
 
