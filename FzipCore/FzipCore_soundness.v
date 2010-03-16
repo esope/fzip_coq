@@ -772,6 +772,158 @@ destruct wfenv_wftyp_EU_aux as [_ H].
 intros. eapply H. eauto. auto.
 Qed.
 
+(** Lemmas about [wfeq] *)
+Lemma wftypeq_wfenv : forall Γ τ₁ τ₂,
+  wftypeq Γ τ₁ τ₂ → wfenv Γ.
+Proof.
+intros Γ τ₁ τ₂ H; induction H; auto.
+Case "forall".
+pick fresh a.
+assert (wfenv (a ~ U ++ G)) as H1 by auto.
+inversion H1; auto.
+Case "exists".
+pick fresh a.
+assert (wfenv (a ~ U ++ G)) as H1 by auto.
+inversion H1; auto.
+Qed.
+
+Lemma wftypeq_wftype : forall Γ τ₁ τ₂,
+  wftypeq Γ τ₁ τ₂ → wftyp Γ τ₁ ∧ wftyp Γ τ₂.
+Proof.
+intros Γ τ₁ τ₂ H; induction H; split; intuition; auto.
+constructor; eauto.
+eapply wfenv_wftyp_Eq2; eauto.
+apply wftyp_forall with (L := L); firstorder.
+apply wftyp_forall with (L := L); firstorder.
+apply wftyp_exists with (L := L); firstorder.
+apply wftyp_exists with (L := L); firstorder.
+Qed.
+
+Lemma wftypeq_refl : forall Γ τ, wftyp Γ τ →
+  wftypeq Γ τ τ.
+Proof.
+intros Γ τ H; induction H; eauto.
+Qed.
+
+Lemma wftypeq_UE : forall Γ₁ a Γ₂ τ₁ τ₂,
+  wftypeq (Γ₂ ++ a ~ U ++ Γ₁) τ₁ τ₂ →
+  wftypeq (Γ₂ ++ a ~ E ++ Γ₁) τ₁ τ₂.
+Proof.
+intros Γ₁ a Γ₂ τ₁ τ₂ H. dependent induction H; auto.
+Case "var". destruct (a == a0); subst.
+SCase "a = a0". constructor; auto 6 using wfenv_UE.
+SCase "a ≠ a0". constructor; auto 6 using wfenv_UE.
+destruct H. analyze_binds H.
+destruct H. analyze_binds H.
+destruct H. analyze_binds H; eauto 6.
+Case "eq".
+constructor; auto using wfenv_UE.
+analyze_binds H.
+Case "forall".
+apply wftypeq_forall with (L := L); intros.
+rewrite_env ((a0 ~ U ++ Γ₂) ++ a ~ E ++ Γ₁). auto.
+Case "exists".
+apply wftypeq_exists with (L := L); intros.
+rewrite_env ((a0 ~ U ++ Γ₂) ++ a ~ E ++ Γ₁). auto.
+Case "trans". eauto.
+Qed.
+
+Lemma wftypeq_EU : forall Γ₁ a Γ₂ τ₁ τ₂,
+  wftypeq (Γ₂ ++ a ~ E ++ Γ₁) τ₁ τ₂ →
+  wftypeq (Γ₂ ++ a ~ U ++ Γ₁) τ₁ τ₂.
+Proof.
+intros Γ₁ a Γ₂ τ₁ τ₂ H. dependent induction H; auto.
+Case "var". destruct (a == a0); subst.
+SCase "a = a0". constructor; auto 6 using wfenv_EU.
+SCase "a ≠ a0". constructor; auto 6 using wfenv_EU.
+destruct H. analyze_binds H.
+destruct H. analyze_binds H.
+destruct H. analyze_binds H; eauto 6.
+Case "eq".
+constructor; auto using wfenv_EU.
+analyze_binds H.
+Case "forall".
+apply wftypeq_forall with (L := L); intros.
+rewrite_env ((a0 ~ U ++ Γ₂) ++ a ~ U ++ Γ₁). auto.
+Case "exists".
+apply wftypeq_exists with (L := L); intros.
+rewrite_env ((a0 ~ U ++ Γ₂) ++ a ~ U ++ Γ₁). auto.
+Case "trans". eauto.
+Qed.
+
+Lemma wftypeq_instantiate :
+  forall Γ₁ Γ₂ τ₁ τ₂ a τ, wftypeq (Γ₁ ++ a ~ U ++ Γ₂) τ₁ τ₂ →
+    wftyp Γ₂ τ → wftypeq (Γ₁ ++ a ~ Eq τ ++ Γ₂) τ₁ τ₂.
+Proof.
+intros Γ₁ Γ₂ τ₁ τ₂ a τ H. dependent induction H; intros; auto.
+Case "var". constructor; auto.
+destruct H. analyze_binds H; eauto 7.
+destruct H. analyze_binds H.
+destruct H. analyze_binds H; eauto 7.
+Case "eq". analyze_binds H.
+Case "forall". apply wftypeq_forall with (L := L); intros; auto.
+rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ ++ Γ₂). auto.
+Case "exists". apply wftypeq_exists with (L := L); intros; auto.
+rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ ++ Γ₂). auto.
+Case "trans". eauto.
+Qed.
+
+Lemma wftypeq_subst_eq :
+  forall Γ₁ Γ₂ τ₁ τ₂ a τ, wftypeq (Γ₁ ++ a ~ Eq τ ++ Γ₂) τ₁ τ₂ →
+    wftypeq (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂)
+    ((tsubst_typ τ a) τ₁) ((tsubst_typ τ a) τ₂).
+Proof.
+intros Γ₁ Γ₂ τ₁ τ₂ a τ H.
+dependent induction H; intros; try solve [simpl; auto].
+Case "var". destruct (a == a0); subst.
+SCase "a = a0". auto using wftypeq_refl, wftyp_subst_eq.
+SCase "a ≠ a0". simpl; destruct (a == a0). contradiction.
+destruct H. analyze_binds H. constructor; auto using wfenv_subst_eq.
+replace (@U typ) with (tag_map (tsubst_typ τ a0) U) by reflexivity.
+  unfold env_map. auto.
+destruct H. analyze_binds H. constructor; auto using wfenv_subst_eq.
+replace (@E typ) with (tag_map (tsubst_typ τ a0) E) by reflexivity.
+  unfold env_map. auto.
+destruct H. analyze_binds H.
+  constructor; auto using wfenv_subst_eq.
+  right; right; exists (tsubst_typ τ a0 x).
+replace (Eq (tsubst_typ τ a0 x)) with (tag_map (tsubst_typ τ a0) (Eq x))
+  by reflexivity.
+  unfold env_map. auto.
+  constructor; auto using wfenv_subst_eq.
+  right; right; exists x. auto.
+Case "eq". assert (uniq (Γ₁ ++ [(a0, Eq τ)] ++ Γ₂)) by auto.
+analyze_binds_uniq H.
+SCase "binds a Γ₁". assert (a ≠ a0) by auto. simpl; destruct (a == a0); try contradiction.
+constructor; auto using wfenv_subst_eq.
+replace (Eq (tsubst_typ τ a0 t)) with (tag_map (tsubst_typ τ a0) (Eq t)) by reflexivity.
+unfold env_map. auto.
+SCase "a = a0". assert (t = τ) by congruence; subst.
+assert (a0 ∉ ftv_typ τ).
+  apply wfenv_strip in H0. inversion H0; subst. apply wftyp_fv in H7. auto.
+  assert (wftypeq (env_map (tsubst_typ τ a0) Γ₁ ++ Γ₂) (tsubst_typ τ a0 τ) (tsubst_typ τ a0 τ)).
+  apply wftypeq_refl; apply wftyp_subst_eq; apply wfenv_wftyp_Eq2 with (x := a0); auto.
+  autorewrite with lngen in *; auto.
+SCase "binds a Γ₂". assert (a ≠ a0) by auto. simpl; destruct (a == a0); try contradiction.
+constructor; auto using wfenv_subst_eq.
+assert (a0 ∉ ftv_typ t).
+assert (ftv_typ t [<=] dom Γ₂). apply wftyp_fv. apply wfenv_wftyp_Eq2 with (x := a); auto. apply wfenv_strip in H0. apply wfenv_strip in H0. auto.
+solve_uniq.
+autorewrite with lngen. auto.
+Case "forall". simpl. apply wftypeq_forall with (L := L ∪ {{a}}); intros; auto.
+replace (typ_var_f a0) with (tsubst_typ τ a (typ_var_f a0)).
+ repeat rewrite <- tsubst_typ_open_typ_wrt_typ.
+ rewrite_env (env_map (tsubst_typ τ a) (a0 ~ U ++ Γ₁) ++ Γ₂). auto.
+
+ ICI
+
+
+Case "exists". apply wftypeq_exists with (L := L); intros; auto.
+rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ ++ Γ₂). auto.
+Case "trans". eauto.
+Qed.
+
+
 
 (** Lemmas about [zip] *)
 Lemma zip_dom1 :
