@@ -13,5 +13,5 @@ opt: xcodec.ml
 	ln -s _build/xcodec.native $(TARGET)
 
 clean:
-	rm $(TARGET)
+	rm -f $(TARGET)
 	ocamlbuild -clean
