@@ -1137,6 +1137,119 @@ Case "sym". eauto.
 Case "trans". eauto.
 Qed.
 
+Lemma wfenv_wftyp_renameE_aux:
+  (forall Γ, wfenv Γ → forall Γ₁ Γ₂ a b,
+    Γ = Γ₁ ++ a ~ E ++ Γ₂ →
+    b ∉ dom (Γ₂ ++ Γ₁) →
+    wfenv (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ E ++ Γ₂))
+  ∧ (forall Γ τ, wftyp Γ τ → forall Γ₁ Γ₂ a b,
+    Γ = Γ₁ ++ a ~ E ++ Γ₂ →
+    b ∉ dom (Γ₂ ++ Γ₁) →
+    wftyp (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ E ++ Γ₂) (tsubst_typ (typ_var_f b) a τ)).
+Proof.
+apply wfenv_wftyp_mut_ind; intros; subst; simpl; simpl_env.
+Case "nil".
+assert (binds a (@E typ) nil) as H1. rewrite H; auto.
+analyze_binds H1.
+Case "T". destruct Γ₁; inversion H0; subst; simpl_env in *.
+simpl; simpl_env.
+constructor. unfold env_map; auto. eapply H; eauto.
+Case "U". destruct Γ₁; inversion H0; subst; simpl_env in *.
+simpl; simpl_env.
+constructor. unfold env_map; auto. eapply H; eauto.
+Case "E". destruct Γ₁; inversion H0; subst; simpl_env in *.
+constructor; auto.
+simpl; simpl_env.
+constructor. unfold env_map; auto. eapply H; eauto.
+Case "Eq". destruct Γ₁; inversion H0; subst; simpl_env in *.
+simpl; simpl_env.
+constructor. unfold env_map; auto. eapply H; eauto.
+Case "var". destruct (a == a0); subst; constructor; simpl_env in *; auto 6.
+unfold env_map.
+destruct o. replace (@U typ) with (tag_map (tsubst_typ (typ_var_f b) a0) U) by reflexivity.
+  analyze_binds H0.
+destruct H0. replace (@E typ) with (tag_map (tsubst_typ (typ_var_f b) a0) E) by reflexivity.
+  analyze_binds H0.
+destruct H0. right; right.
+  analyze_binds H0; eauto.
+  exists (tsubst_typ (typ_var_f b) a0 x).
+  replace (Eq (tsubst_typ (typ_var_f b) a0 x)) with
+  (tag_map (tsubst_typ (typ_var_f b) a0) (Eq x)) by reflexivity.
+  auto.
+Case "arrow". constructor. eapply H; eauto. eapply H0; eauto.
+Case "prod". constructor. eapply H; eauto. eapply H0; eauto.
+Case "forall". apply wftyp_forall with (L := L ∪ {{a}} ∪ {{b}}); intros.
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ E ++ Γ₂). rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
+Case "exists". apply wftyp_exists with (L := L ∪ {{a}} ∪ {{b}}); intros.
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ E ++ Γ₂). rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
+Qed.
+
+Lemma wfenv_renameE:
+  forall Γ₁ Γ₂ a b,
+    wfenv (Γ₁ ++ a ~ E ++ Γ₂) →
+    b ∉ dom (Γ₂ ++ Γ₁) →
+    wfenv (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ E ++ Γ₂).
+Proof.
+destruct wfenv_wftyp_renameE_aux as [H _]. intros. eapply H; eauto.
+Qed.
+
+Lemma wftyp_renameE:
+  forall Γ₁ Γ₂ τ a b,
+    wftyp (Γ₁ ++ a ~ E ++ Γ₂) τ →
+    b ∉ dom (Γ₂ ++ Γ₁) →
+    wftyp (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ E ++ Γ₂) (tsubst_typ (typ_var_f b) a τ).
+Proof.
+destruct wfenv_wftyp_renameE_aux as [_ H]. intros. eapply H; eauto.
+Qed.
+
+Lemma wfenv_wftyp_upperE_aux:
+  (forall Γ, wfenv Γ → forall Γ₁ Γ₂ Γ₃ a,
+    Γ = Γ₁ ++ a ~ E ++ Γ₂ ++ Γ₃ →
+    wfenv (Γ₁ ++ Γ₂ ++ a ~ E ++ Γ₃))
+  ∧ (forall Γ τ, wftyp Γ τ → forall Γ₁ Γ₂ Γ₃ a,
+    Γ = Γ₁ ++ a ~ E ++ Γ₂ ++ Γ₃ →
+    wftyp (Γ₁ ++ Γ₂ ++ a ~ E ++ Γ₃) τ).
+Proof.
+apply wfenv_wftyp_mut_ind; intros; subst; auto.
+Case "nil".
+assert (binds a (@E typ) nil) as H1. rewrite H; auto.
+analyze_binds H1.
+Case "T". destruct Γ₁; inversion H0; subst; simpl_env in *.
+constructor. auto. eapply H; eauto.
+Case "U". destruct Γ₁; inversion H0; subst; simpl_env in *.
+constructor. auto. eapply H; eauto.
+Case "E". destruct Γ₁; inversion H0; subst; simpl_env in *.
+eapply wfenv_weakening; auto. apply wfenv_strip in w; auto.
+constructor; auto.
+Case "Eq". destruct Γ₁; inversion H0; subst; simpl_env in *.
+constructor. auto. eapply H; eauto.
+Case "var". constructor; simpl_env in *; auto 6.
+destruct o. analyze_binds H0.
+destruct H0. analyze_binds H0; auto 7.
+destruct H0. right; right.
+  analyze_binds H0; eauto.
+Case "forall". apply wftyp_forall with (L := L ∪ {{a}}); intros.
+rewrite_env ((a0 ~ U ++ Γ₁) ++ Γ₂ ++ a ~ E ++ Γ₃).
+eapply H; auto.
+Case "exists". apply wftyp_exists with (L := L ∪ {{a}}); intros.
+rewrite_env ((a0 ~ U ++ Γ₁) ++ Γ₂ ++ a ~ E ++ Γ₃).
+eapply H; auto.
+Qed.
+
+Lemma wfenv_upperE: forall Γ₁ Γ₂ Γ₃ a,
+  wfenv (Γ₁ ++ a ~ E ++ Γ₂ ++ Γ₃) →
+  wfenv (Γ₁ ++ Γ₂ ++ a ~ E ++ Γ₃).
+Proof.
+destruct wfenv_wftyp_upperE_aux as [H _]; intros; eapply H; eauto.
+Qed.
+
+Lemma wftyp_upperE: forall Γ₁ Γ₂ Γ₃ a τ,
+    wftyp (Γ₁ ++ a ~ E ++ Γ₂ ++ Γ₃) τ →
+    wftyp (Γ₁ ++ Γ₂ ++ a ~ E ++ Γ₃) τ.
+Proof.
+destruct wfenv_wftyp_upperE_aux as [_ H]; intros; eapply H; eauto.
+Qed.
+
 (** Lemmas about [zip] *)
 Lemma zip_dom1 :
   forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
@@ -1342,6 +1455,25 @@ Case "exists". apply wftyp_exists with (L := L ∪ dom Γ₂); intros; auto.
 eapply H0; auto. constructor; eauto. constructor; auto.
 Qed.
 
+Lemma wftyp_zip23:
+  forall Γ₁ Γ₂ Γ₃ τ, zip Γ₁ Γ₂ Γ₃ ->
+    wftyp Γ₂ τ -> wfenv Γ₁ → wftyp Γ₃ τ.
+Proof.
+intros Γ₁ Γ₂ Γ₃ τ H H0. generalize dependent Γ₃. generalize dependent Γ₁.
+induction H0; intros; auto.
+Case "var". constructor; auto.
+destruct H. eapply zip_binds_U23 in H; eauto. tauto.
+destruct H. eapply zip_binds_E23 in H; eauto.
+destruct H. eapply zip_binds_Eq23 in H; eauto.
+eapply wfenv_zip; eauto.
+Case "arrow". constructor; [eapply IHwftyp1 | eapply IHwftyp2]; eauto.
+Case "prod". constructor; [eapply IHwftyp1 | eapply IHwftyp2]; eauto.
+Case "forall". apply wftyp_forall with (L := L ∪ dom Γ₁); intros; auto.
+eapply H0; auto. constructor; eauto. constructor; auto.
+Case "exists". apply wftyp_exists with (L := L ∪ dom Γ₁); intros; auto.
+eapply H0; auto. constructor; eauto. constructor; auto.
+Qed.
+
 (** Lemmas about [wfterm] *)
 Lemma wfterm_wfenv : forall Γ e τ,
   wfterm Γ e τ → wfenv Γ.
@@ -1378,19 +1510,26 @@ Case "app". inversion IHwfterm1; subst; auto.
   eapply wftyp_zip13. eauto. auto. eapply wfterm_wfenv; eauto.
 Case "abs". pick fresh x. assert ([(x, T t1)] ++ G ⊢ t2 ok) by auto.
 assert (wfenv ([(x, T t1)] ++ G)) by eauto.
-
-
-ICI
-
-inversion H2; subst.
-constructor; auto. rewrite_env (nil ++ G). eauto.
+inversion H3; subst.
+rewrite_env (nil ++ x ~ T t1 ++ G) in H2.
+apply wftyp_subst in H2; simpl_env in H2.
+auto.
+Case "pair". constructor.
+eapply wftyp_zip13. eauto. auto. eapply wftyp_wfenv; eauto.
+eapply wftyp_zip23. eauto. auto. eapply wftyp_wfenv; eauto.
+Case "projL". inversion IHwfterm; subst; auto.
+Case "projR". inversion IHwfterm; subst; auto.
 Case "inst". inversion IHwfterm; subst.
-inversion IHwfterm; subst.
 pick fresh a. rewrite tsubst_typ_intro with (a1 := a); auto.
 rewrite_env (env_map (tsubst_typ t a) nil ++ G).
 apply wftyp_tsubst; simpl_env; auto.
-Case "gen".
-apply wftyp_forall with (L := L); auto.
+Case "gen". apply wftyp_forall with (L := L); auto.
+Case "exists". apply wftyp_exists with (L := L); intros.
+rewrite_env (nil ++ a ~ U ++ G). apply wftyp_EU. simpl_env. auto.
+Case "open". inversion IHwfterm; subst.
+pick fresh a for (L ∪ dom G1 ∪ dom G2 ∪ ftv_term t ∪ ftv_env G2).
+ICI
+
 Qed.
 Hint Resolve wfterm_wftyp.
 
