@@ -46,11 +46,11 @@ Lemma result_regular : forall p, result p → lc_term p.
 Proof.
 intros; destruct val_result_regular as [_ H2]; auto.
 Qed.
-Hint Resolve val_regular result_regular.
+Hint Resolve val_regular result_regular: lngen.
 
 Lemma red0_regular1 : forall e e', red0 e e' → lc_term e.
 Proof.
-intros e e' H. destruct H; auto.
+intros e e' H. destruct H; auto with lngen.
 Case "nu_sigma".
   pick fresh b; pick fresh a.
   apply (lc_term_nu_exists b).
@@ -69,7 +69,7 @@ auto with lngen.
 Case "beta_v". eauto with lngen.
 Case "beta_t".
   pick fresh a.
-  assert (lc_term (open_term_wrt_typ e (typ_var_f a))) by auto.
+  assert (lc_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
   apply tsubst_term_lc_term
     with (t1 := typ_var_f b) (a1 := a) in H0; auto.
   rewrite tsubst_term_open_term_wrt_typ in H0; auto.
@@ -91,14 +91,14 @@ Case "sigma_appL".
   unfold open_term_wrt_typ; simpl.
   constructor.
     apply result_regular in H; inversion H; subst. apply H7.
-    rewrite <- (H1 a) in H0; auto.
+    rewrite <- (H1 a) in H0; auto with lngen.
 Case "sigma_appR".
   pick fresh a.
   apply (lc_term_sigma_exists a); auto.
   apply result_regular in H0; inversion H0; subst; auto.
   unfold open_term_wrt_typ; simpl.
   constructor.
-    rewrite <- (H1 a) in H; auto.
+    rewrite <- (H1 a) in H; auto with lngen.
     apply result_regular in H0; inversion H0; subst. apply H7.
 Case "sigma_pairL".
   pick fresh a.
@@ -107,14 +107,14 @@ Case "sigma_pairL".
   unfold open_term_wrt_typ; simpl.
   constructor.
     apply result_regular in H; inversion H; subst. apply H7.
-    rewrite <- (H1 a) in H0; auto.
+    rewrite <- (H1 a) in H0; auto with lngen.
 Case "sigma_pairR".
   pick fresh a.
   apply (lc_term_sigma_exists a); auto.
   apply result_regular in H0; inversion H0; subst; auto.
   unfold open_term_wrt_typ; simpl.
   constructor.
-    rewrite <- (H1 a) in H; auto.
+    rewrite <- (H1 a) in H; auto with lngen.
     apply result_regular in H0; inversion H0; subst. apply H7.
 Case "sigma_fst".
   pick fresh a.
@@ -167,25 +167,25 @@ Case "sigma_sigma".
   unfold open_term_wrt_typ in H11; simpl in H11; inversion H11; subst.
   auto.
 Qed.
-Hint Resolve red0_regular1 red0_regular2.
+Hint Resolve red0_regular1 red0_regular2: lngen.
 
 Lemma red1_regular1 : forall e e', e ⇝ e' → lc_term e.
 Proof.
-intros e e' H. induction H; eauto.
+intros e e' H. induction H; eauto with lngen.
 Qed.
 
 Lemma red1_regular2 : forall e e', e ⇝ e' → lc_term e'.
 Proof.
-intros e e' H; induction H; eauto.
+intros e e' H; induction H; eauto with lngen.
 Qed.
-Hint Resolve red1_regular1 red1_regular2.
+Hint Resolve red1_regular1 red1_regular2: lngen.
 
 Lemma wftyp_regular : forall Γ τ, wftyp Γ τ → lc_typ τ.
 Proof.
 intros Γ τ H.
 induction H; eauto.
 Qed.
-Hint Resolve wftyp_regular.
+Hint Resolve wftyp_regular : lngen.
 
 Lemma wfenv_wftyp_aux :
   (forall Γ, wfenv Γ → forall Γ₁ x b τ, Γ = x ~ b ++ Γ₁ ->
@@ -221,14 +221,14 @@ generalize dependent Γ₂.
 induction Γ₁; intros; simpl_env in H0; eauto.
 inversion H0; subst; simpl_env in H5; eauto.
 Qed.
-Hint Resolve wfenv_wftyp_T wfenv_wftyp_Eq.
+Hint Resolve wfenv_wftyp_T wfenv_wftyp_Eq: fzip.
 
 
 Lemma wftyp_wfenv : forall Γ τ, wftyp Γ τ → wfenv Γ.
 Proof.
 destruct wfenv_wftyp_aux; auto.
 Qed.
-Hint Resolve wftyp_wfenv.
+Hint Resolve wftyp_wfenv: fzip.
 
 Lemma wfenv_wftyp_uniq_aux :
   (forall Γ, wfenv Γ → uniq Γ) ∧ (forall Γ τ, wftyp Γ τ → uniq Γ).
@@ -242,13 +242,13 @@ Lemma wfenv_uniq : forall Γ, wfenv Γ → uniq Γ.
 Proof.
 destruct wfenv_wftyp_uniq_aux; auto.
 Qed.
-Hint Resolve wfenv_uniq.
+Hint Resolve wfenv_uniq: lngen.
 
 Lemma wftyp_uniq :  forall Γ τ, wftyp Γ τ → uniq Γ.
 Proof.
-eauto.
+eauto with lngen fzip.
 Qed.
-Hint Resolve wftyp_uniq.
+Hint Resolve wftyp_uniq: lngen.
 
 (** Lemmas about [wfenv] and [wftyp] *)
 Lemma wfenv_wftyp_weakening :
@@ -319,6 +319,7 @@ Proof.
 destruct wfenv_wftyp_weakening as [H1 H2].
 intros. apply (H2 (Γ₁ ++ Γ₃)); auto.
 Qed.
+Hint Resolve wfenv_weakening wftyp_weakening: fzip.
 
 Lemma wfenv_wftyp_T2 :
 forall Γ x τ, wfenv Γ → binds x (T τ) Γ → wftyp Γ τ.
@@ -334,7 +335,7 @@ apply wftyp_weakening; auto.
 Case "T ≠".
 rewrite_env (nil ++ a ~ T t ++ Γ).
 apply wftyp_weakening; auto. simpl.
-inversion H; subst. eapply IHΓ; eauto.
+inversion H; subst. eapply IHΓ; eauto with fzip.
 Case "U".
 rewrite_env (nil ++ a ~ U ++ Γ).
 apply wftyp_weakening; auto.
@@ -346,7 +347,7 @@ inversion H; subst. eapply IHΓ; eauto.
 Case "Eq".
 rewrite_env (nil ++ a ~ Eq t ++ Γ).
 apply wftyp_weakening; auto. simpl.
-inversion H; subst. eapply IHΓ; eauto.
+inversion H; subst. eapply IHΓ; eauto with fzip.
 Qed.
 
 Lemma wfenv_wftyp_Eq2 :
@@ -358,7 +359,7 @@ destruct a; destruct t; simpl_env in *; analyze_binds H0.
 Case "T".
 rewrite_env (nil ++ a ~ T t ++ Γ).
 apply wftyp_weakening; auto. simpl.
-inversion H; subst. eapply IHΓ; eauto.
+inversion H; subst. eapply IHΓ; eauto with fzip.
 Case "U".
 rewrite_env (nil ++ a ~ U ++ Γ).
 apply wftyp_weakening; auto.
@@ -375,9 +376,9 @@ apply wftyp_weakening; auto.
 Case "Eq ≠".
 rewrite_env (nil ++ a ~ Eq t ++ Γ).
 apply wftyp_weakening; auto. simpl.
-inversion H; subst. eapply IHΓ; eauto.
+inversion H; subst. eapply IHΓ; eauto with fzip.
 Qed.
-Hint Resolve wfenv_wftyp_T2 wfenv_wftyp_Eq2.
+Hint Resolve wfenv_wftyp_T2 wfenv_wftyp_Eq2: fzip.
 
 Lemma wfenv_wftyp_T3 :
 forall Γ x τ, wfenv (x ~ T τ ++ Γ) → wftyp Γ τ.
@@ -390,39 +391,39 @@ forall Γ x τ, wfenv (x ~ Eq τ ++ Γ) → wftyp Γ τ.
 Proof.
 intros Γ x τ H; inversion H; subst; auto.
 Qed.
-Hint Resolve wfenv_wftyp_T3 wfenv_wftyp_Eq3.
+Hint Resolve wfenv_wftyp_T3 wfenv_wftyp_Eq3: fzip.
 
 Lemma wfenv_regular_T :
 forall Γ x τ, wfenv Γ → binds x (T τ) Γ → lc_typ τ.
 Proof.
 intros. induction H; analyze_binds H0.
-replace t with τ in * by congruence; eauto.
-eauto.
-eauto.
+replace t with τ in * by congruence; eauto with lngen.
+eauto with lngen fzip.
+eauto with lngen fzip.
 Qed.
 
 Lemma wfenv_regular_Eq :
 forall Γ x τ, wfenv Γ → binds x (Eq τ) Γ → lc_typ τ.
 Proof.
 intros. induction H; analyze_binds H0.
-eauto.
-replace t with τ in * by congruence; eauto.
-eauto.
+eauto with lngen fzip.
+replace t with τ in * by congruence; eauto with lngen.
+eauto with lngen fzip.
 Qed.
-Hint Resolve wfenv_regular_T wfenv_regular_Eq.
+Hint Resolve wfenv_regular_T wfenv_regular_Eq: lngen.
 
 Lemma wftyp_regular_T2 : forall Γ x τ τ',
   wftyp (x ~ T τ ++ Γ) τ' → lc_typ τ.
 Proof.
-intros Γ x τ τ' H. eauto.
+intros Γ x τ τ' H. eauto with lngen fzip.
 Qed.
 
 Lemma wftyp_regular_Eq2 : forall Γ x τ τ',
   wftyp (x ~ Eq τ ++ Γ) τ' → lc_typ τ.
 Proof.
-intros Γ x τ τ' H. eauto.
+intros Γ x τ τ' H. eauto with lngen fzip.
 Qed.
-Hint Resolve wftyp_regular_T2 wftyp_regular_Eq2.
+Hint Resolve wftyp_regular_T2 wftyp_regular_Eq2: lngen.
 
 Lemma wfenv_wftyp_subst :
   (forall Γ, wfenv Γ → forall Γ₁ Γ₂ x τ, Γ = Γ₁ ++ x ~ (T τ) ++ Γ₂ → wfenv (Γ₁ ++ Γ₂)) ∧
@@ -433,7 +434,7 @@ Case "wfenv_empty".
 assert (binds x (T τ) nil). rewrite H; auto. analyze_binds H0.
 Case "wfenv_T".
 destruct Γ₁; simpl_env in *.
-inversion H0; subst; eauto.
+inversion H0; subst; eauto with fzip.
 destruct p; destruct t; inversion H0; subst; simpl_env in *;
 constructor; eauto.
 Case "wfenv_cons_U".
@@ -474,7 +475,6 @@ Proof.
 destruct wfenv_wftyp_subst as [H1 H2].
 intros Γ₁ Γ₂ x τ H. eapply H1; eauto.
 Qed.
-Hint Resolve wfenv_subst.
 
 Lemma wftyp_subst :
 forall Γ₁ Γ₂ τ x τ', wftyp (Γ₁ ++ x ~ (T τ') ++ Γ₂) τ → wftyp (Γ₁ ++ Γ₂) τ.
@@ -482,7 +482,7 @@ Proof.
 destruct wfenv_wftyp_subst as [H1 H2].
 intros. eapply H2; eauto.
 Qed.
-Hint Resolve wftyp_subst.
+Hint Resolve wfenv_subst wftyp_subst: fzip.
 
 Lemma wfenv_wftyp_instantiate :
   (forall Γ, wfenv Γ → forall Γ₁ Γ₂ a τ, Γ = Γ₁ ++ a ~ U ++ Γ₂ → wftyp Γ₂ τ → wfenv (Γ₁ ++ a ~ Eq τ ++ Γ₂)) ∧
@@ -537,7 +537,6 @@ Proof.
 destruct wfenv_wftyp_instantiate as [H1 H2].
 intros Γ₁ Γ₂ x τ H. eapply H1; eauto.
 Qed.
-Hint Resolve wfenv_instantiate.
 
 Lemma wftyp_instantiate :
 forall Γ₁ Γ₂ τ a τ', wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ →
@@ -546,7 +545,7 @@ Proof.
 destruct wfenv_wftyp_instantiate as [H1 H2].
 intros. eapply H2; eauto.
 Qed.
-Hint Resolve wftyp_instantiate.
+Hint Resolve wfenv_instantiate wftyp_instantiate: fzip.
 
 Lemma wfenv_strip :
 forall Γ' Γ, wfenv (Γ' ++ Γ) -> wfenv Γ.
@@ -555,16 +554,15 @@ intro Γ'; induction Γ'; intros; auto.
 apply IHΓ'.
 simpl_env in H.
 inversion H; subst; auto.
-eapply wftyp_wfenv; eauto.
-eapply wftyp_wfenv; eauto.
+eauto using wftyp_wfenv.
+eauto using wftyp_wfenv.
 Qed.
-(* Hint Resolve wfenv_strip. *)
 
 Lemma wfenv_wftyp_subst_eq :
   (forall Γ, wfenv Γ → forall Γ₁ Γ₂ a τ, Γ = Γ₁ ++ a ~ Eq τ ++ Γ₂ → wfenv ((env_map (tsubst_typ τ a) Γ₁) ++ Γ₂)) ∧
   (forall Γ τ, wftyp Γ τ → forall Γ₁ Γ₂ a τ', Γ = Γ₁ ++ a ~ Eq τ' ++ Γ₂ → wftyp ((env_map (tsubst_typ τ' a) Γ₁) ++ Γ₂) (tsubst_typ τ' a τ)).
 Proof.
-apply wfenv_wftyp_mut_ind; intros.
+apply wfenv_wftyp_mut_ind; intros; subst.
 Case "wfenv_empty".
 assert (binds a (Eq τ) nil). rewrite H; auto. analyze_binds H0.
 Case "wfenv_cons_T".
@@ -585,17 +583,15 @@ destruct p; destruct t; inversion H0; subst; simpl_env in *.
 simpl; simpl_env; constructor. unfold env_map; auto. eauto.
 Case "wfenv_cons_Eq".
 destruct Γ₁; simpl_env in *.
-inversion H0; subst; eauto.
+inversion H0; subst; eauto with fzip.
 destruct p; destruct t0; inversion H0; subst; simpl_env in *;
 simpl; simpl_env; constructor.
 unfold env_map; auto. auto.
-Case "wftyp_var".
-subst G. simpl.
-destruct (a == a0); subst.
+Case "wftyp_var". simpl; destruct (a == a0); subst.
 SCase "a = a0".
 rewrite_env (nil ++ env_map (tsubst_typ τ' a0) Γ₁ ++ Γ₂); apply wftyp_weakening; auto.
 simpl_env. apply wfenv_wftyp_Eq3 with (x := a0).
-eapply wfenv_strip; eauto.
+eauto using wfenv_strip.
 SCase "a ≠ a0".
 constructor; auto.
 destruct o.
@@ -612,24 +608,24 @@ exists (tsubst_typ τ' a0 x).
 replace (Eq (tsubst_typ τ' a0 x)) with (tag_map (tsubst_typ τ' a0) (Eq x)) by reflexivity;
 unfold env_map; auto.
 Case "wftyp_arrow".
-subst G. simpl; constructor; auto.
+simpl; constructor; auto.
 Case "wftyp_prod".
-subst G. simpl; constructor; auto.
+simpl; constructor; auto.
 Case "wftyp_forall".
-subst G. simpl; apply wftyp_forall with (L := L ∪ {{a}}); intros.
+simpl; apply wftyp_forall with (L := L ∪ {{a}}); intros.
 rewrite_env (([(a0, U)] ++ env_map (tsubst_typ τ' a) Γ₁) ++ Γ₂).
 replace ([(a0, U)] ++ env_map (tsubst_typ τ' a) Γ₁) with (env_map (tsubst_typ τ' a) ([(a0, U)] ++ Γ₁)) by reflexivity.
 replace (typ_var_f a0) with (tsubst_typ τ' a (typ_var_f a0)).
 rewrite <- tsubst_typ_open_typ_wrt_typ.
-eapply H; simpl_env; eauto. eauto.
+eapply H; simpl_env; eauto. eauto with lngen fzip.
 autorewrite with lngen; auto.
 Case "wftyp_exists".
-subst G. simpl; apply wftyp_exists with (L := L ∪ {{a}}); intros.
+simpl; apply wftyp_exists with (L := L ∪ {{a}}); intros.
 rewrite_env (([(a0, U)] ++ env_map (tsubst_typ τ' a) Γ₁) ++ Γ₂).
 replace ([(a0, U)] ++ env_map (tsubst_typ τ' a) Γ₁) with (env_map (tsubst_typ τ' a) ([(a0, U)] ++ Γ₁)) by reflexivity.
 replace (typ_var_f a0) with (tsubst_typ τ' a (typ_var_f a0)).
 rewrite <- tsubst_typ_open_typ_wrt_typ.
-eapply H; simpl_env; eauto. eauto.
+eapply H; simpl_env; eauto. eauto with lngen fzip.
 autorewrite with lngen; auto.
 Qed.
 
@@ -637,37 +633,31 @@ Lemma wfenv_subst_eq :
   forall Γ₁ Γ₂ a τ, wfenv (Γ₁ ++ a ~ Eq τ ++ Γ₂) →
     wfenv (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂).
 Proof.
-destruct wfenv_wftyp_subst_eq as [H1 H2].
-intros Γ₁ Γ₂ x τ H. eapply H1; eauto.
+destruct wfenv_wftyp_subst_eq as [H1 H2]. intros; eauto.
 Qed.
-Hint Resolve wfenv_subst_eq.
 
 Lemma wftyp_subst_eq :
 forall Γ₁ Γ₂ τ a τ', wftyp (Γ₁ ++ a ~ Eq τ' ++ Γ₂) τ →
 wftyp (env_map (tsubst_typ τ' a) Γ₁ ++ Γ₂) (tsubst_typ τ' a τ).
 Proof.
-destruct wfenv_wftyp_subst_eq as [H1 H2].
-intros. eapply H2; eauto.
+destruct wfenv_wftyp_subst_eq as [H1 H2]. intros; eauto.
 Qed.
-Hint Resolve wftyp_subst_eq.
+Hint Resolve wfenv_subst_eq wftyp_subst_eq: fzip.
 
 Lemma wfenv_tsubst :
   forall Γ₁ Γ₂ a τ, wfenv (Γ₁ ++ a ~ U ++ Γ₂) → wftyp Γ₂ τ →
     wfenv (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂).
 Proof.
-intros Γ₁ Γ₂ a τ H H0.
-auto.
+intros; auto with fzip.
 Qed.
-Hint Resolve wfenv_tsubst.
 
 Lemma wftyp_tsubst :
 forall Γ₁ Γ₂ τ a τ', wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ →
 wftyp Γ₂ τ' → wftyp (env_map (tsubst_typ τ' a) Γ₁ ++ Γ₂) (tsubst_typ τ' a τ).
 Proof.
-intros Γ₁ Γ₂ τ a τ' H H0.
-auto.
+intros; auto with fzip.
 Qed.
-Hint Resolve wftyp_tsubst.
+Hint Resolve wfenv_tsubst wftyp_tsubst: fzip.
 
 Lemma wftyp_fv : forall Γ τ, wftyp Γ τ → ftv_typ τ [<=] dom Γ.
 Proof.
@@ -687,7 +677,7 @@ assert (ftv_typ (open_typ_wrt_typ t (typ_var_f a))[<=]add a (dom G)) by auto.
 assert (ftv_typ t [<=] ftv_typ (open_typ_wrt_typ t (typ_var_f a))); auto with lngen.
 fsetdec.
 Qed.
-Hint Resolve wftyp_fv.
+Hint Resolve wftyp_fv: fzip.
 
 Lemma wfenv_wftyp_UE_aux :
   (forall Γ, wfenv Γ ->
@@ -753,179 +743,147 @@ Lemma wfenv_wftyp_EqU_aux :
     forall Γ₁ a Γ₂ τ', Γ = Γ₁ ++ a ~ Eq τ' ++ Γ₂ ->
       wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ).
 Proof.
-apply wfenv_wftyp_mut_ind; intros; subst; auto.
-assert (binds a (Eq τ') nil). rewrite H; auto.
-  analyze_binds H0.
-destruct Γ₁; inversion H0; simpl_env in *; subst.
-  constructor; auto; eapply H; eauto.
-destruct Γ₁; inversion H0; simpl_env in *; subst.
-  constructor; auto; eapply H; eauto.
-destruct Γ₁; inversion H0; simpl_env in *; subst.
-  constructor; auto; eapply H; eauto.
-destruct Γ₁; inversion H0; simpl_env in *; subst.
-  constructor; auto. eapply wftyp_wfenv; eauto.
-  constructor; auto; eapply H; eauto.
-constructor; auto.
+apply wfenv_wftyp_mut_ind; intros; subst; eauto.
+Case "nil". assert (binds a (Eq τ') nil). rewrite H; auto. analyze_binds H0.
+Case "T". destruct Γ₁; inversion H0; simpl_env in *; subst; eauto.
+Case "U". destruct Γ₁; inversion H0; simpl_env in *; subst; eauto.
+Case "E". destruct Γ₁; inversion H0; simpl_env in *; subst; eauto.
+Case "Eq".
+destruct Γ₁; inversion H0; simpl_env in *; subst; eauto.
+  constructor; eauto with fzip.
+Case "var". constructor; eauto.
   destruct o. analyze_binds H0.
   destruct H0. analyze_binds H0.
   destruct H0. analyze_binds H0; eauto 6.
-eapply H; eauto.
-constructor. eapply H; eauto. eapply H0; eauto.
-constructor. eapply H; eauto. eapply H0; eauto.
-apply wftyp_forall with (L := L ∪ {{a}}); intros.
+Case "forall". apply wftyp_forall with (L := L ∪ {{a}}); intros.
   rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ U ++ Γ₂). eapply H; simpl_env; eauto.
-apply wftyp_exists with (L := L ∪ {{a}}); intros.
+Case "exists". apply wftyp_exists with (L := L ∪ {{a}}); intros.
   rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ U ++ Γ₂). eapply H; simpl_env; eauto.
 Qed.
 
 Lemma wfenv_UE :
   forall Γ₁ a Γ₂, wfenv (Γ₁ ++ a ~ U ++ Γ₂) -> wfenv (Γ₁ ++ a ~ E ++ Γ₂).
 Proof.
-destruct wfenv_wftyp_UE_aux as [H _].
-intros. eapply H. eauto. auto.
+destruct wfenv_wftyp_UE_aux as [H _]. intros; eauto.
 Qed.
 
 Lemma wfenv_EU :
   forall Γ₁ a Γ₂, wfenv (Γ₁ ++ a ~ E ++ Γ₂) -> wfenv (Γ₁ ++ a ~ U ++ Γ₂).
 Proof.
-destruct wfenv_wftyp_EU_aux as [H _].
-intros. eapply H. eauto. auto.
+destruct wfenv_wftyp_EU_aux as [H _]. intros; eauto.
 Qed.
 
 Lemma wfenv_EqU :
   forall Γ₁ a Γ₂ τ, wfenv (Γ₁ ++ a ~ Eq τ ++ Γ₂) -> wfenv (Γ₁ ++ a ~ U ++ Γ₂).
 Proof.
-destruct wfenv_wftyp_EqU_aux as [H _].
-intros. eapply H. eauto. auto.
+destruct wfenv_wftyp_EqU_aux as [H _]. intros; eauto.
 Qed.
 
 Lemma wftyp_UE :
   forall Γ₁ a Γ₂ τ, wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ -> wftyp (Γ₁ ++ a ~ E ++ Γ₂) τ.
 Proof.
-destruct wfenv_wftyp_UE_aux as [_ H].
-intros. eapply H. eauto. auto.
+destruct wfenv_wftyp_UE_aux as [_ H]. intros; eauto.
 Qed.
 
 Lemma wftyp_EU :
   forall Γ₁ a Γ₂ τ, wftyp (Γ₁ ++ a ~ E ++ Γ₂) τ -> wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ.
 Proof.
-destruct wfenv_wftyp_EU_aux as [_ H].
-intros. eapply H. eauto. auto.
+destruct wfenv_wftyp_EU_aux as [_ H]. intros; eauto.
 Qed.
 
 Lemma wftyp_EqU :
   forall Γ₁ a Γ₂ τ τ', wftyp (Γ₁ ++ a ~ Eq τ' ++ Γ₂) τ -> wftyp (Γ₁ ++ a ~ U ++ Γ₂) τ.
 Proof.
-destruct wfenv_wftyp_EqU_aux as [_ H].
-intros. eapply H. eauto. auto.
+destruct wfenv_wftyp_EqU_aux as [_ H]. intros; eauto.
 Qed.
+Hint Resolve wfenv_UE wfenv_EU wfenv_EqU wftyp_UE wftyp_EU wftyp_EqU: fzip.
 
 (** Lemmas about [wfeq] *)
 Lemma wftypeq_wfenv : forall Γ τ₁ τ₂,
   wftypeq Γ τ₁ τ₂ → wfenv Γ.
 Proof.
-intros Γ τ₁ τ₂ H; induction H; auto.
-Case "forall".
-pick fresh a.
-assert (wfenv (a ~ U ++ G)) as H1 by auto.
-inversion H1; auto.
-Case "exists".
-pick fresh a.
-assert (wfenv (a ~ U ++ G)) as H1 by auto.
-inversion H1; auto.
+intros Γ τ₁ τ₂ H; induction H; auto; try solve [pick fresh a; eauto using wfenv_strip].
 Qed.
 
 Lemma wftypeq_wftyp : forall Γ τ₁ τ₂,
   wftypeq Γ τ₁ τ₂ → wftyp Γ τ₁ ∧ wftyp Γ τ₂.
 Proof.
-intros Γ τ₁ τ₂ H; induction H; split; intuition; auto.
-constructor; eauto.
-eapply wfenv_wftyp_Eq2; eauto.
+intros Γ τ₁ τ₂ H; induction H; split; intuition; eauto.
+eauto using wfenv_wftyp_Eq2.
 apply wftyp_forall with (L := L); firstorder.
 apply wftyp_forall with (L := L); firstorder.
 apply wftyp_exists with (L := L); firstorder.
 apply wftyp_exists with (L := L); firstorder.
 Qed.
 
-Lemma wftypeq_wftyp_1 : forall Γ τ₁ τ₂,
+Lemma wftypeq_wftyp1 : forall Γ τ₁ τ₂,
   wftypeq Γ τ₁ τ₂ → wftyp Γ τ₁.
 Proof.
 intros Γ τ₁ τ₂ H. edestruct wftypeq_wftyp; eauto.
 Qed.
 
-Lemma wftypeq_wftyp_2 : forall Γ τ₁ τ₂,
+Lemma wftypeq_wftyp2 : forall Γ τ₁ τ₂,
   wftypeq Γ τ₁ τ₂ → wftyp Γ τ₂.
 Proof.
 intros Γ τ₁ τ₂ H. edestruct wftypeq_wftyp; eauto.
 Qed.
+Hint Resolve wftypeq_wfenv wftypeq_wftyp1 wftypeq_wftyp2: fzip.
 
 Lemma wftypeq_refl : forall Γ τ, wftyp Γ τ →
   wftypeq Γ τ τ.
 Proof.
 intros Γ τ H; induction H; eauto.
 Qed.
+Hint Resolve wftypeq_refl: fzip.
 
 Lemma wftypeq_UE : forall Γ₁ a Γ₂ τ₁ τ₂,
   wftypeq (Γ₂ ++ a ~ U ++ Γ₁) τ₁ τ₂ →
   wftypeq (Γ₂ ++ a ~ E ++ Γ₁) τ₁ τ₂.
 Proof.
-intros Γ₁ a Γ₂ τ₁ τ₂ H. dependent induction H; auto.
-Case "var". destruct (a == a0); subst.
-SCase "a = a0". constructor; auto 6 using wfenv_UE.
-SCase "a ≠ a0". constructor; auto 6 using wfenv_UE.
+intros Γ₁ a Γ₂ τ₁ τ₂ H. dependent induction H; eauto.
+Case "var". destruct (a == a0); subst; constructor; auto 6 with fzip.
 destruct H. analyze_binds H.
 destruct H. analyze_binds H.
 destruct H. analyze_binds H; eauto 6.
-Case "eq".
-constructor; auto using wfenv_UE.
-analyze_binds H.
-Case "forall".
-apply wftypeq_forall with (L := L); intros.
+Case "eq". constructor; auto with fzip. analyze_binds H.
+Case "forall". apply wftypeq_forall with (L := L); intros.
 rewrite_env ((a0 ~ U ++ Γ₂) ++ a ~ E ++ Γ₁). auto.
-Case "exists".
-apply wftypeq_exists with (L := L); intros.
+Case "exists". apply wftypeq_exists with (L := L); intros.
 rewrite_env ((a0 ~ U ++ Γ₂) ++ a ~ E ++ Γ₁). auto.
-Case "trans". eauto.
 Qed.
 
 Lemma wftypeq_EU : forall Γ₁ a Γ₂ τ₁ τ₂,
   wftypeq (Γ₂ ++ a ~ E ++ Γ₁) τ₁ τ₂ →
   wftypeq (Γ₂ ++ a ~ U ++ Γ₁) τ₁ τ₂.
 Proof.
-intros Γ₁ a Γ₂ τ₁ τ₂ H. dependent induction H; auto.
-Case "var". destruct (a == a0); subst.
-SCase "a = a0". constructor; auto 6 using wfenv_EU.
-SCase "a ≠ a0". constructor; auto 6 using wfenv_EU.
+intros Γ₁ a Γ₂ τ₁ τ₂ H. dependent induction H; eauto.
+Case "var". destruct (a == a0); subst; constructor; auto 6 with fzip.
 destruct H. analyze_binds H.
 destruct H. analyze_binds H.
 destruct H. analyze_binds H; eauto 6.
-Case "eq".
-constructor; auto using wfenv_EU.
+Case "eq". constructor; auto with fzip.
 analyze_binds H.
-Case "forall".
-apply wftypeq_forall with (L := L); intros.
+Case "forall". apply wftypeq_forall with (L := L); intros.
 rewrite_env ((a0 ~ U ++ Γ₂) ++ a ~ U ++ Γ₁). auto.
-Case "exists".
-apply wftypeq_exists with (L := L); intros.
+Case "exists". apply wftypeq_exists with (L := L); intros.
 rewrite_env ((a0 ~ U ++ Γ₂) ++ a ~ U ++ Γ₁). auto.
-Case "trans". eauto.
 Qed.
+Hint Resolve wftypeq_EU wftypeq_UE: fzip.
 
 Lemma wftypeq_instantiate :
   forall Γ₁ Γ₂ τ₁ τ₂ a τ, wftypeq (Γ₁ ++ a ~ U ++ Γ₂) τ₁ τ₂ →
     wftyp Γ₂ τ → wftypeq (Γ₁ ++ a ~ Eq τ ++ Γ₂) τ₁ τ₂.
 Proof.
-intros Γ₁ Γ₂ τ₁ τ₂ a τ H. dependent induction H; intros; auto.
-Case "var". constructor; auto.
+intros Γ₁ Γ₂ τ₁ τ₂ a τ H. dependent induction H; intros; eauto.
+Case "var". constructor; auto with fzip.
 destruct H. analyze_binds H; eauto 7.
 destruct H. analyze_binds H.
 destruct H. analyze_binds H; eauto 7.
-Case "eq". analyze_binds H.
+Case "eq". analyze_binds H; constructor; auto with fzip.
 Case "forall". apply wftypeq_forall with (L := L); intros; auto.
 rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ ++ Γ₂). auto.
 Case "exists". apply wftypeq_exists with (L := L); intros; auto.
 rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ ++ Γ₂). auto.
-Case "trans". eauto.
 Qed.
 
 Lemma wftypeq_subst_eq :
@@ -934,28 +892,27 @@ Lemma wftypeq_subst_eq :
     ((tsubst_typ τ a) τ₁) ((tsubst_typ τ a) τ₂).
 Proof.
 intros Γ₁ Γ₂ τ₁ τ₂ a τ H.
-dependent induction H; intros; try solve [simpl; auto].
+dependent induction H; intros; try solve [simpl; eauto].
 Case "var". destruct (a == a0); subst.
-SCase "a = a0". auto using wftypeq_refl, wftyp_subst_eq.
+SCase "a = a0". auto with fzip.
 SCase "a ≠ a0". simpl; destruct (a == a0). contradiction.
-destruct H. analyze_binds H. constructor; auto using wfenv_subst_eq.
+destruct H. analyze_binds H; constructor; auto with fzip.
 replace (@U typ) with (tag_map (tsubst_typ τ a0) U) by reflexivity.
   unfold env_map. auto.
-destruct H. analyze_binds H. constructor; auto using wfenv_subst_eq.
+destruct H. analyze_binds H; constructor; auto with fzip.
 replace (@E typ) with (tag_map (tsubst_typ τ a0) E) by reflexivity.
   unfold env_map. auto.
 destruct H. analyze_binds H.
-  constructor; auto using wfenv_subst_eq.
+  constructor; auto with fzip.
   right; right; exists (tsubst_typ τ a0 x).
 replace (Eq (tsubst_typ τ a0 x)) with (tag_map (tsubst_typ τ a0) (Eq x))
   by reflexivity.
   unfold env_map. auto.
-  constructor; auto using wfenv_subst_eq.
-  right; right; exists x. auto.
-Case "eq". assert (uniq (Γ₁ ++ [(a0, Eq τ)] ++ Γ₂)) by auto.
+  constructor; auto with fzip. eauto.
+Case "eq". assert (uniq (Γ₁ ++ [(a0, Eq τ)] ++ Γ₂)) by auto with lngen.
 analyze_binds_uniq H.
 SCase "binds a Γ₁". assert (a ≠ a0) by auto. simpl; destruct (a == a0); try contradiction.
-constructor; auto using wfenv_subst_eq.
+constructor; auto with fzip.
 replace (Eq (tsubst_typ τ a0 t)) with (tag_map (tsubst_typ τ a0) (Eq t)) by reflexivity.
 unfold env_map. auto.
 SCase "a = a0". assert (t = τ) by congruence; subst.
@@ -965,34 +922,25 @@ assert (a0 ∉ ftv_typ τ).
   apply wftypeq_refl; apply wftyp_subst_eq; apply wfenv_wftyp_Eq2 with (x := a0); auto.
   autorewrite with lngen in *; auto.
 SCase "binds a Γ₂". assert (a ≠ a0) by auto. simpl; destruct (a == a0); try contradiction.
-constructor; auto using wfenv_subst_eq.
+constructor; auto with fzip.
 assert (a0 ∉ ftv_typ t).
-assert (ftv_typ t [<=] dom Γ₂). apply wftyp_fv. apply wfenv_wftyp_Eq2 with (x := a); auto. apply wfenv_strip in H0. apply wfenv_strip in H0. auto.
+assert (ftv_typ t [<=] dom Γ₂) by eauto with fzip.
 solve_uniq.
 autorewrite with lngen. auto.
 Case "forall". simpl. apply wftypeq_forall with (L := L ∪ {{a}}); intros; auto.
 replace (typ_var_f a0) with (tsubst_typ τ a (typ_var_f a0)).
- assert (lc_typ τ).
-   apply wfenv_regular_Eq with
-         (Γ := [(a0, U)] ++ Γ₁ ++ [(a, Eq τ)] ++ Γ₂) (x := a); auto.
-   apply wftypeq_wfenv with (τ₁ := open_typ_wrt_typ t1 (typ_var_f a0))
-                            (τ₂ := open_typ_wrt_typ t2 (typ_var_f a0)); auto.
- repeat rewrite <- tsubst_typ_open_typ_wrt_typ; auto.
- rewrite_env (env_map (tsubst_typ τ a) (a0 ~ U ++ Γ₁) ++ Γ₂). auto.
- assert (a0 ≠ a) by auto.
- simpl; unfold typvar. destruct (a0 == a); congruence.
+assert (lc_typ τ) by eauto with lngen fzip.
+repeat rewrite <- tsubst_typ_open_typ_wrt_typ; auto.
+rewrite_env (env_map (tsubst_typ τ a) (a0 ~ U ++ Γ₁) ++ Γ₂). auto.
+assert (a0 ≠ a) by auto.
+simpl; unfold typvar. destruct (a0 == a); congruence.
 Case "exists". simpl. apply wftypeq_exists with (L := L ∪ {{a}}); intros; auto.
 replace (typ_var_f a0) with (tsubst_typ τ a (typ_var_f a0)).
- assert (lc_typ τ).
-   apply wfenv_regular_Eq with
-         (Γ := [(a0, U)] ++ Γ₁ ++ [(a, Eq τ)] ++ Γ₂) (x := a); auto.
-   apply wftypeq_wfenv with (τ₁ := open_typ_wrt_typ t1 (typ_var_f a0))
-                            (τ₂ := open_typ_wrt_typ t2 (typ_var_f a0)); auto.
+ assert (lc_typ τ) by eauto with lngen fzip.
  repeat rewrite <- tsubst_typ_open_typ_wrt_typ; auto.
  rewrite_env (env_map (tsubst_typ τ a) (a0 ~ U ++ Γ₁) ++ Γ₂). auto.
  assert (a0 ≠ a) by auto.
  simpl; unfold typvar. destruct (a0 == a); congruence.
-Case "trans". eauto.
 Qed.
 
 Lemma wftypeq_tsubst :
@@ -1003,31 +951,28 @@ Lemma wftypeq_tsubst :
 Proof.
 auto using wftypeq_instantiate, wftypeq_subst_eq.
 Qed.
+Hint Resolve wftypeq_instantiate wftypeq_subst_eq wftypeq_tsubst: fzip.
 
 Lemma wftypeq_subst :
   forall Γ₁ Γ₂ τ₁ τ₂ x τ, wftypeq (Γ₁ ++ x ~ T τ ++ Γ₂) τ₁ τ₂ →
     wftypeq (Γ₁ ++ Γ₂) τ₁ τ₂.
 Proof.
-intros Γ₁ Γ₂ τ₁ τ₂ x τ H.
-dependent induction H.
-Case "var". constructor. 
+intros Γ₁ Γ₂ τ₁ τ₂ x τ H. dependent induction H; eauto.
+Case "var". constructor.
 destruct H. analyze_binds H.
 destruct H. analyze_binds H.
-destruct H. right; right; exists x0. analyze_binds H.
-eapply wfenv_subst; eauto.
+destruct H. analyze_binds H; eauto.
+eauto with fzip.
 Case "eq". constructor.
 analyze_binds H. eapply wfenv_subst; eauto.
-Case "arrow". constructor; eauto.
-Case "prod". constructor; eauto.
 Case "forall". apply wftypeq_forall with (L := L); intros.
 rewrite_env ((a ~ U ++ Γ₁) ++ Γ₂).
  eapply H0; simpl_env; auto.
 Case "exists". apply wftypeq_exists with (L := L); intros.
 rewrite_env ((a ~ U ++ Γ₁) ++ Γ₂).
  eapply H0; simpl_env; auto.
-Case "sym". eauto.
-Case "trans". eauto.
 Qed.
+Hint Resolve wftypeq_subst.
 
 Lemma wfenv_wftyp_wftypeq_T_aux :
   (forall Γ, wfenv Γ → forall Γ₁ Γ₂ x τ₁ τ₂,
@@ -1039,26 +984,19 @@ Lemma wfenv_wftyp_wftypeq_T_aux :
     wftypeq Γ₂ τ₁ τ₂ →
     wftyp (Γ₁ ++ x ~ T τ₂ ++ Γ₂) τ).
 Proof.
-apply wfenv_wftyp_mut_ind; intros; subst.
+apply wfenv_wftyp_mut_ind; intros; subst; eauto.
 Case "nil".
 assert (binds x (T τ₁) nil) as H1. rewrite H; auto.
 analyze_binds H1.
-Case "T". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor; auto. eapply wftypeq_wftyp_2; eauto.
-constructor; auto. eapply H; eauto.
-Case "U". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor; auto. eapply H; eauto.
-Case "E". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor; auto. eapply H; eauto.
-Case "Eq". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor; auto. eapply H; eauto.
-Case "var". constructor.
+Case "T". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+constructor; auto. eauto with fzip.
+Case "U". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "E". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "Eq". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "var". constructor; eauto.
 destruct o. analyze_binds H0.
 destruct H0. analyze_binds H0.
-destruct H0. right; right; exists x0. analyze_binds H0.
-eapply H; eauto.
-Case "arrow". constructor. eapply H; eauto. eapply H0; eauto.
-Case "prod". constructor. eapply H; eauto. eapply H0; eauto.
+destruct H0. analyze_binds H0; eauto 6.
 Case "forall". apply wftyp_forall with (L := L); intros.
 rewrite_env ((a ~ U ++ Γ₁) ++ x ~ T τ₂ ++ Γ₂). eapply H; simpl_env; auto.
 Case "exists". apply wftyp_exists with (L := L); intros.
@@ -1082,6 +1020,7 @@ Lemma wftyp_wftypeq_T :
 Proof.
 destruct wfenv_wftyp_wftypeq_T_aux as [_ H]; intros; eapply H; eauto.
 Qed.
+Hint Resolve wfenv_wftypeq_T wftyp_wftypeq_T: fzip.
 
 Lemma wfenv_wftyp_wftypeq_Eq_aux :
   (forall Γ, wfenv Γ → forall Γ₁ Γ₂ a τ₁ τ₂,
@@ -1093,26 +1032,19 @@ Lemma wfenv_wftyp_wftypeq_Eq_aux :
     wftypeq Γ₂ τ₁ τ₂ →
     wftyp (Γ₁ ++ a ~ Eq τ₂ ++ Γ₂) τ).
 Proof.
-apply wfenv_wftyp_mut_ind; intros; subst.
+apply wfenv_wftyp_mut_ind; intros; subst; eauto.
 Case "nil".
 assert (binds a (Eq τ₁) nil) as H1. rewrite H; auto.
 analyze_binds H1.
-Case "T". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor; auto. eapply H; eauto.
-Case "U". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor; auto. eapply H; eauto.
-Case "E". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor; auto. eapply H; eauto.
-Case "Eq". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor; auto. eapply wftypeq_wftyp_2; eauto.
-constructor; auto. eapply H; eauto.
-Case "var". constructor.
+Case "T". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "U". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "E". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "Eq". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+constructor; auto. eauto with fzip.
+Case "var". constructor; eauto.
 destruct o. analyze_binds H0.
 destruct H0. analyze_binds H0.
-destruct H0. right; right. analyze_binds H0; eauto.
-eapply H; eauto.
-Case "arrow". constructor. eapply H; eauto. eapply H0; eauto.
-Case "prod". constructor. eapply H; eauto. eapply H0; eauto.
+destruct H0. analyze_binds H0; eauto 7.
 Case "forall". apply wftyp_forall with (L := L); intros.
 rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ₂ ++ Γ₂). eapply H; simpl_env; auto.
 Case "exists". apply wftyp_exists with (L := L); intros.
@@ -1136,6 +1068,7 @@ Lemma wftyp_wftypeq_Eq :
 Proof.
 destruct wfenv_wftyp_wftypeq_Eq_aux as [_ H]; intros; eapply H; eauto.
 Qed.
+Hint Resolve wfenv_wftypeq_Eq wftyp_wftypeq_Eq: fzip.
 
 Lemma wftypeq_weakening :
   forall Γ₁ Γ₂ Γ₃ τ₁ τ₂, wftypeq (Γ₁ ++ Γ₃) τ₁ τ₂ →
@@ -1147,43 +1080,39 @@ Case "var".
 constructor; auto using wfenv_weakening.
 destruct H. analyze_binds H.
 destruct H. analyze_binds H.
-destruct H. right; right. analyze_binds H; eauto.
+destruct H. analyze_binds H; eauto 6.
 Case "forall".
 apply wftypeq_forall with (L := L ∪ dom Γ₂); intros.
-rewrite_env ((a~U ++ Γ₁) ++ Γ₂ ++ Γ₃); apply H0; eauto.
+rewrite_env ((a~U ++ Γ₁) ++ Γ₂ ++ Γ₃); eauto.
 Case "exists".
 apply wftypeq_exists with (L := L ∪ dom Γ₂); intros.
-rewrite_env ((a~U ++ Γ₁) ++ Γ₂ ++ Γ₃); apply H0; eauto.
+rewrite_env ((a~U ++ Γ₁) ++ Γ₂ ++ Γ₃); eauto.
 Case "trans". eauto.
 Qed.
+Hint Resolve wftypeq_weakening: fzip.
 
 Lemma wftypeq_wftypeq :
   forall Γ₁ Γ₂ τ₁ τ₂ a τ τ', wftypeq (Γ₁ ++ a ~ Eq τ ++ Γ₂) τ₁ τ₂ →
     wftypeq Γ₂ τ τ' →
     wftypeq (Γ₁ ++ a ~ Eq τ' ++ Γ₂) τ₁ τ₂.
 Proof.
-intros Γ₁ Γ₂ τ₁ τ₂ a τ τ' H H0. dependent induction H.
-Case "var". constructor.
+intros Γ₁ Γ₂ τ₁ τ₂ a τ τ' H H0. dependent induction H; eauto.
+Case "var". constructor; eauto using wfenv_wftypeq_Eq.
 destruct H. analyze_binds H.
 destruct H. analyze_binds H.
-destruct H. right; right. analyze_binds H; eauto.
-eapply wfenv_wftypeq_Eq; eauto.
-Case "eq". analyze_binds H.
-constructor; auto. eapply wfenv_wftypeq_Eq; eauto.
-replace t with τ by congruence. apply wftypeq_trans with (t2 := τ').
-constructor; auto. eapply wfenv_wftypeq_Eq; eauto. apply wftypeq_sym.
-rewrite_env (nil ++ (Γ₁ ++ a0 ~ Eq τ') ++ Γ₂). apply wftypeq_weakening; simpl_env in *; auto.
-eapply wfenv_wftypeq_Eq; eauto.
-constructor; auto. eapply wfenv_wftypeq_Eq; eauto.
-Case "arrow". constructor; eauto.
-Case "prod". constructor; eauto.
+destruct H. analyze_binds H; eauto 7.
+Case "eq". analyze_binds H; eauto using wfenv_wftypeq_Eq.
+replace t with τ by congruence.
+apply wftypeq_trans with (t2 := τ').
+constructor; eauto using wfenv_wftypeq_Eq. apply wftypeq_sym.
+rewrite_env (nil ++ (Γ₁ ++ a0 ~ Eq τ') ++ Γ₂). apply wftypeq_weakening; simpl_env in *; 
+eauto using wfenv_wftypeq_Eq.
 Case "forall". apply wftypeq_forall with (L := L); intros.
-rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ' ++ Γ₂). eapply H0; eauto.
+rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ' ++ Γ₂). eauto.
 Case "exists". apply wftypeq_exists with (L := L); intros.
-rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ' ++ Γ₂). eapply H0; eauto.
-Case "sym". eauto.
-Case "trans". eauto.
+rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ' ++ Γ₂). eauto.
 Qed.
+Hint Resolve wftypeq_wftypeq: fzip.
 
 Lemma wfenv_wftyp_renameE_aux:
   (forall Γ, wfenv Γ → forall Γ₁ Γ₂ a b,
@@ -1195,23 +1124,18 @@ Lemma wfenv_wftyp_renameE_aux:
     b ∉ dom (Γ₂ ++ Γ₁) →
     wftyp (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ E ++ Γ₂) (tsubst_typ (typ_var_f b) a τ)).
 Proof.
-apply wfenv_wftyp_mut_ind; intros; subst; simpl; simpl_env.
+apply wfenv_wftyp_mut_ind; intros; subst; simpl; simpl_env; eauto.
 Case "nil".
 assert (binds a (@E typ) nil) as H1. rewrite H; auto.
 analyze_binds H1.
-Case "T". destruct Γ₁; inversion H0; subst; simpl_env in *.
-simpl; simpl_env.
-constructor. unfold env_map; auto. eapply H; eauto.
-Case "U". destruct Γ₁; inversion H0; subst; simpl_env in *.
-simpl; simpl_env.
-constructor. unfold env_map; auto. eapply H; eauto.
-Case "E". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor; auto.
-simpl; simpl_env.
-constructor. unfold env_map; auto. eapply H; eauto.
-Case "Eq". destruct Γ₁; inversion H0; subst; simpl_env in *.
-simpl; simpl_env.
-constructor. unfold env_map; auto. eapply H; eauto.
+Case "T". destruct Γ₁; inversion H0; subst; simpl; simpl_env in *.
+constructor. unfold env_map; auto. eauto.
+Case "U". destruct Γ₁; inversion H0; subst; simpl; simpl_env in *.
+constructor. unfold env_map; auto. eauto.
+Case "E". destruct Γ₁; inversion H0; subst; simpl; simpl_env in *; auto.
+constructor. unfold env_map; auto. eauto.
+Case "Eq". destruct Γ₁; inversion H0; subst; simpl; simpl_env in *.
+constructor. unfold env_map; auto. eauto.
 Case "var". destruct (a == a0); subst; constructor; simpl_env in *; auto 6.
 unfold env_map.
 destruct o. replace (@U typ) with (tag_map (tsubst_typ (typ_var_f b) a0) U) by reflexivity.
@@ -1224,8 +1148,6 @@ destruct H0. right; right.
   replace (Eq (tsubst_typ (typ_var_f b) a0 x)) with
   (tag_map (tsubst_typ (typ_var_f b) a0) (Eq x)) by reflexivity.
   auto.
-Case "arrow". constructor. eapply H; eauto. eapply H0; eauto.
-Case "prod". constructor. eapply H; eauto. eapply H0; eauto.
 Case "forall". apply wftyp_forall with (L := L ∪ {{a}} ∪ {{b}}); intros.
 rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ E ++ Γ₂). rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
 Case "exists". apply wftyp_exists with (L := L ∪ {{a}} ∪ {{b}}); intros.
@@ -1262,26 +1184,19 @@ apply wfenv_wftyp_mut_ind; intros; subst; auto.
 Case "nil".
 assert (binds a (@E typ) nil) as H1. rewrite H; auto.
 analyze_binds H1.
-Case "T". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor. auto. eapply H; eauto.
-Case "U". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor. auto. eapply H; eauto.
-Case "E". destruct Γ₁; inversion H0; subst; simpl_env in *.
+Case "T". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "U". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "E". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
 eapply wfenv_weakening; auto. apply wfenv_strip in w; auto.
-constructor; auto.
-Case "Eq". destruct Γ₁; inversion H0; subst; simpl_env in *.
-constructor. auto. eapply H; eauto.
+Case "Eq". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
 Case "var". constructor; simpl_env in *; auto 6.
 destruct o. analyze_binds H0.
 destruct H0. analyze_binds H0; auto 7.
-destruct H0. right; right.
-  analyze_binds H0; eauto.
+destruct H0. analyze_binds H0; eauto 7.
 Case "forall". apply wftyp_forall with (L := L ∪ {{a}}); intros.
-rewrite_env ((a0 ~ U ++ Γ₁) ++ Γ₂ ++ a ~ E ++ Γ₃).
-eapply H; auto.
+rewrite_env ((a0 ~ U ++ Γ₁) ++ Γ₂ ++ a ~ E ++ Γ₃). eauto.
 Case "exists". apply wftyp_exists with (L := L ∪ {{a}}); intros.
-rewrite_env ((a0 ~ U ++ Γ₁) ++ Γ₂ ++ a ~ E ++ Γ₃).
-eapply H; auto.
+rewrite_env ((a0 ~ U ++ Γ₁) ++ Γ₂ ++ a ~ E ++ Γ₃). eauto.
 Qed.
 
 Lemma wfenv_upperE: forall Γ₁ Γ₂ Γ₃ a,
@@ -1319,6 +1234,7 @@ Lemma zip_dom3 :
 Proof.
 intros Γ₁ Γ₂ Γ₃ H. rewrite (zip_dom2 Γ₁ Γ₂ Γ₃); auto. eapply zip_dom1; eauto.
 Qed.
+Hint Resolve zip_dom1 zip_dom2 zip_dom3: fzip.
 
 Lemma zip_binds_T12 :
   forall Γ₁ Γ₂ Γ₃ x τ, zip Γ₁ Γ₂ Γ₃ →
@@ -1340,6 +1256,7 @@ Lemma zip_binds_T23 :
 Proof.
 intros Γ₁ Γ₂ Γ₃ x τ H H0. dependent induction H; auto; try solve [analyze_binds H0].
 Qed.
+Hint Resolve zip_binds_T12 zip_binds_T13 zip_binds_T23: fzip.
 
 Lemma zip_binds_Eq12 :
   forall Γ₁ Γ₂ Γ₃ a τ, zip Γ₁ Γ₂ Γ₃ →
@@ -1361,6 +1278,7 @@ Lemma zip_binds_Eq23 :
 Proof.
 intros Γ₁ Γ₂ Γ₃ a τ H H0. dependent induction H; auto; try solve [analyze_binds H0].
 Qed.
+Hint Resolve zip_binds_Eq12 zip_binds_Eq13 zip_binds_Eq23: fzip.
 
 Lemma zip_binds_E12 :
   forall Γ₁ Γ₂ Γ₃ a, zip Γ₁ Γ₂ Γ₃ →
@@ -1382,6 +1300,7 @@ Lemma zip_binds_E23 :
 Proof.
 intros Γ₁ Γ₂ Γ₃ a H H0. dependent induction H; auto; try solve [analyze_binds H0].
 Qed.
+Hint Resolve zip_binds_E12 zip_binds_E13 zip_binds_E23: fzip.
 
 Lemma zip_binds_U12 :
   forall Γ₁ Γ₂ Γ₃ a, zip Γ₁ Γ₂ Γ₃ →
@@ -1403,6 +1322,7 @@ Lemma zip_binds_U23 :
 Proof.
 intros Γ₁ Γ₂ Γ₃ a H H0. dependent induction H; auto; try solve [analyze_binds H0; intuition].
 Qed.
+Hint Resolve zip_binds_U12 zip_binds_U13 zip_binds_U23: fzip.
 
 Lemma wfenv_wftyp_zip_aux :
   forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
@@ -1437,8 +1357,8 @@ Case "wftyp_E".
 rewrite_env ((Γ ++ [(a, E)]) ++ G); apply IHzip2; simpl_env; auto.
 apply wftyp_weakening; auto.
   constructor; auto. apply wfenv_strip with (Γ' := Γ); auto.
-  eauto.
-  apply uniq_app_3; apply uniq_app_1 with (F := G2); simpl_env; eauto. 
+  eauto with fzip.
+  apply uniq_app_3; apply uniq_app_1 with (F := G2); simpl_env; eauto with lngen. 
 Case "wfenv_Eq".
 inversion H1; inversion H2; subst; auto.
 constructor; auto.
@@ -1452,32 +1372,29 @@ Lemma wfenv_zip:
   forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
     wfenv Γ₁ -> wfenv Γ₂ -> wfenv Γ₃.
 Proof.
-intros Γ₁ Γ₂ Γ₃ H H0 H1.
-destruct (wfenv_wftyp_zip_aux Γ₁ Γ₂ Γ₃ H) as [? _].
-auto.
+intros Γ₁ Γ₂ Γ₃ H H0 H1. edestruct wfenv_wftyp_zip_aux; eauto.
 Qed.
 
 Lemma wftyp_zip:
   forall Γ₁ Γ₂ Γ₃ τ, zip Γ₁ Γ₂ Γ₃ ->
     wftyp Γ₁ τ -> wftyp Γ₂ τ -> wftyp Γ₃ τ.
 Proof.
-intros Γ₁ Γ₂ Γ₃ τ H H0 H1.
-destruct (wfenv_wftyp_zip_aux Γ₁ Γ₂ Γ₃ H) as [_ ?].
+intros.
+edestruct wfenv_wftyp_zip_aux; eauto.
 rewrite_env (nil ++ Γ₃). auto.
 Qed.
+Hint Resolve wfenv_zip wftyp_zip.
 
 Lemma wftyp_zip12:
   forall Γ₁ Γ₂ Γ₃ τ, zip Γ₁ Γ₂ Γ₃ ->
     wftyp Γ₁ τ -> wfenv Γ₂ → wftyp Γ₂ τ.
 Proof.
 intros Γ₁ Γ₂ Γ₃ τ H H0. generalize dependent Γ₃. generalize dependent Γ₂.
-induction H0; intros; auto.
+induction H0; intros; eauto.
 Case "var". constructor; auto.
 destruct H. eapply zip_binds_U12 in H; eauto. tauto.
-destruct H. eapply zip_binds_E12 in H; eauto.
-destruct H. eapply zip_binds_Eq12 in H; eauto.
-Case "arrow". constructor; [eapply IHwftyp1 | eapply IHwftyp2]; eauto.
-Case "prod". constructor; [eapply IHwftyp1 | eapply IHwftyp2]; eauto.
+destruct H. eauto with fzip.
+destruct H. eauto with fzip.
 Case "forall". apply wftyp_forall with (L := L ∪ dom Γ₂); intros; auto.
 eapply H0; auto. constructor; eauto.
 Case "exists". apply wftyp_exists with (L := L ∪ dom Γ₂); intros; auto.
@@ -1489,14 +1406,11 @@ Lemma wftyp_zip13:
     wftyp Γ₁ τ -> wfenv Γ₂ → wftyp Γ₃ τ.
 Proof.
 intros Γ₁ Γ₂ Γ₃ τ H H0. generalize dependent Γ₃. generalize dependent Γ₂.
-induction H0; intros; auto.
-Case "var". constructor; auto.
-destruct H. eapply zip_binds_U13 in H; eauto.
-destruct H. eapply zip_binds_E13 in H; eauto.
-destruct H. eapply zip_binds_Eq13 in H; eauto.
-eapply wfenv_zip; eauto.
-Case "arrow". constructor; [eapply IHwftyp1 | eapply IHwftyp2]; eauto.
-Case "prod". constructor; [eapply IHwftyp1 | eapply IHwftyp2]; eauto.
+induction H0; intros; eauto.
+Case "var". constructor; eauto using wfenv_zip.
+destruct H. eauto with fzip.
+destruct H. eauto with fzip.
+destruct H. eauto with fzip.
 Case "forall". apply wftyp_forall with (L := L ∪ dom Γ₂); intros; auto.
 eapply H0; auto. constructor; eauto. constructor; auto.
 Case "exists". apply wftyp_exists with (L := L ∪ dom Γ₂); intros; auto.
@@ -1508,32 +1422,27 @@ Lemma wftyp_zip23:
     wftyp Γ₂ τ -> wfenv Γ₁ → wftyp Γ₃ τ.
 Proof.
 intros Γ₁ Γ₂ Γ₃ τ H H0. generalize dependent Γ₃. generalize dependent Γ₁.
-induction H0; intros; auto.
-Case "var". constructor; auto.
+induction H0; intros; eauto.
+Case "var". constructor; eauto using wfenv_zip.
 destruct H. eapply zip_binds_U23 in H; eauto. tauto.
-destruct H. eapply zip_binds_E23 in H; eauto.
-destruct H. eapply zip_binds_Eq23 in H; eauto.
-eapply wfenv_zip; eauto.
-Case "arrow". constructor; [eapply IHwftyp1 | eapply IHwftyp2]; eauto.
-Case "prod". constructor; [eapply IHwftyp1 | eapply IHwftyp2]; eauto.
+destruct H. eauto with fzip.
+destruct H. eauto with fzip.
 Case "forall". apply wftyp_forall with (L := L ∪ dom Γ₁); intros; auto.
-eapply H0; auto. constructor; eauto. constructor; auto.
+eapply H0; auto. constructor; eauto. auto.
 Case "exists". apply wftyp_exists with (L := L ∪ dom Γ₁); intros; auto.
-eapply H0; auto. constructor; eauto. constructor; auto.
+eapply H0; auto. constructor; eauto. auto.
 Qed.
+Hint Resolve wftyp_zip12 wftyp_zip13 wftyp_zip23: fzip.
 
-(** Lemmas about [wfterm] *)
+(** Lemmas about [wfterm] *) ICI
 Lemma wfterm_wfenv : forall Γ e τ,
   wfterm Γ e τ → wfenv Γ.
 Proof.
 intros Γ e τ H.
 induction H; auto; try solve [eapply wfenv_zip; eauto].
-Case "lam".
-pick fresh x. apply wfenv_strip with (Γ' := x ~ T t1). auto.
-Case "gen".
-pick fresh a. apply wfenv_strip with (Γ' := a ~ U). auto.
-Case "exists".
-pick fresh a. apply wfenv_strip with (Γ' := a ~ E). auto.
+Case "lam". pick fresh x. eauto using wfenv_strip.
+Case "gen". pick fresh a. eauto using wfenv_strip.
+Case "exists". pick fresh a. eauto using wfenv_strip.
 Case "open".
 apply wfenv_weakening; auto. constructor; auto.
   eapply wfenv_strip; eauto.
@@ -1546,7 +1455,7 @@ assert (wfenv (G2 ++ G1)).
 apply wfenv_weakening; auto.
 constructor; auto. apply wfenv_strip with (Γ' := G2). auto.
 Qed.
-Hint Resolve wfterm_wfenv.
+Hint Resolve wfterm_wfenv: fzip.
 
 Lemma wfterm_wftyp : forall Γ e τ,
   wfterm Γ e τ → wftyp Γ τ.
@@ -1607,14 +1516,14 @@ Case "sigma".
   eapply wftyp_regular; eauto.
 Case "coerce". eapply wftypeq_wftyp_2; eauto.
 Qed.
-Hint Resolve wfterm_wftyp.
+Hint Resolve wfterm_wftyp: fzip.
 
 Lemma wfterm_regular2 : forall Γ e τ,
   wfterm Γ e τ → lc_typ τ.
 Proof.
 intros Γ e τ H; eauto.
 Qed.
-Hint Resolve wfterm_regular2.
+Hint Resolve wfterm_regular2: lngen.
 
 Lemma wfterm_regular1 : forall Γ e τ,
   wfterm Γ e τ → lc_term e.
@@ -1629,14 +1538,14 @@ apply lc_term_sigma_exists with (a1 := a); auto.
 apply wfenv_regular_Eq with (Γ := [(a, Eq t')] ++ G2 ++ G1) (x := a); eauto.
 Case "coerce". apply wftypeq_wftyp_2 in H. apply wftyp_regular in H. auto.
 Qed.
-Hint Resolve wfterm_regular1.
+Hint Resolve wfterm_regular1: lngen.
 
 Lemma wfterm_env_uniq : forall Γ e τ,
   wfterm Γ e τ → uniq Γ.
 Proof.
 intros Γ e τ H. eauto.
 Qed.
-Hint Resolve wfterm_env_uniq.
+Hint Resolve wfterm_env_uniq: lngen.
 
 (*
 (** Lemmas about values *)
@@ -1817,7 +1726,8 @@ Case "sigma". pick fresh a.
 assert (fv_term (open_term_wrt_typ e (typ_var_f a)) [<=] dom (a ~ Eq t' ++ G2 ++ G1)) by auto.
 assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
 assert (fv_term e [<=] {{a}} ∪ dom G2 ∪ dom G1). repeat rewrite dom_app in *.
-simpl in *. transitivity (add a empty∪dom G2∪dom G1). fsetdec. ICI fsetdec.
+simpl in *. transitivity (add a empty∪dom G2∪dom G1). fsetdec.
+assert (add a empty [=] singleton a). fsetdec.
 fsetdec.
 
 Qed.
