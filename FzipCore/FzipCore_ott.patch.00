@@ -15,6 +15,10 @@
 >            val e2) ->
 >      val e
 > 
+450c457
+<       ( forall a , a \notin  L  -> wfterm  ( a ~(Eq  t' ) ++   (  (( G2 ) ++ ( G1 ))  )  )   ( open_term_wrt_typ e (typ_var_f a) )   (open_typ_wrt_typ  t   (typ_var_f a) )  )  ->
+---
+>       ( forall a , a \notin  L  -> wfterm  ( a ~(Eq  t' ) ++   (  (( G2 ) ++ ( G1 ))  )  )   ( open_term_wrt_typ e (typ_var_f a) )   (tsubst_typ (typ_var_f a) b  t) )  ->
 477,481c484,500
 <  | red0_nu_sigma : forall (L:vars) (t:typ) (e:term),
 <       ( forall b , b \notin  L  ->  b  `notin` ftv_typ (  ( open_typ_wrt_typ t (typ_var_f b) )  )  )  ->

@@ -2,7 +2,7 @@
 
 Require Import Metatheory.
 
-Inductive tag {A : Set} : Set :=
+Inductive tag {A : Type} : Type :=
   | T : A -> tag
   | U : tag
   | E : tag
@@ -454,8 +454,8 @@ Inductive wfterm : typing_env -> term -> typ -> Prop :=    (* defn wfterm *)
      wfterm G (term_nu e) t
  | wfterm_sigma : forall (L:vars) (G1:typing_env) (b:typvar) (G2:typing_env) (t':typ) (e:term) (t:typ),
       b  `notin` dom   (  (( G2 ) ++ ( G1 ))  )   ->
-      ( forall a , a \notin  L  -> wfterm  ( a ~(Eq  t' ) ++   (  (( G2 ) ++ ( G1 ))  )  )   ( open_term_wrt_typ e (typ_var_f a) )  t )  ->
-     wfterm  (( G2 ) ++ (  (  ( b ~E ++  G1 )  )  ))  (term_sigma (typ_var_f b) t' e)  (open_typ_wrt_typ  t   (typ_var_f b) ) 
+      ( forall a , a \notin  L  -> wfterm  ( a ~(Eq  t' ) ++   (  (( G2 ) ++ ( G1 ))  )  )   ( open_term_wrt_typ e (typ_var_f a) )   (tsubst_typ (typ_var_f a) b  t) )  ->
+     wfterm  (( G2 ) ++ (  (  ( b ~E ++  G1 )  )  ))  (term_sigma (typ_var_f b) t' e) t
  | wfterm_coerce : forall (G:typing_env) (e:term) (t t':typ),
      wftypeq G t' t ->
      wfterm G e t' ->

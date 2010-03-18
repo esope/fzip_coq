@@ -1,6 +1,6 @@
 embed
 {{ coq
-Inductive tag {A : Set} : Set :=
+Inductive tag {A : Type} : Type :=
   | T : A -> tag
   | U : tag
   | E : tag
@@ -314,9 +314,9 @@ G, E a |- e : t
 G |- nu a. e : t
 
          b not in dom (G1,G2)
-      (G1, G2), a = t' |- e : t
--------------------------------------------- :: sigma
-(G1, E b), G2 |- sig <b> (a = t') e : {b/a}t
+      (G1, G2), a = t' |- e : {a/b}t
+--------------------------------------- :: sigma
+(G1, E b), G2 |- sig <b> (a = t') e : t
 
    G |- t' = t
    G |- e : t'
