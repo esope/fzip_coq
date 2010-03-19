@@ -1965,22 +1965,72 @@ fsetdec.
 Qed.
 Hint Resolve wfterm_fv wfterm_ftv: fzip.
 
+Lemma wfterm_uniqueness_aux : forall Γ Γ' e τ τ',
+  wfterm Γ e τ → wfterm Γ' e τ' →
+  (forall x τ₀, binds x (T τ₀) Γ → binds x (T τ₀) Γ') →
+  τ = τ'.
+Proof.
+intros Γ Γ' e τ τ' H H0 H1.
+generalize dependent τ'. generalize dependent Γ'.
+induction H; intros Γ' Hbinds τ' H2; inversion H2; subst; auto.
+Case "var".
+assert (T t = T τ'). eapply binds_unique with (E:=Γ'); eauto with lngen. congruence.
+Case "app".
+assert (typ_arrow t2 t1 = typ_arrow t3 τ') by eauto with fzip; congruence.
+Case "abs". pick fresh x.
+assert (t2 = t3).
+  apply H1 with (Γ' := x ~ T t1 ++ Γ') (x := x); intros; auto.
+  analyze_binds_uniq H3. eauto with lngen.
+congruence.
+Case "pair".
+assert (t1 = t0) by eauto with fzip.
+assert (t2 = t3) by eauto 6 with fzip.
+congruence.
+Case "projL".
+assert (typ_prod t1 t2 = typ_prod τ' t3) by eauto with fzip; congruence.
+Case "projR".
+assert (typ_prod t1 t2 = typ_prod t3 τ') by eauto with fzip; congruence.
+Case "inst".
+assert (typ_forall t' = typ_forall t'0) by eauto with fzip; congruence.
+Case "gen". pick fresh a.
+assert (open_typ_wrt_typ t (typ_var_f a) = open_typ_wrt_typ t0 (typ_var_f a)).
+  apply H1 with (Γ' := a ~ U ++ Γ') (a := a); intros; auto.
+  analyze_binds_uniq H3. eauto with lngen.
+f_equal; eapply open_typ_wrt_typ_inj; eauto.
+Case "exists". pick fresh a.
+assert (open_typ_wrt_typ t (typ_var_f a) = open_typ_wrt_typ t0 (typ_var_f a)).
+  apply H0 with (Γ' := a ~ E ++ Γ') (a := a); intros; auto.
+  analyze_binds_uniq H1. eauto with lngen.
+f_equal; eapply open_typ_wrt_typ_inj; eauto.
+Case "open".
+assert (typ_exists t = typ_exists t0).
+  apply IHwfterm with (Γ' := G3 ++ G0); intros; auto.
+  assert (binds x (T τ₀) (G2 ++ b ~ E ++ G1)) by analyze_binds H1.
+  apply Hbinds in H3. analyze_binds_uniq H3. eauto with lngen.
+congruence.
+Case "nu". pick fresh a.
+apply H0 with (Γ' := a ~ E ++ Γ') (a := a); intros; auto.
+analyze_binds H1.
+Case "sigma". pick fresh a.
+assert (tsubst_typ (typ_var_f a) b t = tsubst_typ (typ_var_f a) b τ').
+  apply H1 with (Γ' := [(a, Eq t')] ++ G3 ++ G0) (a := a); intros; auto.
+  assert (binds x (T τ₀) (G2 ++ b ~ E ++ G1)).
+    analyze_binds_uniq H3. eauto with lngen.
+  apply Hbinds in H4.
+  analyze_binds_uniq H4. eauto with lngen.
+assert (tsubst_typ (typ_var_f b) a (tsubst_typ (typ_var_f a) b t)
+  = tsubst_typ (typ_var_f b) a (tsubst_typ (typ_var_f a) b τ'))
+by congruence.
+rewrite tsubst_typ_var_twice in H4; auto.
+rewrite tsubst_typ_var_twice in H4; eauto with lngen fzip.
+apply tsubst_typ_lc_typ_inv with (t1 := typ_var_f a) (a1 := b); auto.
+eauto with lngen.
+Qed.
+
 Lemma wfterm_uniqueness : forall Γ e τ τ',
   wfterm Γ e τ → wfterm Γ e τ' → τ = τ'.
 Proof.
-intros Γ e τ τ' H1 H2. generalize dependent τ'.
-induction H1; intros τ' H2; inversion H2; subst.
-Case "var".
-assert (T t = T τ'). eapply binds_unique; eauto. congruence.
-Case "app".
-assert (typ_arrow t2 t1 = typ_arrow t3 τ') by auto; congruence.
-Case "abs".
-pick fresh x; assert (t2 = t3) by eauto; congruence.
-Case "inst".
-assert (typ_forall t' = typ_forall t'0) by auto; congruence.
-Case "gen".
-pick fresh a. assert (open_typ_wrt_typ t (typ_var_f a) = open_typ_wrt_typ t0 (typ_var_f a)) by auto.
-f_equal; eapply open_typ_wrt_typ_inj; eauto.
+intros; eauto using wfterm_uniqueness_aux.
 Qed.
 
 (*
