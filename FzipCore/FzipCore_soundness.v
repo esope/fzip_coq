@@ -659,7 +659,7 @@ intros; auto with fzip.
 Qed.
 Hint Resolve wfenv_tsubst wftyp_tsubst: fzip.
 
-Lemma wftyp_fv : forall Γ τ, wftyp Γ τ → ftv_typ τ [<=] dom Γ.
+Lemma wftyp_ftv : forall Γ τ, wftyp Γ τ → ftv_typ τ [<=] dom Γ.
 Proof.
 intros Γ τ H. induction H; simpl in *; try fsetdec.
 Case "var".
@@ -677,7 +677,28 @@ assert (ftv_typ (open_typ_wrt_typ t (typ_var_f a))[<=]add a (dom G)) by auto.
 assert (ftv_typ t [<=] ftv_typ (open_typ_wrt_typ t (typ_var_f a))); auto with lngen.
 fsetdec.
 Qed.
-Hint Resolve wftyp_fv: fzip.
+Hint Resolve wftyp_ftv: fzip.
+
+Lemma wftyp_T_not_ftv : forall Γ τ x τ',
+  wftyp Γ τ → binds x (T τ') Γ → x ∉ ftv_typ τ.
+Proof.
+intros Γ τ x τ' H H0. induction H; simpl; auto.
+Case "var". destruct (a == x); subst; auto.
+assert (uniq G) by auto with lngen. elimtype False.
+intuition.
+  assert (T τ' = U). eapply binds_unique; eauto. congruence.
+  assert (T τ' = E). eapply binds_unique; eauto. congruence.
+  destruct H. assert (T τ' = Eq x0). eapply binds_unique; eauto. congruence.
+Case "forall". pick fresh a.
+assert (x ∉ ftv_typ (open_typ_wrt_typ t (typ_var_f a))) by eauto.
+assert (ftv_typ t [<=] ftv_typ (open_typ_wrt_typ t (typ_var_f a))) by auto with lngen.
+fsetdec.
+Case "exists". pick fresh a.
+assert (x ∉ ftv_typ (open_typ_wrt_typ t (typ_var_f a))) by eauto.
+assert (ftv_typ t [<=] ftv_typ (open_typ_wrt_typ t (typ_var_f a))) by auto with lngen.
+fsetdec.
+Qed.
+Hint Resolve wftyp_T_not_ftv.
 
 Lemma wfenv_wftyp_UE_aux :
   (forall Γ, wfenv Γ ->
@@ -917,7 +938,7 @@ replace (Eq (tsubst_typ τ a0 t)) with (tag_map (tsubst_typ τ a0) (Eq t)) by re
 unfold env_map. auto.
 SCase "a = a0". assert (t = τ) by congruence; subst.
 assert (a0 ∉ ftv_typ τ).
-  apply wfenv_strip in H0. inversion H0; subst. apply wftyp_fv in H7. auto.
+  apply wfenv_strip in H0. inversion H0; subst. apply wftyp_ftv in H7. auto.
   assert (wftypeq (env_map (tsubst_typ τ a0) Γ₁ ++ Γ₂) (tsubst_typ τ a0 τ) (tsubst_typ τ a0 τ)).
   apply wftypeq_refl; apply wftyp_subst_eq; apply wfenv_wftyp_Eq2 with (x := a0); auto.
   autorewrite with lngen in *; auto.
@@ -1256,7 +1277,14 @@ Lemma zip_binds_T23 :
 Proof.
 intros Γ₁ Γ₂ Γ₃ x τ H H0. dependent induction H; auto; try solve [analyze_binds H0].
 Qed.
-Hint Resolve zip_binds_T12 zip_binds_T13 zip_binds_T23: fzip.
+
+Lemma zip_binds_T31 :
+  forall Γ₁ Γ₂ Γ₃ x τ, zip Γ₁ Γ₂ Γ₃ →
+    binds x (T τ) Γ₃ → binds x (T τ) Γ₁.
+Proof.
+intros Γ₁ Γ₂ Γ₃ x τ H H0. dependent induction H; auto; try solve [analyze_binds H0].
+Qed.
+Hint Resolve zip_binds_T12 zip_binds_T13 zip_binds_T23 zip_binds_T31: fzip.
 
 Lemma zip_binds_Eq12 :
   forall Γ₁ Γ₂ Γ₃ a τ, zip Γ₁ Γ₂ Γ₃ →
@@ -1278,7 +1306,21 @@ Lemma zip_binds_Eq23 :
 Proof.
 intros Γ₁ Γ₂ Γ₃ a τ H H0. dependent induction H; auto; try solve [analyze_binds H0].
 Qed.
-Hint Resolve zip_binds_Eq12 zip_binds_Eq13 zip_binds_Eq23: fzip.
+
+Lemma zip_binds_Eq31 :
+  forall Γ₁ Γ₂ Γ₃ a τ, zip Γ₁ Γ₂ Γ₃ →
+    binds a (Eq τ) Γ₃ → binds a (Eq τ) Γ₁.
+Proof.
+intros Γ₁ Γ₂ Γ₃ a τ H H0. dependent induction H; auto; try solve [analyze_binds H0].
+Qed.
+
+Lemma zip_binds_Eq32 :
+  forall Γ₁ Γ₂ Γ₃ a τ, zip Γ₁ Γ₂ Γ₃ →
+    binds a (Eq τ) Γ₃ → binds a (Eq τ) Γ₂.
+Proof.
+intros Γ₁ Γ₂ Γ₃ a τ H H0. dependent induction H; auto; try solve [analyze_binds H0].
+Qed.
+Hint Resolve zip_binds_Eq12 zip_binds_Eq13 zip_binds_Eq23 zip_binds_Eq31 zip_binds_Eq32: fzip.
 
 Lemma zip_binds_E12 :
   forall Γ₁ Γ₂ Γ₃ a, zip Γ₁ Γ₂ Γ₃ →
@@ -1300,7 +1342,16 @@ Lemma zip_binds_E23 :
 Proof.
 intros Γ₁ Γ₂ Γ₃ a H H0. dependent induction H; auto; try solve [analyze_binds H0].
 Qed.
-Hint Resolve zip_binds_E12 zip_binds_E13 zip_binds_E23: fzip.
+
+Lemma zip_binds_E3_inv :
+  forall Γ₁ Γ₂ Γ₃ a, zip Γ₁ Γ₂ Γ₃ →
+    uniq Γ₃ → binds a E Γ₃ →
+    (binds a E Γ₁ ∧ binds a U Γ₂) ∨ (a ∉ dom Γ₁ ∧ binds a E Γ₂).
+Proof.
+intros Γ₁ Γ₂ Γ₃ a H H0 H1. dependent induction H; auto;
+analyze_binds_uniq H1; destruct IHzip; auto; try solve_uniq; destruct H1; auto.
+Qed.
+Hint Resolve zip_binds_E12 zip_binds_E13 zip_binds_E23 zip_binds_E3_inv: fzip.
 
 Lemma zip_binds_U12 :
   forall Γ₁ Γ₂ Γ₃ a, zip Γ₁ Γ₂ Γ₃ →
@@ -1322,7 +1373,21 @@ Lemma zip_binds_U23 :
 Proof.
 intros Γ₁ Γ₂ Γ₃ a H H0. dependent induction H; auto; try solve [analyze_binds H0; intuition].
 Qed.
-Hint Resolve zip_binds_U12 zip_binds_U13 zip_binds_U23: fzip.
+
+Lemma zip_binds_U31 :
+  forall Γ₁ Γ₂ Γ₃ a, zip Γ₁ Γ₂ Γ₃ →
+    binds a U Γ₃ → binds a U Γ₁.
+Proof.
+intros Γ₁ Γ₂ Γ₃ a H H0. dependent induction H; auto; try solve [analyze_binds H0; intuition].
+Qed.
+
+Lemma zip_binds_U32 :
+  forall Γ₁ Γ₂ Γ₃ a, zip Γ₁ Γ₂ Γ₃ →
+    binds a U Γ₃ → binds a U Γ₂.
+Proof.
+intros Γ₁ Γ₂ Γ₃ a H H0. dependent induction H; auto; try solve [analyze_binds H0; intuition].
+Qed.
+Hint Resolve zip_binds_U12 zip_binds_U13 zip_binds_U23 zip_binds_U31 zip_binds_U32: fzip.
 
 Lemma wfenv_wftyp_zip_aux :
   forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
@@ -1434,7 +1499,7 @@ eapply H0; auto. constructor; eauto. auto.
 Qed.
 Hint Resolve wftyp_zip12 wftyp_zip13 wftyp_zip23: fzip.
 
-(** Lemmas about [wfterm] *) ICI
+(** Lemmas about [wfterm] *)
 Lemma wfterm_wfenv : forall Γ e τ,
   wfterm Γ e τ → wfenv Γ.
 Proof.
@@ -1445,15 +1510,13 @@ Case "gen". pick fresh a. eauto using wfenv_strip.
 Case "exists". pick fresh a. eauto using wfenv_strip.
 Case "open".
 apply wfenv_weakening; auto. constructor; auto.
-  eapply wfenv_strip; eauto.
-Case "nu".
-pick fresh a. apply wfenv_strip with (Γ' := a ~ E). auto.
+  eauto using wfenv_strip.
+Case "nu". pick fresh a. eauto using wfenv_strip.
 Case "sigma".
 pick fresh a.
-assert (wfenv (G2 ++ G1)).
-  apply wfenv_strip with (Γ' := [(a, Eq t')]). auto.
+assert (wfenv (G2 ++ G1)) by eauto using wfenv_strip.
 apply wfenv_weakening; auto.
-constructor; auto. apply wfenv_strip with (Γ' := G2). auto.
+constructor; auto. eauto using wfenv_strip.
 Qed.
 Hint Resolve wfterm_wfenv: fzip.
 
@@ -1461,26 +1524,19 @@ Lemma wfterm_wftyp : forall Γ e τ,
   wfterm Γ e τ → wftyp Γ τ.
 Proof.
 intros Γ e τ H.
-induction H.
-Case "var". eapply wfenv_wftyp_T2; eauto.
-Case "app". inversion IHwfterm1; subst; auto.
-  eapply wftyp_zip13. eauto. auto. eapply wfterm_wfenv; eauto.
+induction H; try solve [eauto 2 with fzip
+  | inversion IHwfterm; subst; auto].
+Case "app". inversion IHwfterm1; subst; eauto 3 with fzip.
 Case "abs". pick fresh x. assert ([(x, T t1)] ++ G ⊢ t2 ok) by auto.
-assert (wfenv ([(x, T t1)] ++ G)) by eauto.
+assert (wfenv ([(x, T t1)] ++ G)) by eauto 2 with fzip.
 inversion H3; subst.
 rewrite_env (nil ++ x ~ T t1 ++ G) in H2.
-apply wftyp_subst in H2; simpl_env in H2.
-auto.
-Case "pair". constructor.
-eapply wftyp_zip13. eauto. auto. eapply wftyp_wfenv; eauto.
-eapply wftyp_zip23. eauto. auto. eapply wftyp_wfenv; eauto.
-Case "projL". inversion IHwfterm; subst; auto.
-Case "projR". inversion IHwfterm; subst; auto.
+apply wftyp_subst in H2; simpl_env in H2; auto.
+Case "pair". constructor; eauto 3 with fzip.
 Case "inst". inversion IHwfterm; subst.
 pick fresh a. rewrite tsubst_typ_intro with (a1 := a); auto.
 rewrite_env (env_map (tsubst_typ t a) nil ++ G).
 apply wftyp_tsubst; simpl_env; auto.
-Case "gen". apply wftyp_forall with (L := L); auto.
 Case "exists". apply wftyp_exists with (L := L); intros.
 rewrite_env (nil ++ a ~ U ++ G). apply wftyp_EU. simpl_env. auto.
 Case "open". inversion IHwfterm; subst.
@@ -1500,7 +1556,7 @@ rewrite_env (env_map (tsubst_typ (typ_forall (typ_var_b 0)) a) nil ++ G).
 apply wftyp_tsubst. apply wftyp_EU. simpl_env. auto.
 apply wftyp_forall with (L := L ∪ dom G); intros; unfold open_typ_wrt_typ; simpl;
   simpl_env; constructor; auto.
-  constructor; auto. apply wfenv_strip with (Γ' := a ~ E). eapply wftyp_wfenv; eauto.
+  eauto 4 with fzip.
 autorewrite with lngen; auto.
 Case "sigma".
   rewrite_env (nil ++ G2 ++ b ~ E ++ G1).
@@ -1514,36 +1570,33 @@ Case "sigma".
   apply tsubst_typ_var_twice; auto.
   apply tsubst_typ_lc_typ_inv with (t1 := typ_var_f a) (a1 := b); auto.
   eapply wftyp_regular; eauto.
-Case "coerce". eapply wftypeq_wftyp_2; eauto.
 Qed.
 Hint Resolve wfterm_wftyp: fzip.
 
 Lemma wfterm_regular2 : forall Γ e τ,
   wfterm Γ e τ → lc_typ τ.
 Proof.
-intros Γ e τ H; eauto.
+intros Γ e τ H; eauto with lngen fzip.
 Qed.
 Hint Resolve wfterm_regular2: lngen.
 
 Lemma wfterm_regular1 : forall Γ e τ,
   wfterm Γ e τ → lc_term e.
 Proof.
-intros Γ e τ H; induction H; auto.
+intros Γ e τ H; induction H; eauto with lngen.
 Case "abs". pick fresh x.
 apply lc_term_abs_exists with (x1 := x); auto.
-apply wfenv_regular_T with (Γ := [(x, T t1)] ++ G) (x := x); eauto.
-Case "inst". apply wftyp_regular in H; auto.
+apply wfenv_regular_T with (Γ := [(x, T t1)] ++ G) (x := x); eauto with fzip.
 Case "sigma". pick fresh a.
 apply lc_term_sigma_exists with (a1 := a); auto.
-apply wfenv_regular_Eq with (Γ := [(a, Eq t')] ++ G2 ++ G1) (x := a); eauto.
-Case "coerce". apply wftypeq_wftyp_2 in H. apply wftyp_regular in H. auto.
+apply wfenv_regular_Eq with (Γ := [(a, Eq t')] ++ G2 ++ G1) (x := a); eauto with fzip.
 Qed.
 Hint Resolve wfterm_regular1: lngen.
 
 Lemma wfterm_env_uniq : forall Γ e τ,
   wfterm Γ e τ → uniq Γ.
 Proof.
-intros Γ e τ H. eauto.
+intros Γ e τ H. eauto with lngen fzip.
 Qed.
 Hint Resolve wfterm_env_uniq: lngen.
 
@@ -1688,6 +1741,102 @@ Hint Resolve red1_topen.
 *)
 
 (* Lemmas about wfterm *)
+Lemma wfterm_T_not_ftv : forall Γ M τ x τ',
+  wfterm Γ M τ → binds x (T τ') Γ → x ∉ ftv_term M.
+Proof.
+intros Γ M τ x τ' H H0. induction H; simpl; auto.
+Case "app". eauto 7 with fzip.
+Case "lam". pick fresh y.
+assert (x ∉ ftv_typ t1). eapply wftyp_T_not_ftv; eauto with fzip.
+assert (x ∉ ftv_term (e ^ y)) by eauto with fzip.
+assert (ftv_term e [<=] ftv_term (e ^ y)) by auto with lngen.
+auto.
+Case "pair". eauto 7 with fzip.
+Case "inst". assert (x ∉ ftv_typ t) by eauto with fzip. auto.
+Case "gen". pick fresh a.
+assert (x ∉ ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto.
+assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
+auto.
+Case "exists". pick fresh a.
+assert (x ∉ ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto.
+assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
+auto.
+Case "open".
+assert (x ≠ b). analyze_binds_uniq H0. eauto with lngen.
+assert (x ∉ ftv_term e). analyze_binds_uniq H0. eauto with lngen.
+auto.
+Case "nu". pick fresh a.
+assert (x ∉ ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto.
+assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
+auto.
+Case "sigma". pick fresh a.
+assert (x ≠ b). analyze_binds_uniq H0. eauto with lngen.
+assert (x ∉ ftv_typ t').
+  assert (wftyp (G2 ++ G1) t'). eauto with fzip.
+  analyze_binds_uniq H0; eauto with lngen.
+assert (x ∉ ftv_term (open_term_wrt_typ e (typ_var_f a))) by eauto.
+assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
+auto.
+Case "coerce". eauto with fzip.
+Qed.
+
+Lemma wfterm_UEEq_not_fv :
+  forall Γ M τ a,
+    wfterm Γ M τ →
+    (binds a U Γ ∨ binds a E Γ ∨ (∃ τ', binds a (Eq τ') Γ) ∨ a ∉ dom Γ) →
+    a ∉ fv_term M.
+Proof.
+intros Γ M τ a H H0. induction H; simpl; auto.
+Case "var". destruct (a == x); subst; auto.
+destruct H0. assert (U = T t). eapply binds_unique; eauto with lngen. congruence.
+destruct H0. assert (E = T t). eapply binds_unique; eauto with lngen. congruence.
+destruct H0. destruct H0. assert (Eq x0 = T t). eapply binds_unique; eauto with lngen. congruence.
+eauto.
+Case "app".
+assert (a ∉ fv_term e1).
+  destruct H0. eauto with fzip.
+  destruct H0. apply zip_binds_E3_inv with (Γ₁:=G1) (Γ₂:=G2) in H0; auto; eauto with lngen.
+  destruct H0. destruct H0. eauto 7 with fzip.
+  assert (dom G1 [<=] dom G) by eauto with fzip. auto 8.
+assert (a ∉ fv_term e2).
+  destruct H0. eauto with fzip.
+  destruct H0. apply zip_binds_E3_inv with (Γ₁:=G1) (Γ₂:=G2) in H0; auto; eauto with lngen.
+  destruct H0.  destruct H0. eauto 7 with fzip.
+  erewrite <- zip_dom2 in H0; eauto.
+auto.
+Case "lam". pick fresh x.
+assert (a ∉ fv_term (e ^ x)). apply H2; auto.
+  destruct H0. auto.
+  destruct H0. auto.
+  destruct H0. destruct H0; eauto 6.
+  auto.
+assert (fv_term e [<=] fv_term (e ^ x)) by auto with lngen.
+auto.
+Case "pair".
+assert (a ∉ fv_term e1).
+  destruct H0. eauto with fzip.
+  destruct H0. apply zip_binds_E3_inv with (Γ₁:=G1) (Γ₂:=G2) in H0; auto; eauto with lngen.
+  destruct H0. destruct H0. eauto 7 with fzip.
+  assert (dom G1 [<=] dom G) by eauto with fzip. auto 8.
+assert (a ∉ fv_term e2).
+  destruct H0. eauto with fzip.
+  destruct H0. apply zip_binds_E3_inv with (Γ₁:=G1) (Γ₂:=G2) in H0; auto; eauto with lngen.
+  destruct H0.  destruct H0. eauto 7 with fzip.
+  erewrite <- zip_dom2 in H0; eauto.
+auto.
+Case "gen". pick fresh b.
+assert (a ∉ fv_term (open_term_wrt_typ e (typ_var_f b))).
+  destruct H0. auto.
+  destruct H0. auto.
+  destruct H0. destruct H0; eauto 7.
+  auto 6.
+assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f b))) by auto with lngen.
+auto.
+
+ICI
+    
+
+
 Lemma wfterm_fv : forall Γ e τ,
   wfterm Γ e τ → fv_term e [<=] dom Γ.
 Proof.
@@ -1695,7 +1844,7 @@ intros Γ e τ H. induction H; simpl fv_term in *; repeat rewrite dom_app in *;
 try solve [fsetdec].
 Case "var". assert (x ∈ dom G) by eauto; fsetdec.
 Case "app".
-assert (dom G1 [<=] dom G). eapply zip_dom1; eauto.
+assert (dom G1 [<=] dom G) by eauto with fzip.
 assert (dom G2 [=] dom G). rewrite zip_dom2 with (Γ₁ := G1) (Γ₃ := G); auto; fsetdec.
 fsetdec.
 Case "lam". pick fresh x. 
@@ -1704,7 +1853,7 @@ assert (fv_term e [<=] fv_term (e ^ x)) by auto with lngen.
 assert (fv_term e [<=] {{x}} ∪ dom G). simpl in *; fsetdec.
 fsetdec.
 Case "pair".
-assert (dom G1 [<=] dom G). eapply zip_dom1; eauto.
+assert (dom G1 [<=] dom G) by eauto with fzip.
 assert (dom G2 [=] dom G). rewrite zip_dom2 with (Γ₁ := G1) (Γ₃ := G); auto; fsetdec.
 fsetdec.
 Case "gen". pick fresh a. 
@@ -1726,6 +1875,7 @@ Case "sigma". pick fresh a.
 assert (fv_term (open_term_wrt_typ e (typ_var_f a)) [<=] dom (a ~ Eq t' ++ G2 ++ G1)) by auto.
 assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
 assert (fv_term e [<=] {{a}} ∪ dom G2 ∪ dom G1). repeat rewrite dom_app in *.
+fsetdec.
 simpl in *. transitivity (add a empty∪dom G2∪dom G1). fsetdec.
 assert (add a empty [=] singleton a). fsetdec.
 fsetdec.
