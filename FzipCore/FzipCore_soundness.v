@@ -1832,15 +1832,43 @@ assert (a ∉ fv_term (open_term_wrt_typ e (typ_var_f b))).
   auto 6.
 assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f b))) by auto with lngen.
 auto.
-
-ICI
-    
-
+Case "exists". pick fresh b.
+assert (a ∉ fv_term (open_term_wrt_typ e (typ_var_f b))).
+  destruct H0. auto.
+  destruct H0. auto.
+  destruct H0. destruct H0; eauto 7.
+  auto 6.
+assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f b))) by auto with lngen.
+auto.
+Case "open". apply IHwfterm.
+  destruct H0. analyze_binds_uniq H0. eauto with lngen.
+  destruct H0. analyze_binds_uniq H0. eauto with lngen.
+  destruct H0. destruct H0. analyze_binds_uniq H0.
+    eauto with lngen. eauto 6. eauto 6.
+  auto.
+Case "nu". pick fresh b.
+assert (a ∉ fv_term (open_term_wrt_typ e (typ_var_f b))).
+  destruct H0. auto.
+  destruct H0. auto.
+  destruct H0. destruct H0; eauto 7.
+  auto 6.
+assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f b))) by auto with lngen.
+auto.
+Case "sigma". pick fresh c.
+assert (a ∉ fv_term (open_term_wrt_typ e (typ_var_f c))). apply H2; auto.
+  destruct H0. analyze_binds_uniq H0. eauto with lngen.
+  destruct H0. analyze_binds_uniq H0. eauto with lngen.
+  destruct H0. destruct H0. analyze_binds_uniq H0.
+    eauto with lngen. eauto 7. eauto 7.
+  auto 6.
+assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f c))) by auto with lngen.
+auto.
+Qed.
 
 Lemma wfterm_fv : forall Γ e τ,
   wfterm Γ e τ → fv_term e [<=] dom Γ.
 Proof.
-intros Γ e τ H. induction H; simpl fv_term in *; repeat rewrite dom_app in *;
+intros Γ e τ H. induction H; simpl fv_term in *; repeat rewrite dom_app in *; simpl dom in *;
 try solve [fsetdec].
 Case "var". assert (x ∈ dom G) by eauto; fsetdec.
 Case "app".
@@ -1848,39 +1876,94 @@ assert (dom G1 [<=] dom G) by eauto with fzip.
 assert (dom G2 [=] dom G). rewrite zip_dom2 with (Γ₁ := G1) (Γ₃ := G); auto; fsetdec.
 fsetdec.
 Case "lam". pick fresh x. 
-assert (fv_term (e ^ x) [<=] dom (x ~ T t1 ++ G)) by auto.
+assert (fv_term (e ^ x) [<=] add x (dom G)) by auto.
 assert (fv_term e [<=] fv_term (e ^ x)) by auto with lngen.
-assert (fv_term e [<=] {{x}} ∪ dom G). simpl in *; fsetdec.
 fsetdec.
 Case "pair".
 assert (dom G1 [<=] dom G) by eauto with fzip.
 assert (dom G2 [=] dom G). rewrite zip_dom2 with (Γ₁ := G1) (Γ₃ := G); auto; fsetdec.
 fsetdec.
 Case "gen". pick fresh a. 
-assert (fv_term (open_term_wrt_typ e (typ_var_f a)) [<=] dom (a ~ U ++ G)) by auto.
+assert (fv_term (open_term_wrt_typ e (typ_var_f a)) [<=] add a (dom G)) by auto.
 assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
-assert (fv_term e [<=] {{a}} ∪ dom G). simpl in *; fsetdec.
 fsetdec.
 Case "exists". pick fresh a. 
-assert (fv_term (open_term_wrt_typ e (typ_var_f a)) [<=] dom (a ~ E ++ G)) by auto.
+assert (fv_term (open_term_wrt_typ e (typ_var_f a)) [<=] add a (dom G)) by auto.
 assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
-assert (fv_term e [<=] {{a}} ∪ dom G). simpl in *; fsetdec.
 fsetdec.
 Case "nu". pick fresh a. 
-assert (fv_term (open_term_wrt_typ e (typ_var_f a)) [<=] dom (a ~ E ++ G)) by auto.
+assert (fv_term (open_term_wrt_typ e (typ_var_f a)) [<=] add a (dom G)) by auto.
 assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
-assert (fv_term e [<=] {{a}} ∪ dom G). simpl in *; fsetdec.
 fsetdec.
 Case "sigma". pick fresh a.
-assert (fv_term (open_term_wrt_typ e (typ_var_f a)) [<=] dom (a ~ Eq t' ++ G2 ++ G1)) by auto.
+assert (fv_term (open_term_wrt_typ e (typ_var_f a)) [<=] add a (dom (G2 ++ G1))) by auto.
+repeat rewrite dom_app in H2.
 assert (fv_term e [<=] fv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
-assert (fv_term e [<=] {{a}} ∪ dom G2 ∪ dom G1). repeat rewrite dom_app in *.
-fsetdec.
-simpl in *. transitivity (add a empty∪dom G2∪dom G1). fsetdec.
-assert (add a empty [=] singleton a). fsetdec.
-fsetdec.
-
+assert (fv_term e [<=] {{a}} ∪ dom G2 ∪ dom G1). clear Fr.
+  simpl in H2. fsetdec.
+clear H2 H3. 
+assert (fv_term e [<=] dom G2 ∪ dom G1).
+  assert (a ∉ fv_term e).
+    replace (fv_term e) with
+      (fv_term (term_sigma (typ_var_f b) t' e)) by reflexivity.
+    apply wfterm_UEEq_not_fv with (Γ := G2 ++ b ~ E ++ G1) (τ := t); eauto.
+clear Fr. fsetdec.
+clear Fr. fsetdec.
 Qed.
+
+Lemma wfterm_ftv : forall Γ e τ,
+  wfterm Γ e τ → ftv_term e [<=] dom Γ.
+Proof.
+intros Γ e τ H. induction H; simpl ftv_term in *; repeat rewrite dom_app in *; simpl dom in *;
+try solve [fsetdec].
+Case "app".
+assert (dom G1 [<=] dom G) by eauto with fzip.
+erewrite zip_dom2 in IHwfterm2; eauto.
+fsetdec.
+Case "abs". pick fresh x.
+assert (ftv_typ t1 [<=] dom G). eapply wftyp_ftv; eauto with fzip.
+assert (ftv_term e [<=] dom G). clear H2.
+  assert (ftv_term (e ^ x)[<=] add x (dom G)) by auto.
+  assert (ftv_term e [<=] ftv_term (e ^ x)) by auto with lngen.
+  assert (x ∉ ftv_term (e ^ x)).
+    apply wfterm_T_not_ftv with (Γ:= x~ T t1 ++ G) (τ:= t2) (τ':= t1); auto.
+  clear Fr. simpl in H2. fsetdec.
+clear Fr. fsetdec.
+Case "pair".
+assert (dom G1 [<=] dom G) by eauto with fzip.
+erewrite zip_dom2 in IHwfterm2; eauto.
+fsetdec.
+Case "inst".
+assert (ftv_typ t [<=] dom G) by auto with fzip.
+fsetdec.
+Case "gen". pick fresh a.
+assert (ftv_term (open_term_wrt_typ e (typ_var_f a))[<=] add a (dom G)) by auto.
+assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
+fsetdec.
+Case "exists". pick fresh a.
+assert (ftv_term (open_term_wrt_typ e (typ_var_f a))[<=] add a (dom G)) by auto.
+assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
+fsetdec.
+Case "nu". pick fresh a.
+assert (ftv_term (open_term_wrt_typ e (typ_var_f a))[<=] add a (dom G)) by auto.
+assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
+fsetdec.
+Case "sigma". pick fresh a.
+assert (ftv_typ t' [<=] dom (G2 ++ G1)).
+  apply wftyp_ftv; eauto with fzip.
+assert (ftv_term e [<=] dom G2 ∪ dom G1).
+  assert (ftv_term (open_term_wrt_typ e (typ_var_f a))[<=] add a (dom (G2 ++ G1))) by auto.
+  assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
+  rewrite dom_app in H3.
+  assert (a ∉ ftv_term e) by fsetdec.
+  clear Fr. fsetdec.
+rewrite dom_app in H2.
+clear Fr. fsetdec.
+Case "coerce".
+assert (ftv_typ t [<=] dom G) by eauto with fzip.
+fsetdec.
+Qed.
+Hint Resolve wfterm_fv wfterm_ftv: fzip.
 
 Lemma wfterm_uniqueness : forall Γ e τ τ',
   wfterm Γ e τ → wfterm Γ e τ' → τ = τ'.
