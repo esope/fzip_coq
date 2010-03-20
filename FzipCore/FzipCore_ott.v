@@ -8,6 +8,9 @@ Inductive tag {A : Type} : Type :=
   | E : tag
   | Eq : A -> tag.
 
+Definition pure {A: Type} (G: list (atom * @tag A)) := forall a, ~ binds a E G.
+Hint Unfold pure.
+
 
 (** syntax *)
 Definition termvar := var.
@@ -410,7 +413,7 @@ Inductive wftypeq : typing_env -> typ -> typ -> Prop :=    (* defn wftypeq *)
 (* defns Jwfterm *)
 Inductive wfterm : typing_env -> term -> typ -> Prop :=    (* defn wfterm *)
  | wfterm_val : forall (G:typing_env) (x:termvar) (t:typ),
-      (forall a, ~ binds a E ( G ))  ->
+      (pure ( G ))  ->
      wfenv G ->
       binds ( x ) (T ( t )) ( G )  ->
      wfterm G (term_var_f x) t
@@ -420,7 +423,7 @@ Inductive wfterm : typing_env -> term -> typ -> Prop :=    (* defn wfterm *)
      wfterm G2 e2 t2 ->
      wfterm G (term_app e1 e2) t1
  | wfterm_abs : forall (L:vars) (G:typing_env) (t1:typ) (e:term) (t2:typ),
-      (forall a, ~ binds a E ( G ))  ->
+      (pure ( G ))  ->
       ( forall x , x \notin  L  -> wfterm  ( x ~(T  t1 ) ++  G )   ( open_term_wrt_term e (term_var_f x) )  t2 )  ->
      wfterm G (term_abs t1 e) (typ_arrow t1 t2)
  | wfterm_pair : forall (G:typing_env) (e1 e2:term) (t1 t2:typ) (G1 G2:typing_env),
@@ -439,7 +442,7 @@ Inductive wfterm : typing_env -> term -> typ -> Prop :=    (* defn wfterm *)
      wfterm G e (typ_forall t') ->
      wfterm G (term_inst e t)  (open_typ_wrt_typ  t'   t ) 
  | wfterm_gen : forall (L:vars) (G:typing_env) (e:term) (t:typ),
-      (forall a, ~ binds a E ( G ))  ->
+      (pure ( G ))  ->
       ( forall a , a \notin  L  -> wfterm  ( a ~U ++  G )   ( open_term_wrt_typ e (typ_var_f a) )   ( open_typ_wrt_typ t (typ_var_f a) )  )  ->
      wfterm G (term_gen e) (typ_forall t)
  | wfterm_exists : forall (L:vars) (G:typing_env) (e:term) (t:typ),
