@@ -100,6 +100,74 @@ assert (a ∉ ftv_typ t0). unfold ftv_env in H; simpl in H; auto.
 simpl; autorewrite with lngen; auto.
 Qed.
 
+Definition lc_env Γ :=
+  (forall x τ, binds x (T τ) Γ → lc_typ τ) ∧
+  (forall a τ, binds a (Eq τ) Γ → lc_typ τ).
+
+Lemma lc_env_app_inv1 Γ Γ' :
+  lc_env (Γ ++ Γ') → lc_env Γ.
+Proof.
+intros Γ Γ' H. destruct H. split; intros; eauto.
+Qed.
+
+Lemma lc_env_app_inv2 Γ Γ' :
+  lc_env (Γ ++ Γ') → lc_env Γ'.
+Proof.
+intros Γ Γ' H. destruct H. split; intros; eauto.
+Qed.
+
+Lemma lc_env_app Γ Γ' :
+  lc_env Γ → lc_env Γ' → lc_env (Γ ++ Γ').
+Proof.
+intros Γ Γ' H H0. induction Γ; simpl_env in *; auto.
+destruct a; destruct t; split; intros;
+destruct IHΓ; eauto using lc_env_app_inv2, uniq_app_2.
+analyze_binds H1.
+  replace t with τ in * by congruence. destruct H. apply (H a); auto.
+  apply (H2 x); auto.
+  apply (H2 x); auto.
+analyze_binds H1.
+  apply (H3 a0); auto.
+  apply (H3 a0); auto.
+analyze_binds H1; apply (H2 x); auto.
+analyze_binds H1; apply (H3 a0); auto.
+analyze_binds H1; apply (H2 x); auto.
+analyze_binds H1; apply (H3 a0); auto.
+analyze_binds H1; apply (H2 x); auto.
+analyze_binds H1.
+  replace t with τ in * by congruence. destruct H. apply (H1 a); auto.
+  apply (H3 a0); auto.
+  apply (H3 a0); auto.
+Qed.
+
+Lemma lc_env_nil : lc_env nil.
+Proof.
+  split; intros; analyze_binds H.
+Qed.
+
+Lemma lc_env_T : forall x τ, lc_typ τ → lc_env (x ~ T τ).
+Proof.
+intros x τ H. split; intros; analyze_binds H0; congruence.
+Qed.
+
+Lemma lc_env_Eq : forall a τ, lc_typ τ → lc_env (a ~ Eq τ).
+Proof.
+intros x τ H. split; intros; analyze_binds H0; congruence.
+Qed.
+
+Lemma lc_env_U : forall a, lc_env (a ~ U).
+Proof.
+intro a; split; intros; analyze_binds H.
+Qed.
+
+Lemma lc_env_E : forall a, lc_env (a ~ E).
+Proof.
+intro a; split; intros; analyze_binds H.
+Qed.
+
+Hint Resolve lc_env_app_inv1 lc_env_app_inv2 lc_env_app
+  lc_env_nil lc_env_T lc_env_Eq lc_env_U lc_env_E: lngen.
+
 (** Additional lemmas *)
 Lemma var_subst : forall e x, subst_term e x (term_var_f x) = e.
 Proof.

@@ -1235,6 +1235,25 @@ destruct wfenv_wftyp_upperE_aux as [_ H]; intros; eapply H; eauto.
 Qed.
 
 (** Lemmas about [zip] *)
+Lemma zip_lc1 : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ → lc_env Γ₁.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H. induction H; auto with lngen.
+Qed.
+
+Lemma zip_lc2 : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ → lc_env Γ₂.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H. induction H; auto with lngen.
+Qed.
+
+Lemma zip_lc3 : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ → lc_env Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H. induction H; auto with lngen.
+Qed.
+Hint Resolve zip_lc1 zip_lc2 zip_lc3: lngen.
+
 Lemma zip_dom1 :
   forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
   dom Γ₁ [<=] dom Γ₃.
@@ -2056,16 +2075,269 @@ simpl_env; eauto.
 Qed.
 *)
 
+(** Lemmas about [pure] *)
+Lemma pure_T (A: Type) : forall x t, pure (x ~ @T A t).
+Proof.
+intros A x t y H; analyze_binds H.
+Qed.
+
+Lemma pure_U (A: Type) : forall a, pure (a ~ @U A).
+Proof.
+intros A x y H; analyze_binds H.
+Qed.
+
+Lemma pure_Eq (A: Type) : forall a t, pure (a ~ @Eq A t).
+Proof.
+intros A x t y H; analyze_binds H.
+Qed.
+Hint Resolve pure_T pure_U pure_Eq: fzip.
+
+Lemma pure_app : forall (Γ₁ Γ₂: typing_env),
+  pure Γ₁ → pure Γ₂ → pure (Γ₂ ++ Γ₁).
+Proof.
+intro Γ₁; induction Γ₁; intros; simpl_env in *; auto.
+assert (pure Γ₁). intros y H2; eapply H; eauto.
+destruct a. destruct t; intros x H2;
+try solve [analyze_binds H2;
+  [eapply (IHΓ₁ Γ₂); eauto | eapply H; eauto]].
+eapply (H a); auto.
+Qed.
+
+Lemma pure_app_inv1 : forall (Γ₁ Γ₂: typing_env),
+  pure (Γ₂ ++ Γ₁) → pure Γ₁.
+Proof.
+intro Γ₁; induction Γ₁; intros; simpl_env in *; auto.
+destruct a; destruct t;
+intros x H1; eapply (H x); analyze_binds H1.
+Qed.
+
+Lemma pure_app_inv2 : forall (Γ₁ Γ₂: typing_env),
+  pure (Γ₂ ++ Γ₁) → pure Γ₂.
+Proof.
+intro Γ₁; induction Γ₁; intros; simpl_env in *; auto.
+destruct a; destruct t;
+intros x H1; eapply (H x); analyze_binds H1.
+Qed.
+Hint Resolve pure_app pure_app_inv1 pure_app_inv2: fzip.
+
+Lemma pure_zip : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ → pure Γ₁ → pure Γ₂ → pure Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0 H1. induction H; auto.
+apply pure_app; eauto using pure_app_inv1; auto with fzip.
+apply pure_app; eauto using pure_app_inv1; auto with fzip.
+intros x H3; eapply (H0 a); auto.
+intros x H3; eapply (H1 a); auto.
+apply pure_app; eauto using pure_app_inv1; auto with fzip.
+Qed.
+
+Lemma pure_zip_inv1 : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ → pure Γ₃ → pure Γ₁.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0. induction H; auto;
+intros y H3; apply (H0 y); analyze_binds H3; eauto with fzip.
+Qed.
+
+Lemma pure_zip_inv2 : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ → pure Γ₃ → pure Γ₂.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0. induction H; auto;
+intros y H3; apply (H0 y); analyze_binds H3; eauto with fzip.
+Qed.
+Hint Resolve pure_zip pure_zip_inv1 pure_zip_inv2: fzip.
+
+Lemma zip_self : forall Γ, pure Γ → lc_env Γ → zip Γ Γ Γ.
+Proof.
+intros Γ H H0. induction Γ; simpl_env in *; auto.
+destruct a; destruct t; auto.
+constructor. destruct H0; eauto. eauto with fzip lngen.
+constructor. eauto with fzip lngen.
+elimtype False; eapply (H a); auto.
+constructor. destruct H0; eauto. eauto with fzip lngen.
+Qed.
+
+Lemma zip_app1 : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ →
+  forall Γ, pure Γ → lc_env Γ → disjoint Γ Γ₂ →
+    zip (Γ₁ ++ Γ) (Γ₂ ++ Γ) (Γ₃ ++ Γ).
+Proof.
+intros Γ₁ Γ₂ Γ₃ H. induction H; intros; simpl_env in *.
+Case "nil". auto using zip_self.
+Case "TT". eauto 6 using disjoint_sym_1, disjoint_app_2.
+Case "UU". eauto 6 using disjoint_sym_1, disjoint_app_2.
+Case "EU". eauto 6 using disjoint_sym_1, disjoint_app_2.
+Case "E". constructor. solve_uniq.
+eauto 6 using disjoint_sym_1, disjoint_app_2.
+Case "EqEq". eauto 6 using disjoint_sym_1, disjoint_app_2.
+Qed.
+
+Lemma zip_app2 : forall Γ Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ →
+  pure Γ → lc_env Γ → disjoint Γ Γ₂ →
+    zip (Γ ++ Γ₁) (Γ ++ Γ₂) (Γ ++ Γ₃).
+Proof.
+intros Γ Γ₁ Γ₂ Γ₃ H H0 H1 H2. induction Γ; simpl_env in *; auto.
+destruct a; destruct t.
+Case "T". constructor. destruct H1; eauto.
+apply IHΓ. eauto with fzip. eauto with lngen. solve_uniq.
+Case "U". constructor. 
+apply IHΓ. eauto with fzip. eauto with lngen. solve_uniq.
+Case "E". elimtype False. eapply (H0 a); auto.
+Case "Eq". constructor. destruct H1; eauto.
+apply IHΓ. eauto with fzip. eauto with lngen. solve_uniq.
+Qed.
+
+Lemma zip_unique : forall Γ₁ Γ₂ Γ₃ Γ₄,
+  zip Γ₁ Γ₂ Γ₃ → zip Γ₁ Γ₂ Γ₄ → Γ₃ = Γ₄.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₄ H H0.
+generalize dependent Γ₄. induction H; intros Γ₄ H1; inversion H1; subst;
+f_equal; auto.
+Qed.
+
+Lemma zip_nil : forall Γ Γ',
+  zip nil Γ Γ' → Γ = Γ'.
+Proof.
+intros Γ Γ' H. dependent induction H; auto.
+rewrite IHzip; auto.
+Qed.
+
+Lemma zip_app_inv1 : forall Γ₁ Γ₂ Γ₃' Γ₃'',
+  zip Γ₁ Γ₂ (Γ₃' ++ Γ₃'') →
+  exists Γ₁', exists Γ₁'',
+    Γ₁ = Γ₁' ++ Γ₁'' ∧ dom Γ₁' [<=] dom Γ₃' ∧
+    (forall a, binds a U Γ₃'' → binds a U Γ₁'') ∧
+    (forall a τ, binds a (Eq τ) Γ₃'' → binds a (Eq τ) Γ₁'') ∧
+    (forall x τ, binds x (T τ) Γ₃'' → binds x (T τ) Γ₁'').
+Proof.
+intros Γ₁ Γ₂ Γ₃' Γ₃'' H. dependent induction H.
+Case "nil".
+exists nil; exists nil; split; auto.
+split. fsetdec.
+split. intros. destruct Γ₃'. destruct Γ₃''. auto. inversion H.  simpl_env in H; inversion H.
+split. intros. destruct Γ₃'. destruct Γ₃''. auto. inversion H.  simpl_env in H; inversion H.
+intros. destruct Γ₃'. destruct Γ₃''. auto. inversion H.  simpl_env in H; inversion H.
+
+ICI
+
+Case "TT". destruct Γ₃'; simpl in *.
+destruct Γ₃''; simpl in *; inversion H1; subst.
+exists nil. exists (x ~ T t ++ G1). split. reflexivity.
+split. simpl; fsetdec.
+intros. simpl_env in H2. analyze_binds H2. eauto with fzip.
+inversion H1; subst. destruct (IHzip Γ₃' Γ₃'') as [? [? [? [? ?]]]]; auto; subst. exists (x ~ T t ++ x0). exists x1. split. simpl_env; auto.
+split. rewrite dom_app. simpl. fsetdec.
+intros. auto.
+Case "UU". destruct Γ₃'; simpl in *.
+destruct Γ₃''; simpl in *; inversion H0; subst.
+exists nil. exists (a ~ U ++ G1). split. reflexivity.
+split. simpl; fsetdec.
+intros. simpl_env in H1. analyze_binds H1. eauto with fzip.
+inversion H0; subst. destruct (IHzip Γ₃' Γ₃'') as [? [? [? [? ?]]]]; auto; subst. exists (a ~ U ++ x). exists x0. split. simpl_env; auto. 
+split. rewrite dom_app. simpl. fsetdec.
+intros. auto.
+Case "EU". destruct Γ₃'; simpl in *.
+destruct Γ₃''; simpl in *; inversion H0; subst.
+exists nil. exists (a ~ E ++ G1). split. reflexivity. 
+split. simpl; fsetdec.
+intros. simpl_env in H1. analyze_binds H1. eauto with fzip.
+inversion H0; subst. destruct (IHzip Γ₃' Γ₃'') as [? [? [? [? ?]]]]; auto; subst. exists (a ~ E ++ x). exists x0. split. simpl_env; auto.
+split. rewrite dom_app. simpl. fsetdec.
+intros. auto.
+Case "E". destruct Γ₃'; simpl in *.
+destruct Γ₃''; simpl in *; inversion H1; subst.
+exists nil. exists G1. split. reflexivity. 
+split. simpl; fsetdec.
+intros. simpl_env in H2. analyze_binds H2. eauto with fzip.
+inversion H1; subst. destruct (IHzip Γ₃' Γ₃'') as [? [? [? [? ?]]]]; auto; subst. exists x. exists x0. split. simpl_env; auto. 
+split. fsetdec.
+intros. auto.
+Case "EqEq". destruct Γ₃'; simpl in *.
+destruct Γ₃''; simpl in *; inversion H1; subst.
+exists nil. exists (a ~ Eq t ++ G1). split. reflexivity. 
+split. simpl; fsetdec.
+intros. simpl_env in H2. analyze_binds H2. eauto with fzip.
+inversion H1; subst. destruct (IHzip Γ₃' Γ₃'') as [? [? [? [? ?]]]]; auto; subst. exists (a ~ Eq t ++ x). exists x0. split. simpl_env; auto.
+split. rewrite dom_app. simpl. fsetdec.
+intros. auto.
+Qed.
+
+Lemma zip_app_inv2 : forall Γ₁ Γ₂ Γ₃' Γ₃'',
+  zip Γ₁ Γ₂ (Γ₃' ++ Γ₃'') →
+  exists Γ₂', exists Γ₂'',
+    Γ₂ = Γ₂' ++ Γ₂'' ∧ dom Γ₂' [<=] dom Γ₃'.
+Proof.
+intros Γ₁ Γ₂ Γ₃' Γ₃'' H. dependent induction H.
+Case "nil".
+exists nil; exists nil; split; auto; fsetdec.
+Case "TT". destruct Γ₃'; simpl in *.
+destruct Γ₃''; simpl in *; inversion H1; subst.
+exists nil. exists (x ~ T t ++ G2). split. reflexivity. simpl; fsetdec.
+inversion H1; subst. destruct (IHzip Γ₃' Γ₃'') as [? [? [? ?]]]; auto; subst. exists (x ~ T t ++ x0). exists x1. split. simpl_env; auto. rewrite dom_app. simpl. fsetdec.
+Case "UU". destruct Γ₃'; simpl in *.
+destruct Γ₃''; simpl in *; inversion H0; subst.
+exists nil. exists (a ~ U ++ G2). split. reflexivity. simpl; fsetdec.
+inversion H0; subst. destruct (IHzip Γ₃' Γ₃'') as [? [? [? ?]]]; auto; subst. exists (a ~ U ++ x). exists x0. split. simpl_env; auto. rewrite dom_app. simpl. fsetdec.
+Case "EU". destruct Γ₃'; simpl in *.
+destruct Γ₃''; simpl in *; inversion H0; subst.
+exists nil. exists (a ~ U ++ G2). split. reflexivity. simpl; fsetdec.
+inversion H0; subst. destruct (IHzip Γ₃' Γ₃'') as [? [? [? ?]]]; auto; subst. exists (a ~ U ++ x). exists x0. split. simpl_env; auto. rewrite dom_app. simpl. fsetdec.
+Case "E". destruct Γ₃'; simpl in *.
+destruct Γ₃''; simpl in *; inversion H1; subst.
+exists nil. exists (a ~ E ++ G2). split. reflexivity. simpl; fsetdec.
+inversion H1; subst. destruct (IHzip Γ₃' Γ₃'') as [? [? [? ?]]]; auto; subst. exists (a ~ E ++ x). exists x0. split. simpl_env; auto. rewrite dom_app. simpl. fsetdec.
+Case "EqEq". destruct Γ₃'; simpl in *.
+destruct Γ₃''; simpl in *; inversion H1; subst.
+exists nil. exists (a ~ Eq t ++ G2). split. reflexivity. simpl; fsetdec.
+inversion H1; subst. destruct (IHzip Γ₃' Γ₃'') as [? [? [? ?]]]; auto; subst. exists (a ~ Eq t ++ x). exists x0. split. simpl_env; auto. rewrite dom_app. simpl. fsetdec.
+Qed.
+
+
+
+
+(*
+Lemma zip_assoc : forall Γ₁ Γ₂ Γ₃ Γ₁₂ Γ₂₃ Γ₁₂₃ Γ₁₂₃',
+  zip Γ₁ Γ₂ Γ₁₂ → zip Γ₁₂ Γ₃ Γ₁₂₃ →
+  zip Γ₁ Γ₂₃ Γ₁₂₃' → zip Γ₂ Γ₃ Γ₂₃ →
+  Γ₁₂₃ = Γ₁₂₃'.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁₂ Γ₂₃ Γ₁₂₃ Γ₁₂₃' H H0 H1 H2.
+generalize dependent Γ₃. generalize dependent Γ₂₃.
+generalize dependent Γ₁₂₃. generalize dependent Γ₁₂₃'.
+induction H; intros.
+Case "nil".
+inversion H0; subst; auto. inversion H1; subst.
+auto.
+inversion H2.
+inversion H2; subst. inversion H1; subst.
+  replace G3 with G in * by eauto using zip_unique.
+  f_equal. auto using zip_nil.
+Case "TT".
+inversion H1; subst.
+  inversion H2; subst.
+    inversion H3; subst. f_equal. eauto.
+    inversion H3; subst.
+  clear H1. inversion H3; subst. clear H3. inversion H2; subst. clear H2. f_equal.
+    eapply IHzip; eauto.
+*)
+
+
 (** Major lemmas about [wfterm] *)
 Lemma wfterm_weakening : forall Γ₁ Γ₂ Γ₃ e τ,
   wfterm (Γ₁ ++ Γ₃) e τ →
   wfenv (Γ₂ ++ Γ₃) →
   disjoint Γ₁ Γ₂ →
+  pure Γ₂ →
+  (forall a, a ∈ ftv_env Γ₂ → ⌉(binds a E Γ₃)) →
   wfterm (Γ₁ ++ Γ₂ ++ Γ₃) e τ.
 Proof.
 intros Γ₁ Γ₂ Γ₃ e τ H. dependent induction H; intros; eauto.
 Case "var".
-constructor. auto using wfenv_weakening. analyze_binds H0.
+constructor. eauto with fzip. auto with fzip. analyze_binds H0.
+Case "app".
+destruct (zip_app_inv1 G1 G2 Γ₁ Γ₃ H) as [G1' [G1'' [? ?]]].
+destruct (zip_app_inv2 G1 G2 Γ₁ Γ₃ H) as [G2' [G2'' [? ?]]].
+
 Case "abs". pick fresh x and apply wfterm_abs.
 rewrite_env (([(x, T t1)] ++ Γ₁) ++ Γ₂ ++ Γ₃).
 apply H0; simpl_env; auto.
