@@ -131,23 +131,32 @@ G1 zip G2 = G3
 ----------------------- :: empty
 empty zip empty = empty
 
+    x not in dom G1
+    x not in dom G2
       G1 zip G2 = G
 ------------------------- :: TT
 G1,x:t zip G2,x:t = G,x:t
 
+    a not in dom G1
+    a not in dom G2
       G1 zip G2 = G
 ------------------------- :: UU
 G1,U a zip G2,U a = G,U a
 
+    a not in dom G1
+    a not in dom G2
       G1 zip G2 = G
 ------------------------- :: EU
 G1,E a zip G2,U a = G,E a
 
-     a not in dom G1
+    a not in dom G1
+    a not in dom G2
       G1 zip G2 = G
 ------------------------- :: E
 G1 zip G2,E a = G,E a
 
+    a not in dom G1
+    a not in dom G2
       G1 zip G2 = G
 ------------------------- :: EqEq
 G1,a=t zip G2,a=t = G,a=t

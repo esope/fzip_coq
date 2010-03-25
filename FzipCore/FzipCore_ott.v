@@ -321,20 +321,29 @@ Inductive zip : typing_env -> typing_env -> typing_env -> Prop :=    (* defn zip
      zip  nil   nil   nil 
  | zip_TT : forall (G1:typing_env) (x:termvar) (t:typ) (G2 G:typing_env),
      lc_typ t ->
+      x  `notin` dom  G1  ->
+      x  `notin` dom  G2  ->
      zip G1 G2 G ->
      zip  ( x ~(T  t ) ++  G1 )   ( x ~(T  t ) ++  G2 )   ( x ~(T  t ) ++  G ) 
  | zip_UU : forall (G1:typing_env) (a:typvar) (G2 G:typing_env),
+      a  `notin` dom  G1  ->
+      a  `notin` dom  G2  ->
      zip G1 G2 G ->
      zip  ( a ~U ++  G1 )   ( a ~U ++  G2 )   ( a ~U ++  G ) 
  | zip_EU : forall (G1:typing_env) (a:typvar) (G2 G:typing_env),
+      a  `notin` dom  G1  ->
+      a  `notin` dom  G2  ->
      zip G1 G2 G ->
      zip  ( a ~E ++  G1 )   ( a ~U ++  G2 )   ( a ~E ++  G ) 
  | zip_E : forall (G1 G2:typing_env) (a:typvar) (G:typing_env),
       a  `notin` dom  G1  ->
+      a  `notin` dom  G2  ->
      zip G1 G2 G ->
      zip G1  ( a ~E ++  G2 )   ( a ~E ++  G ) 
  | zip_EqEq : forall (G1:typing_env) (a:typvar) (t:typ) (G2 G:typing_env),
      lc_typ t ->
+      a  `notin` dom  G1  ->
+      a  `notin` dom  G2  ->
      zip G1 G2 G ->
      zip  ( a ~(Eq  t ) ++  G1 )   ( a ~(Eq  t ) ++  G2 )   ( a ~(Eq  t ) ++  G ) .
 
