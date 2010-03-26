@@ -236,3 +236,30 @@ assert (forall n m t2, size_typ t2 <= n →
   auto.
 intros t2 H H0. eauto with lngen.
 Qed.
+
+Lemma binds_decomp : forall (Γ: typing_env) x b,
+  binds x b Γ → exists Γ', exists Γ'', Γ = Γ' ++ x ~ b ++ Γ''.
+Proof.
+intros Γ x b H. induction Γ.
+inversion H.
+destruct a as [x' b']. analyze_binds H.
+exists nil; exists Γ; auto.
+destruct IHΓ as [? [? ?]]; auto. subst.
+exists (x' ~ b' ++ x0); exists x1; simpl_env; auto.
+Qed.
+
+Lemma uniq_app_inv : forall (Γ₁ Γ₂ Γ₁' Γ₂': typing_env) x b,
+  Γ₁ ++ x ~ b ++ Γ₂ = Γ₁' ++ x ~ b ++ Γ₂' →
+  uniq (Γ₁ ++ x ~ b ++ Γ₂) →
+  Γ₁ = Γ₁' ∧ Γ₂ = Γ₂'.
+Proof.
+intro Γ₁. induction Γ₁; intros; destruct Γ₁'; simpl in *.
+split; congruence.
+inversion H; subst. elimtype False. solve_uniq.
+inversion H; subst. elimtype False. solve_uniq.
+inversion H; subst.
+destruct (IHΓ₁ Γ₂ Γ₁' Γ₂' x b H3).
+simpl_env in *. solve_uniq.
+split; congruence.
+Qed.
+

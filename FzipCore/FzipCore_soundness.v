@@ -2696,6 +2696,7 @@ repeat rewrite ftv_env_app. fsetdec.
 repeat rewrite ftv_env_app. fsetdec.
 Qed.
 
+(*
 Lemma wfterm_ftv_env_not_E : forall Γ M τ,
   wfterm Γ M τ →
   forall a, a ∈ ftv_env Γ → not (binds a E Γ).
@@ -2732,7 +2733,7 @@ analyze_binds_uniq H2.
   simpl_env in *. solve_uniq.
 
 ICI
-
+*)
 
 
 Lemma wfterm_T_not_E : forall Γ M τ x τ₁,
@@ -2819,6 +2820,24 @@ eapply H1; eauto.
     contradiction.
 Qed.
 
+Lemma ftv_env_binds : forall Γ a,
+  a ∈ ftv_env Γ → exists x, exists τ,
+    a ∈ ftv_typ τ ∧ (binds x (T τ) Γ ∨ binds x (Eq τ) Γ).
+Proof.
+intros Γ a H. induction Γ; simpl_env in *.
+Case "nil". rewrite ftv_env_nil in H. elimtype False; fsetdec.
+Case "cons". destruct a0; destruct t; rewrite ftv_env_app in H;
+unfold ftv_env at 1 in H; simpl in H.
+SCase "T".
+assert (a ∈ ftv_typ t ∨ a ∈ ftv_env Γ) as [? | ?] by fsetdec; eauto 7.
+destruct IHΓ as [x [τ [? [? | ?]]]]; eauto 6.
+SCase "U". destruct IHΓ as [x [τ [? [? | ?]]]]; eauto 6. fsetdec.
+SCase "E". destruct IHΓ as [x [τ [? [? | ?]]]]; eauto 6. fsetdec.
+SCase "Eq".
+assert (a ∈ ftv_typ t ∨ a ∈ ftv_env Γ) as [? | ?] by fsetdec; eauto 7.
+destruct IHΓ as [x [τ [? [? | ?]]]]; eauto 6.
+Qed.
+
 (** Major lemmas about [wfterm] *)
 Lemma wfterm_weakening : forall Γ₁ Γ₂ Γ₃ e τ,
   wfterm (Γ₁ ++ Γ₃) e τ →
@@ -2828,32 +2847,168 @@ Lemma wfterm_weakening : forall Γ₁ Γ₂ Γ₃ e τ,
   (forall a, a ∈ ftv_env Γ₂ → ⌉(binds a E Γ₃)) →
   wfterm (Γ₁ ++ Γ₂ ++ Γ₃) e τ.
 Proof.
-intros Γ₁ Γ₂ Γ₃ e τ H.
+intros Γ₁ Γ₂ Γ₃ e τ H H0 H1 H2 H3.
+assert (forall a, a ∈ ftv_env (Γ₂ ++ Γ₃) → ⌉binds a E (Γ₂ ++ Γ₃)).
+  intros. rewrite ftv_env_app in H4.
+  assert (a ∈ ftv_env Γ₂ ∨ a ∈ ftv_env Γ₃) as [? | ?] by fsetdec; intro H6; analyze_binds H6.
+    eapply (H2 a); auto.
+    eapply (H3 a); auto.
+    eapply (H2 a); auto.
+    apply ftv_env_binds in H5. destruct H5 as [? [? [? [? | ?]]]].
+      apply wfterm_T_not_E with (x := x) (a := a) (τ₁ := x0) in H; auto.
+      apply wfterm_Eq_not_E with (b := a) (a := x) (τ₁ := x0) in H; auto.
 assert (uniq (Γ₂ ++ Γ₃)) by eauto with lngen.
-assert (lc_env (Γ₂ ++ Γ₃)) by wfenv_lc_env.
- dependent induction H; intros; eauto.
+assert (lc_env (Γ₂ ++ Γ₃)) by eauto using wfenv_lc_env.
+assert (uniq (Γ₁ ++ Γ₃)) by eauto with lngen.
+assert (lc_env (Γ₁ ++ Γ₃)). apply wfenv_lc_env. eapply wfterm_wfenv; eauto.
+generalize dependent Γ₂.
+dependent induction H; intros; eauto.
 Case "var".
-constructor. eauto with fzip. auto with fzip. analyze_binds H0.
+constructor. eauto with fzip. auto with fzip. analyze_binds H1.
 Case "app".
 destruct (zip_app_inv G1 G2 Γ₁ Γ₃ H) as [G1' [G1'' [G2' [G2'' [? [? [? ?]]]]]]];
 subst.
 apply wfterm_app with (G1 := G1' ++ Γ₂ ++ G1'')
                       (G2 := G2' ++ Γ₂ ++ G2'')
                       (t2 := t2).
-apply zip_app_weakening; my_auto.
-apply IHwfterm1; auto.
-
-  
-
-
-
+apply zip_app_weakening; my_auto; eauto with lngen.
+apply IHwfterm1; eauto using zip_uniq1, zip_lc1.
+  eapply wfenv_zip_inv1 with (Γ' := Γ₃); eauto.
+  assert (uniq G1'). assert (uniq (G1' ++ G1'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G1'). assert (dom G1' [<=] dom Γ₁) by eauto with fzip. solve_uniq. 
+  solve_uniq.
+  intros. intro. eapply (H6 a). rewrite ftv_env_app; auto. eauto with fzip.
+  intros. intro. eapply (H6 a). rewrite ftv_env_app in *.
+    rewrite (zip_ftv_env1 G1'') in H11; eauto.
+    analyze_binds H12; eauto with fzip.
+  assert (uniq G1''). assert (uniq (G1' ++ G1'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G1''). assert (dom G1'' [<=] dom Γ₃) by eauto with fzip. assert (uniq (Γ₂ ++ Γ₃)) by eauto with lngen. solve_uniq.
+  solve_uniq.
+  eauto with lngen.
+apply IHwfterm2; eauto using zip_uniq2, zip_lc2.
+  eapply wfenv_zip_inv2 with (Γ' := Γ₃); eauto.
+  assert (uniq G2'). assert (uniq (G2' ++ G2'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G2'). assert (dom G2' [=] dom Γ₁) by eauto with fzip. solve_uniq. 
+  solve_uniq.
+  intros. intro. eapply (H6 a). rewrite ftv_env_app; auto. eauto with fzip.
+  intros. intro. eapply (H6 a). rewrite ftv_env_app in *.
+    rewrite (zip_ftv_env2 _ G2'') in H11 ; eauto.
+    analyze_binds H12; eauto with fzip.
+  assert (uniq G2''). assert (uniq (G2' ++ G2'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G2''). assert (dom G2'' [=] dom Γ₃) by eauto with fzip. assert (uniq (Γ₂ ++ Γ₃)) by eauto with lngen. solve_uniq.
+  solve_uniq.
+  eauto with lngen.
 Case "abs". pick fresh x and apply wfterm_abs.
+eauto with fzip.
 rewrite_env (([(x, T t1)] ++ Γ₁) ++ Γ₂ ++ Γ₃).
-apply H0; simpl_env; auto.
+apply H1; simpl_env; auto. apply lc_env_app; auto. apply lc_env_T.
+  apply wfenv_regular_T with (Γ := [(x, T t1)] ++ Γ₁ ++ Γ₃) (x := x); auto.
+  eapply wfterm_wfenv; eauto.
+Case "pair".
+destruct (zip_app_inv G1 G2 Γ₁ Γ₃ H) as [G1' [G1'' [G2' [G2'' [? [? [? ?]]]]]]];
+subst.
+apply wfterm_pair with (G1 := G1' ++ Γ₂ ++ G1'')
+                      (G2 := G2' ++ Γ₂ ++ G2'').
+apply zip_app_weakening; my_auto; eauto with lngen.
+apply IHwfterm1; eauto using zip_uniq1, zip_lc1.
+  eapply wfenv_zip_inv1 with (Γ' := Γ₃); eauto.
+  assert (uniq G1'). assert (uniq (G1' ++ G1'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G1'). assert (dom G1' [<=] dom Γ₁) by eauto with fzip. solve_uniq. 
+  solve_uniq.
+  intros. intro. eapply (H6 a). rewrite ftv_env_app; auto. eauto with fzip.
+  intros. intro. eapply (H6 a). rewrite ftv_env_app in *.
+    rewrite (zip_ftv_env1 G1'') in H11; eauto.
+    analyze_binds H12; eauto with fzip.
+  assert (uniq G1''). assert (uniq (G1' ++ G1'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G1''). assert (dom G1'' [<=] dom Γ₃) by eauto with fzip. assert (uniq (Γ₂ ++ Γ₃)) by eauto with lngen. solve_uniq.
+  solve_uniq.
+  eauto with lngen.
+apply IHwfterm2; eauto using zip_uniq2, zip_lc2.
+  eapply wfenv_zip_inv2 with (Γ' := Γ₃); eauto.
+  assert (uniq G2'). assert (uniq (G2' ++ G2'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G2'). assert (dom G2' [=] dom Γ₁) by eauto with fzip. solve_uniq. 
+  solve_uniq.
+  intros. intro. eapply (H6 a). rewrite ftv_env_app; auto. eauto with fzip.
+  intros. intro. eapply (H6 a). rewrite ftv_env_app in *.
+    rewrite (zip_ftv_env2 _ G2'') in H11 ; eauto.
+    analyze_binds H12; eauto with fzip.
+  assert (uniq G2''). assert (uniq (G2' ++ G2'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G2''). assert (dom G2'' [=] dom Γ₃) by eauto with fzip. assert (uniq (Γ₂ ++ Γ₃)) by eauto with lngen. solve_uniq.
+  solve_uniq.
+  eauto with lngen.
 Case "inst". constructor. auto using wftyp_weakening. eauto.
 Case "gen". pick fresh a and apply wfterm_gen.
-rewrite_env (([(a, None)] ++ Γ₁) ++ Γ₂ ++ Γ₃).
-apply H0; simpl_env; auto.
+eauto with fzip.
+rewrite_env (([(a, U)] ++ Γ₁) ++ Γ₂ ++ Γ₃).
+apply H1; simpl_env; auto with lngen. 
+Case "exists". pick fresh a and apply wfterm_exists.
+rewrite_env (([(a, E)] ++ Γ₁) ++ Γ₂ ++ Γ₃).
+apply H0; simpl_env; auto with lngen.
+Case "open".
+assert (binds b E (Γ₁ ++ Γ₃)). rewrite <- H1; auto.
+analyze_binds H11.
+SCase "binds b E Γ₁". apply binds_decomp in BindsTac; destruct BindsTac as [? [? ?]].
+subst. simpl_env in *. constructor.
+simpl_env. solve_uniq.
+rewrite_env ((x ++ x0) ++ Γ₂ ++ Γ₃). apply IHwfterm; simpl_env; my_auto.
+eauto with lngen.
+symmetry in H1. apply uniq_app_inv in H1.
+  destruct H1; congruence. solve_uniq.
+SCase "binds b E Γ₃". apply binds_decomp in BindsTac; destruct BindsTac as [? [? ?]].
+subst. simpl_env in *.
+symmetry in H1. rewrite_env ((Γ₁ ++ x) ++ [(b, E)] ++ x0) in H1.
+  apply uniq_app_inv in H1.
+  destruct H1; subst; simpl_env in *.
+rewrite_env ((Γ₁ ++ Γ₂ ++ x) ++ [(b, E)] ++ G1). constructor; simpl_env.
+solve_uniq.
+apply IHwfterm; simpl_env; auto.
+solve_uniq.
+apply lc_env_app. eauto with lngen. eapply lc_env_app; eauto with lngen.
+assert (b ∉ ftv_env (Γ₂ ++ x)).
+rewrite ftv_env_app. intro. eapply (H6 b); auto. repeat rewrite ftv_env_app; fsetdec.
+rewrite_env ((Γ₂ ++ x) ++ G1). replace (Γ₂ ++ x) with
+  (env_map (tsubst_typ (typ_forall (typ_var_b 0)) b) (Γ₂ ++ x)).
+apply wfenv_tsubst. apply wfenv_EU. simpl_env. auto.
+eapply wftyp_forall with (L := dom G1). intros. unfold open_typ_wrt_typ; simpl.
+simpl_env. constructor; auto. constructor; auto.
+apply wfenv_strip with (Γ' := Γ₂ ++ x ++ [(b, E)]); simpl_env; auto.
+apply tsubst_env_fresh_eq; auto.
+intros. intro. eapply (H5 a); auto.
+intros. intro. eapply (H6 a).
+  repeat rewrite ftv_env_app in *. fsetdec.
+  analyze_binds H11.
+solve_uniq.
+apply lc_env_app. eauto with lngen. apply lc_env_app; eauto with lngen.
+simpl_env. solve_uniq.
+Case "nu". pick fresh a and apply wfterm_nu.
+rewrite_env (([(a, E)] ++ Γ₁) ++ Γ₂ ++ Γ₃).
+apply H0; simpl_env; auto with lngen.
+Case "sigma".
+assert (binds b E (Γ₁ ++ Γ₃)). rewrite <- H2; auto.
+analyze_binds H12.
+SCase "binds b E Γ₁". apply binds_decomp in BindsTac; destruct BindsTac as [? [? ?]].
+subst. simpl_env in *. apply wfterm_sigma with (L := L ∪ dom x ∪ dom x0 ∪ dom Γ₂ ∪ dom Γ₃); intros.
+simpl_env. solve_uniq.
+rewrite_env ((a ~ Eq t' ++ x ++ x0) ++ Γ₂ ++ Γ₃). apply H1; simpl_env; auto.
+solve_uniq.
+apply lc_env_app. apply lc_env_Eq. apply wfenv_regular_Eq with (Γ := a ~ Eq t' ++ G2 ++ G1) (x := a); auto.
+  eapply wfterm_wfenv; eauto.
+  apply lc_env_app; eauto with lngen.
+symmetry in H2. apply uniq_app_inv in H2.
+  destruct H2; congruence. solve_uniq.
+solve_uniq.
+SCase "binds b E Γ₃". ICI
+
+Case "coerce". apply wfterm_coerce with (t' := t').
+auto using wftypeq_weakening. eauto.
 Qed.
 
 Lemma wfterm_subst : forall Γ₁ Γ₂ x τ₁ τ₂ e₁ e₂,
