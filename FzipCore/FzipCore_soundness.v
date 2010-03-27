@@ -3041,18 +3041,25 @@ Qed.
 
 Lemma wfterm_subst : forall Γ₁ Γ₂ x τ₁ τ₂ e₁ e₂,
   wfterm (Γ₁ ++ x ~ T τ₂ ++ Γ₂) e₁ τ₁ →
-  wfterm Γ₂ e₂ τ₂ →
+  wfterm Γ₂ e₂ τ₂ → pure Γ₂ →
   wfterm (Γ₁ ++ Γ₂) (subst_term e₂ x e₁) τ₁.
 Proof with eauto.
-intros Γ₁ Γ₂ x τ₁ τ₂ e₁ e₂ H. dependent induction H; intro; simpl...
+intros Γ₁ Γ₂ x τ₁ τ₂ e₁ e₂ H. dependent induction H; intros; simpl...
 Case "var".
   destruct (x == x0); subst.
   SCase "x = x0".
-    analyze_binds_uniq H0; apply wfterm_weakening with (Γ₁ := nil); auto.
+    analyze_binds_uniq H1. eauto with lngen.
+    apply wfterm_weakening with (Γ₁ := nil); auto.
     replace t with τ₂ by congruence; auto.
     eapply wfenv_subst; eauto.
-  SCase "x <> x0".
-    analyze_binds_uniq H0...
+    eauto with fzip.
+  SCase "x <> x0". analyze_binds_uniq H1.
+  eauto with lngen.
+  SSCase "binds x in Γ₁".
+    constructor; auto. eauto with fzip. eapply wfenv_subst; eauto.
+  SSCase "binds x in Γ₂".
+    constructor; auto. eauto with fzip. eapply wfenv_subst; eauto.
+Case "app".
 Case "abs".
   pick fresh z and apply wfterm_abs.
   rewrite_env ((z ~ T t1 ++ Γ₁) ++ Γ₂).
