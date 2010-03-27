@@ -3005,8 +3005,36 @@ apply lc_env_app. apply lc_env_Eq. apply wfenv_regular_Eq with (Γ := a ~ Eq t' 
 symmetry in H2. apply uniq_app_inv in H2.
   destruct H2; congruence. solve_uniq.
 solve_uniq.
-SCase "binds b E Γ₃". ICI
-
+SCase "binds b E Γ₃". apply binds_decomp in BindsTac; destruct BindsTac as [? [? ?]].
+subst. simpl_env in *.
+symmetry in H2. rewrite_env ((Γ₁ ++ x) ++ [(b, E)] ++ x0) in H2.
+  apply uniq_app_inv in H2.
+  destruct H2; subst; simpl_env in *.
+rewrite_env ((Γ₁ ++ Γ₂ ++ x) ++ [(b, E)] ++ G1).
+apply wfterm_sigma with (L := L ∪ dom x ∪ dom G1 ∪ dom Γ₂ ∪ dom Γ₁); intros; simpl_env.
+solve_uniq.
+rewrite_env (([(a, Eq t')] ++ Γ₁) ++ Γ₂ ++ x ++ G1).
+apply H1; simpl_env; auto.
+solve_uniq.
+apply lc_env_app.
+assert (lc_typ t'). apply wfenv_regular_Eq with (Γ := [(a, Eq t')] ++ Γ₁ ++ x ++ G1) (x := a); auto. eapply wfterm_wfenv; eauto.
+eauto with lngen. eapply lc_env_app. eauto with lngen. eapply lc_env_app; eauto with lngen.
+assert (b ∉ ftv_env (Γ₂ ++ x)).
+rewrite ftv_env_app. intro. eapply (H9 b); auto. repeat rewrite ftv_env_app; fsetdec.
+rewrite_env ((Γ₂ ++ x) ++ G1). replace (Γ₂ ++ x) with
+  (env_map (tsubst_typ (typ_forall (typ_var_b 0)) b) (Γ₂ ++ x)).
+apply wfenv_tsubst. apply wfenv_EU. simpl_env. auto.
+eapply wftyp_forall with (L := dom G1). intros. unfold open_typ_wrt_typ; simpl.
+simpl_env. constructor; auto. constructor; auto.
+apply wfenv_strip with (Γ' := Γ₂ ++ x ++ [(b, E)]); simpl_env; auto.
+apply tsubst_env_fresh_eq; auto.
+intros. intro. eapply (H6 a0); auto.
+intros. intro. eapply (H9 a0).
+  repeat rewrite ftv_env_app in *. fsetdec.
+  analyze_binds H13.
+solve_uniq.
+apply lc_env_app. eauto with lngen. apply lc_env_app; eauto with lngen.
+simpl_env. solve_uniq.
 Case "coerce". apply wfterm_coerce with (t' := t').
 auto using wftypeq_weakening. eauto.
 Qed.
