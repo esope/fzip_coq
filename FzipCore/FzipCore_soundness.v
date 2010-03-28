@@ -2426,8 +2426,8 @@ Lemma wfterm_subst : forall Γ₁ Γ₂ x τ₁ τ₂ e₁ e₂,
   wfterm (Γ₁ ++ x ~ T τ₂ ++ Γ₂) e₁ τ₁ →
   wfterm Γ₂ e₂ τ₂ → pure Γ₂ →
   wfterm (Γ₁ ++ Γ₂) (subst_term e₂ x e₁) τ₁.
-Proof with eauto.
-intros Γ₁ Γ₂ x τ₁ τ₂ e₁ e₂ H. dependent induction H; intros; simpl...
+Proof.
+intros Γ₁ Γ₂ x τ₁ τ₂ e₁ e₂ H. dependent induction H; intros; simpl; eauto.
 Case "var".
   destruct (x == x0); subst.
   SCase "x = x0".
@@ -2436,13 +2436,26 @@ Case "var".
     replace t with τ₂ by congruence; auto.
     eapply wfenv_subst; eauto.
     eauto with fzip.
-  SCase "x <> x0". analyze_binds_uniq H1.
-  eauto with lngen.
-  SSCase "binds x in Γ₁".
-    constructor; auto. eauto with fzip. eapply wfenv_subst; eauto.
-  SSCase "binds x in Γ₂".
-    constructor; auto. eauto with fzip. eapply wfenv_subst; eauto.
+  SCase "x <> x0".
+  analyze_binds_uniq H1. eauto with lngen.
+  constructor; eauto using pure_subst, wfenv_subst.
+  constructor; eauto using pure_subst, wfenv_subst.
 Case "app".
+  destruct (zip_app_inv G1 G2 Γ₁ (x ~ T τ₂ ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; subst; auto.
+  inversion H7; subst.
+  apply wfterm_app with (G1 := x0 ++ G1) (G2 := x2 ++ G2) (t2 := t2).
+  apply zip_app; auto.
+  assert (uniq (x0 ++ [(x, T τ₂)] ++ G1)) by eauto with lngen. solve_uniq.
+  assert (uniq (x2 ++ [(x, T τ₂)] ++ G2)) by eauto with lngen. solve_uniq.
+  assert (uniq (Γ₁ ++ [(x, T τ₂)] ++ Γ₂)) by eauto with lngen. solve_uniq.
+  eapply IHwfterm1. eauto.
+    rewrite (zip_pure_inv1 G1 G2 Γ₂); auto. eapply pure_zip_inv1; eauto.
+  eapply IHwfterm2. eauto.
+    rewrite (zip_pure_inv2 G1 G2 Γ₂); auto. eapply pure_zip_inv2; eauto.
+
+  ICI
+
+
 Case "abs".
   pick fresh z and apply wfterm_abs.
   rewrite_env ((z ~ T t1 ++ Γ₁) ++ Γ₂).

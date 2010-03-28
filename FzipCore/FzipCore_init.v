@@ -42,6 +42,21 @@ Definition env_map {A : Type} (f : typ → A) (env : typing_env) :=
   map (tag_map f) env.
 Hint Unfold env_map.
 
+Lemma binds_E_tsubst_inv : forall a Γ b τ,
+  binds a E (env_map (tsubst_typ τ b) Γ) → binds a E Γ.
+Proof.
+intros a Γ b τ H. induction Γ; simpl in *; simpl_env in *; auto.
+destruct a0; destruct t; analyze_binds H.
+Qed.
+
+Lemma binds_U_tsubst_inv : forall a Γ b τ,
+  binds a U (env_map (tsubst_typ τ b) Γ) → binds a U Γ.
+Proof.
+intros a Γ b τ H. induction Γ; simpl in *; simpl_env in *; auto.
+destruct a0; destruct t; analyze_binds H.
+Qed.
+Hint Resolve binds_E_tsubst_inv binds_U_tsubst_inv: lngen.
+
 Definition binding_fold {A B : Type} (f : B → A → B)  (acc : B) (b : atom * @tag A) :=
   match b with
     | (_, U) => acc

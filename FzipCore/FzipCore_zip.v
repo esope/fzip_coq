@@ -448,7 +448,25 @@ destruct H4; destruct H3; subst.
 apply zip_app; my_auto.
 Qed.
 
-(*
+Lemma zip_subst_eq : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ,
+  zip (Γ₁ ++ a ~ Eq τ ++ Γ₁') (Γ₂ ++ a ~ Eq τ ++ Γ₂') (Γ₃ ++ a ~ Eq τ ++ Γ₃') →
+  zip (env_map (tsubst_typ τ a) Γ₁ ++ Γ₁')
+      (env_map (tsubst_typ τ a) Γ₂ ++ Γ₂')
+      (env_map (tsubst_typ τ a) Γ₃ ++ Γ₃').
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ H.
+assert (uniq (Γ₁ ++ a ~ Eq τ ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ a ~ Eq τ ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ a ~ Eq τ ++ Γ₃')) by eauto with lngen.
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+apply uniq_app_inv in H4; my_auto.
+apply uniq_app_inv in H3; my_auto.
+destruct H4; destruct H3; subst.
+apply zip_app; auto using zip_stable_tsubst;
+  unfold env_map; solve_uniq.
+Qed.
+
 Lemma zip_tsubst : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ,
   lc_typ τ →
   zip (Γ₁ ++ a ~ U ++ Γ₁') (Γ₂ ++ a ~ U ++ Γ₂') (Γ₃ ++ a ~ U ++ Γ₃') →
@@ -457,14 +475,83 @@ Lemma zip_tsubst : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ,
       (env_map (tsubst_typ τ a) Γ₃ ++ Γ₃').
 Proof.
 intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ Hlc H.
-assert (uniq (Γ₁ ++ [(a, U)] ++ Γ₁')) by eauto with lngen.
-assert (uniq (Γ₂ ++ [(a, U)] ++ Γ₂')) by eauto with lngen.
-assert (uniq (Γ₃ ++ [(a, U)] ++ Γ₃')) by eauto with lngen.
-apply zip_app_inv in H. decompose record H; clear H.
-inversion H7; subst.
-apply uniq_app_inv in H4; my_auto.
-apply uniq_app_inv in H3; my_auto.
-destruct H4; destruct H3; subst.
-apply zip_app; my_auto.
+auto using zip_subst_eq, zip_instantiate.
 Qed.
-*)
+
+Lemma zip_app_T_inv : forall Γ₁ Γ₂ Γ₃' x τ Γ₃'',
+  zip Γ₁ Γ₂ (Γ₃' ++ x ~ T τ ++ Γ₃'') →
+  exists Γ₁', exists Γ₁'', exists Γ₂', exists Γ₂'',
+    Γ₁ = Γ₁' ++ x ~ T τ ++ Γ₁'' ∧ Γ₂ = Γ₂' ++ x ~ T τ ++ Γ₂''.
+Proof.
+intros Γ₁ Γ₂ Γ₃' x τ Γ₃'' H.
+dependent induction H.
+Case "nil". destruct Γ₃'; inversion H.
+Case "T". destruct Γ₃'; inversion H3; subst.
+exists nil; exists G1; exists nil; exists G2; split; auto.
+destruct (IHzip Γ₃' x0 τ Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (x ~ T t ++ x1); exists x2; exists (x ~ T t ++ x3); exists x4; split; auto.
+Case "U". destruct Γ₃'; inversion H2; subst.
+destruct (IHzip Γ₃' x τ Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (a ~ U ++ x0); exists x1; exists (a ~ U ++ x2); exists x3; split; auto.
+Case "EU". destruct Γ₃'; inversion H2; subst.
+destruct (IHzip Γ₃' x τ Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (a ~ E ++ x0); exists x1; exists (a ~ U ++ x2); exists x3; split; auto.
+Case "E". destruct Γ₃'; inversion H2; subst.
+destruct (IHzip Γ₃' x τ Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists x0; exists x1; exists (a ~ E ++ x2); exists x3; split; auto.
+Case "Eq". destruct Γ₃'; inversion H3; subst.
+destruct (IHzip Γ₃' x τ Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (a ~ Eq t ++ x0); exists x1; exists (a ~ Eq t ++ x2); exists x3; split; auto.
+Qed.
+
+Lemma zip_app_Eq_inv : forall Γ₁ Γ₂ Γ₃' a τ Γ₃'',
+  zip Γ₁ Γ₂ (Γ₃' ++ a ~ Eq τ ++ Γ₃'') →
+  exists Γ₁', exists Γ₁'', exists Γ₂', exists Γ₂'',
+    Γ₁ = Γ₁' ++ a ~ Eq τ ++ Γ₁'' ∧ Γ₂ = Γ₂' ++ a ~ Eq τ ++ Γ₂''.
+Proof.
+intros Γ₁ Γ₂ Γ₃' a τ Γ₃'' H.
+dependent induction H.
+Case "nil". destruct Γ₃'; inversion H.
+Case "T". destruct Γ₃'; inversion H3; subst.
+destruct (IHzip Γ₃' a τ Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (x ~ T t ++ x0); exists x1; exists (x ~ T t ++ x2); exists x3; split; auto.
+Case "U". destruct Γ₃'; inversion H2; subst.
+destruct (IHzip Γ₃' a0 τ Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (a ~ U ++ x); exists x0; exists (a ~ U ++ x1); exists x2; split; auto.
+Case "EU". destruct Γ₃'; inversion H2; subst.
+destruct (IHzip Γ₃' a0 τ Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (a ~ E ++ x); exists x0; exists (a ~ U ++ x1); exists x2; split; auto.
+Case "E". destruct Γ₃'; inversion H2; subst.
+destruct (IHzip Γ₃' a0 τ Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists x; exists x0; exists (a ~ E ++ x1); exists x2; split; auto.
+Case "Eq". destruct Γ₃'; inversion H3; subst.
+exists nil; exists G1; exists nil; exists G2; split; auto.
+destruct (IHzip Γ₃' a0 τ Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (a ~ Eq t ++ x); exists x0; exists (a ~ Eq t ++ x1); exists x2; split; auto.
+Qed.
+
+Lemma zip_app_U_inv : forall Γ₁ Γ₂ Γ₃' a Γ₃'',
+  zip Γ₁ Γ₂ (Γ₃' ++ a ~ U ++ Γ₃'') →
+  exists Γ₁', exists Γ₁'', exists Γ₂', exists Γ₂'',
+    Γ₁ = Γ₁' ++ a ~ U ++ Γ₁'' ∧ Γ₂ = Γ₂' ++ a ~ U ++ Γ₂''.
+Proof.
+intros Γ₁ Γ₂ Γ₃' a Γ₃'' H.
+dependent induction H.
+Case "nil". destruct Γ₃'; inversion H.
+Case "T". destruct Γ₃'; inversion H3; subst.
+destruct (IHzip Γ₃' a Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (x ~ T t ++ x0); exists x1; exists (x ~ T t ++ x2); exists x3; split; auto.
+Case "U". destruct Γ₃'; inversion H2; subst.
+exists nil; exists G1; exists nil; exists G2; auto.
+destruct (IHzip Γ₃' a0 Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (a ~ U ++ x); exists x0; exists (a ~ U ++ x1); exists x2; split; auto.
+Case "EU". destruct Γ₃'; inversion H2; subst.
+destruct (IHzip Γ₃' a0 Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (a ~ E ++ x); exists x0; exists (a ~ U ++ x1); exists x2; split; auto.
+Case "E". destruct Γ₃'; inversion H2; subst.
+destruct (IHzip Γ₃' a0 Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists x; exists x0; exists (a ~ E ++ x1); exists x2; split; auto.
+Case "Eq". destruct Γ₃'; inversion H3; subst.
+destruct (IHzip Γ₃' a0 Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
+subst. exists (a ~ Eq t ++ x); exists x0; exists (a ~ Eq t ++ x1); exists x2; split; auto.
+Qed.

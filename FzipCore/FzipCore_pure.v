@@ -87,7 +87,6 @@ constructor. destruct H0; eauto. solve_uniq. solve_uniq.
   apply IHΓ. eauto with fzip. eauto with lngen. solve_uniq.
 Qed.
 
-
 Lemma zip_app_weakening : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ,
   zip (Γ₁ ++ Γ₁') (Γ₂ ++ Γ₂') (Γ₃ ++ Γ₃') →
   zip Γ₁ Γ₂ Γ₃ →
@@ -111,4 +110,63 @@ assert (dom Γ₂' [=] dom Γ₃') by eauto with fzip.
   assert (disjoint Γ₂ Γ) by solve_uniq.
   assert (disjoint Γ₂' Γ) by solve_uniq.
   solve_uniq.
+Qed.
+
+Lemma pure_subst : forall Γ₁ Γ₂ x (τ: typ),
+  pure (Γ₁ ++ x ~ T τ ++ Γ₂) →
+  pure (Γ₁ ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ x τ H.
+intros a H0. eapply (H a). analyze_binds H0.
+Qed.
+
+Lemma pure_instantiate : forall Γ₁ Γ₂ a τ,
+  lc_typ τ →
+  pure (Γ₁ ++ a ~ U ++ Γ₂) →
+  pure (Γ₁ ++ a ~ Eq τ ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ a τ Hlc H.
+intros a0 H0. eapply (H a0). analyze_binds H0.
+Qed.
+
+Lemma pure_subst_eq : forall Γ₁ Γ₂ a τ,
+  pure (Γ₁ ++ a ~ Eq τ ++ Γ₂) →
+  pure (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ a τ H.
+unfold env_map.
+intros a0 H0.
+replace (@E typ) with (tag_map (tsubst_typ τ a) E) in H0 by reflexivity.
+eapply (H a0). analyze_binds H0; eauto with lngen.
+Qed.
+
+Lemma pure_tsubst : forall Γ₁ Γ₂ a τ,
+  lc_typ τ →
+  pure (Γ₁ ++ a ~ U ++ Γ₂) →
+  pure (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ a τ H H0.
+auto using pure_instantiate, pure_subst_eq.
+Qed.
+
+Lemma zip_pure_inv1 : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ → pure Γ₃ → Γ₁ = Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0. induction H; auto.
+Case "T". rewrite IHzip; eauto with fzip; subst; auto.
+Case "U". rewrite IHzip; eauto with fzip; subst; auto.
+Case "E". elimtype False. eapply (H0 a). auto.
+Case "EU". elimtype False. eapply (H0 a). auto.
+Case "Eq". rewrite IHzip; eauto with fzip; subst; auto.
+Qed.
+
+Lemma zip_pure_inv2 : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ → pure Γ₃ → Γ₂ = Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0. induction H; auto.
+Case "T". rewrite IHzip; eauto with fzip; subst; auto.
+Case "U". rewrite IHzip; eauto with fzip; subst; auto.
+Case "E". elimtype False. eapply (H0 a). auto.
+Case "EU". elimtype False. eapply (H0 a). auto.
+Case "Eq". rewrite IHzip; eauto with fzip; subst; auto.
 Qed.
