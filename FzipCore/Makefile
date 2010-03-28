@@ -49,6 +49,8 @@ LNGEN_FILES = \
 
 FILES = \
 	FzipCore_init \
+	FzipCore_zip \
+	FzipCore_pure \
 	FzipCore_soundness \
 #	FzipCore_dec \
 #	FzipCore_sim \

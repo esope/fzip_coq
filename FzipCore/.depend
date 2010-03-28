@@ -1,4 +1,6 @@
 FzipCore_inf.vo: FzipCore_inf.v ../metatheory/Metatheory.vo ../metatheory/LibLNgen.vo FzipCore_ott.vo
 FzipCore_ott.vo: FzipCore_ott.v ../metatheory/Metatheory.vo
 FzipCore_init.vo: FzipCore_init.v FzipCore_inf.vo
-FzipCore_soundness.vo: FzipCore_soundness.v FzipCore_init.vo
+FzipCore_zip.vo: FzipCore_zip.v FzipCore_init.vo
+FzipCore_pure.vo: FzipCore_pure.v FzipCore_init.vo FzipCore_zip.vo
+FzipCore_soundness.vo: FzipCore_soundness.v FzipCore_init.vo FzipCore_zip.vo FzipCore_pure.vo

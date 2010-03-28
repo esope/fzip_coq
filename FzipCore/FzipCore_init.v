@@ -100,6 +100,25 @@ assert (a ∉ ftv_typ t0). unfold ftv_env in H; simpl in H; auto.
 simpl; autorewrite with lngen; auto.
 Qed.
 
+
+Lemma ftv_env_binds : forall Γ a,
+  a ∈ ftv_env Γ → exists x, exists τ,
+    a ∈ ftv_typ τ ∧ (binds x (T τ) Γ ∨ binds x (Eq τ) Γ).
+Proof.
+intros Γ a H. induction Γ; simpl_env in *.
+Case "nil". rewrite ftv_env_nil in H. elimtype False; fsetdec.
+Case "cons". destruct a0; destruct t; rewrite ftv_env_app in H;
+unfold ftv_env at 1 in H; simpl in H.
+SCase "T".
+assert (a ∈ ftv_typ t ∨ a ∈ ftv_env Γ) as [? | ?] by fsetdec; eauto 7.
+destruct IHΓ as [x [τ [? [? | ?]]]]; eauto 6.
+SCase "U". destruct IHΓ as [x [τ [? [? | ?]]]]; eauto 6. fsetdec.
+SCase "E". destruct IHΓ as [x [τ [? [? | ?]]]]; eauto 6. fsetdec.
+SCase "Eq".
+assert (a ∈ ftv_typ t ∨ a ∈ ftv_env Γ) as [? | ?] by fsetdec; eauto 7.
+destruct IHΓ as [x [τ [? [? | ?]]]]; eauto 6.
+Qed.
+
 Definition lc_env Γ :=
   (forall x τ, binds x (T τ) Γ → lc_typ τ) ∧
   (forall a τ, binds a (Eq τ) Γ → lc_typ τ).
