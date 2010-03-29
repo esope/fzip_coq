@@ -2071,6 +2071,28 @@ intros Γ' Γ'' H0 H1 Γ₁' Γ₂' H2.
 edestruct (H (Γ'' ++ Γ')) as [_ ?]; eauto.
 Qed.
 
+Lemma wftyp_zip_inv1 : forall Γ' Γ'' τ, wftyp (Γ'' ++ Γ') τ →
+  (forall a, a ∈ ftv_env (Γ'' ++ Γ') ∪ ftv_typ τ →
+    not (binds a E (Γ'' ++ Γ'))) →
+  forall Γ₁' Γ₂', zip Γ₁' Γ₂' Γ' →
+    wftyp (Γ'' ++ Γ₁') τ.
+Proof.
+edestruct wfenv_wftyp_zip_inv_aux as [_ ?].
+intros Γ' Γ'' τ H0 H1 Γ₁' Γ₂' H2.
+edestruct (H (Γ'' ++ Γ')) as [? _]; eauto.
+Qed.
+
+Lemma wftyp_zip_inv2 : forall Γ' Γ'' τ, wftyp (Γ'' ++ Γ') τ →
+  (forall a, a ∈ ftv_env (Γ'' ++ Γ') ∪ ftv_typ τ →
+    not (binds a E (Γ'' ++ Γ'))) →
+  forall Γ₁' Γ₂', zip Γ₁' Γ₂' Γ' →
+    wftyp (Γ'' ++ Γ₂') τ.
+Proof.
+edestruct wfenv_wftyp_zip_inv_aux as [_ ?].
+intros Γ' Γ'' τ H0 H1 Γ₁' Γ₂' H2.
+edestruct (H (Γ'' ++ Γ')) as [_ ?]; eauto.
+Qed.
+
 (*
 Lemma zip_assoc : forall Γ₁ Γ₂ Γ₃ Γ₁₂ Γ₂₃ Γ₁₂₃ Γ₁₂₃',
   zip Γ₁ Γ₂ Γ₁₂ → zip Γ₁₂ Γ₃ Γ₁₂₃ →
@@ -2514,9 +2536,238 @@ Case "sigma".
   elimtype False. eapply (H4 b). auto.
 Qed.
 
-Lemma wfterm_tsubst : forall Γ₁ Γ₂ a τ₁ e₁ τ₂,
-  wfterm (Γ₁ ++ a ~ None ++ Γ₂) e₁ τ₁ →
+Lemma wfterm_instantiate : forall Γ₁ Γ₂ a τ₁ e₁ τ₂,
+  wfterm (Γ₁ ++ a ~ U ++ Γ₂) e₁ τ₁ →
   wftyp Γ₂ τ₂ →
+  (forall a, a ∈ ftv_typ τ₂ → not (binds a E Γ₂)) →
+  wfterm (Γ₁ ++ a ~ Eq τ₂ ++ Γ₂) e₁ τ₁.
+Proof.
+intros Γ₁ Γ₂ a τ₁ e₁ τ₂ H. dependent induction H; intros; eauto.
+Case "var".
+constructor.
+apply pure_instantiate; eauto with lngen.
+auto using wfenv_instantiate.
+analyze_binds H1.
+Case "app".
+destruct (zip_app_inv G1 G2 Γ₁ (a ~ U ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; auto; subst.
+inversion H7; subst.
+apply wfterm_app with (G1 := x ++ a ~ Eq τ₂ ++ G1) (G2 := x1 ++ a ~ Eq τ₂ ++ G2) (t2 := t2).
+apply zip_instantiate; eauto with lngen.
+apply IHwfterm1; auto.
+  rewrite_env (nil ++ G1). eapply wftyp_zip_inv1; eauto.
+  intros a0 H4 H5. simpl_env in *.
+    assert (a0 ∈ ftv_env Γ₂ ∨ a0 ∈ ftv_typ τ₂) as [? | ?] by fsetdec.
+      apply ftv_env_binds in H9. destruct H9 as [? [? [? [? | ?]]]].
+      assert (wfterm (Γ₁ ++ [(a, U)] ++ Γ₂) (term_app e1 e2) t1) as HEx1 by eauto.
+      assert (binds x0 (T x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by eauto.
+      eapply (wfterm_T_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_app e1 e2) t1 x0 x2 _ _ a0); auto.
+      Existential 1 := HEx1. Existential 1 := HEx2.
+      assert (wfterm (Γ₁ ++ [(a, U)] ++ Γ₂) (term_app e1 e2) t1) as HEx1 by eauto.
+      assert (binds x0 (Eq x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by auto.
+      eapply (wfterm_Eq_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_app e1 e2) t1 x0 x2 _ _ a0); auto.
+      Existential 1 := HEx1. Existential 1 := HEx2.
+      eapply (H3 a0); auto.
+  intros a0 H4 H5. eapply (H3 a0); eauto with fzip.
+apply IHwfterm2; auto.
+  rewrite_env (nil ++ G2). eapply wftyp_zip_inv2; eauto.
+  intros a0 H4 H5. simpl_env in *.
+    assert (a0 ∈ ftv_env Γ₂ ∨ a0 ∈ ftv_typ τ₂) as [? | ?] by fsetdec.
+      apply ftv_env_binds in H9. destruct H9 as [? [? [? [? | ?]]]].
+      assert (wfterm (Γ₁ ++ [(a, U)] ++ Γ₂) (term_app e1 e2) t1) as HEx1 by eauto.
+      assert (binds x0 (T x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by eauto.
+      eapply (wfterm_T_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_app e1 e2) t1 x0 x2 _ _ a0); auto.
+      Existential 1 := HEx1. Existential 1 := HEx2.
+      assert (wfterm (Γ₁ ++ [(a, U)] ++ Γ₂) (term_app e1 e2) t1) as HEx1 by eauto.
+      assert (binds x0 (Eq x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by auto.
+      eapply (wfterm_Eq_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_app e1 e2) t1 x0 x2 _ _ a0); auto.
+      Existential 1 := HEx1. Existential 1 := HEx2.
+      eapply (H3 a0); auto.
+  intros a0 H4 H5. eapply (H3 a0); eauto with fzip.
+Case "abs".
+  pick fresh z and apply wfterm_abs.
+  apply pure_instantiate; eauto with lngen.
+  rewrite_env ((z ~ T t1 ++ Γ₁) ++ a ~ Eq τ₂ ++ Γ₂). auto.
+Case "pair".
+destruct (zip_app_inv G1 G2 Γ₁ (a ~ U ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; auto; subst.
+inversion H7; subst.
+apply wfterm_pair with (G1 := x ++ a ~ Eq τ₂ ++ G1) (G2 := x1 ++ a ~ Eq τ₂ ++ G2).
+apply zip_instantiate; eauto with lngen.
+eapply IHwfterm1; auto.
+  rewrite_env (nil ++ G1). eapply wftyp_zip_inv1; eauto.
+  intros a0 H4 H5. simpl_env in *.
+    assert (a0 ∈ ftv_env Γ₂ ∨ a0 ∈ ftv_typ τ₂) as [? | ?] by fsetdec.
+      apply ftv_env_binds in H9. destruct H9 as [? [? [? [? | ?]]]].
+      assert (wfterm (Γ₁ ++ [(a, U)] ++ Γ₂) (term_pair e1 e2) (typ_prod t1 t2)) as HEx1 by eauto.
+      assert (binds x0 (T x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by auto.
+      eapply (wfterm_T_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_pair e1 e2) (typ_prod t1 t2) x0 x2 _ _ a0); auto.
+      Existential 1 := HEx1. Existential 1 := HEx2.
+      assert (wfterm (Γ₁ ++ [(a, U)] ++ Γ₂) (term_pair e1 e2) (typ_prod t1 t2)) as HEx1 by eauto.
+      assert (binds x0 (Eq x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by auto.
+      eapply (wfterm_Eq_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_pair e1 e2) (typ_prod t1 t2) x0 x2 _ _ a0); auto.
+      Existential 1 := HEx1. Existential 1 := HEx2.
+      eapply (H3 a0); auto.
+  intros a0 H4 H5. eapply (H3 a0); eauto with fzip.
+eapply IHwfterm2; auto.
+  rewrite_env (nil ++ G2). eapply wftyp_zip_inv2; eauto.
+  intros a0 H4 H5. simpl_env in *.
+    assert (a0 ∈ ftv_env Γ₂ ∨ a0 ∈ ftv_typ τ₂) as [? | ?] by fsetdec.
+      apply ftv_env_binds in H9. destruct H9 as [? [? [? [? | ?]]]].
+      assert (wfterm (Γ₁ ++ [(a, U)] ++ Γ₂) (term_pair e1 e2) (typ_prod t1 t2)) as HEx1 by eauto.
+      assert (binds x0 (T x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by auto.
+      eapply (wfterm_T_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_pair e1 e2) (typ_prod t1 t2) x0 x2 _ _ a0); auto.
+      Existential 1 := HEx1. Existential 1 := HEx2.
+      assert (wfterm (Γ₁ ++ [(a, U)] ++ Γ₂) (term_pair e1 e2) (typ_prod t1 t2)) as HEx1 by eauto.
+      assert (binds x0 (Eq x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by auto.
+      eapply (wfterm_Eq_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_pair e1 e2) (typ_prod t1 t2) x0 x2 _ _ a0); auto.
+      Existential 1 := HEx1. Existential 1 := HEx2.
+      eapply (H3 a0); auto.
+  intros a0 H4 H5. eapply (H3 a0); eauto with fzip.
+Case "inst".
+  constructor; auto using wftyp_instantiate.
+Case "gen".
+  pick fresh b and apply wfterm_gen.
+  apply pure_instantiate; eauto with lngen.
+  rewrite_env ((b ~ U ++ Γ₁) ++ a ~ Eq τ₂ ++ Γ₂). auto.
+Case "exists".
+  pick fresh b and apply wfterm_exists.
+  rewrite_env ((b ~ E ++ Γ₁) ++ a ~ Eq τ₂ ++ Γ₂). auto.
+Case "open".
+  assert (binds b E (Γ₁ ++ (a, U) :: Γ₂)). rewrite <- H1; auto.
+  assert (uniq (G2 ++ G1)) by eauto with lngen.
+  analyze_binds H4.
+  SCase "b binds in Γ₁". apply binds_decomp in BindsTac. destruct BindsTac as [? [? ?]]; subst.
+  simpl_env in *.
+  apply uniq_app_inv in H1. destruct H1; subst.
+  constructor.
+    solve_uniq.
+    rewrite_env ((x ++ x0) ++ [(a, Eq τ₂)] ++ Γ₂). apply IHwfterm; simpl_env; auto.
+  solve_uniq.
+  SCase "b binds in Γ₂". apply binds_decomp in BindsTac0. destruct BindsTac0 as [? [? ?]]; subst.
+  simpl_env in *.
+  rewrite_env ((Γ₁ ++ [(a, U)] ++ x) ++ [(b, E)] ++ x0) in H1.
+  apply uniq_app_inv in H1. destruct H1; subst.
+  rewrite_env ((Γ₁ ++ [(a, Eq τ₂)] ++ x) ++ [(b, E)] ++ x0).
+  constructor.
+    solve_uniq.
+    simpl_env. apply IHwfterm; simpl_env; auto.
+    replace τ₂ with (tsubst_typ (typ_forall (typ_var_b 0)) b τ₂).
+    replace x with (env_map (tsubst_typ (typ_forall (typ_var_b 0)) b) x).
+    apply wftyp_tsubst. apply wftyp_EU; auto.
+    apply wftyp_forall with (L := dom x0); intros. unfold open_typ_wrt_typ; simpl; simpl_env.
+      constructor; auto. constructor; auto. apply wfenv_strip with (Γ' := x ++ [(b, E)]); simpl_env; eauto with fzip.
+    apply tsubst_env_fresh_eq.
+    assert (b ∉ ftv_env ((Γ₁ ++ [(a, U)] ++ x) ++ b ~ E ++ x0)). intro.
+      apply ftv_env_binds in H1. destruct H1 as [? [? [? [? | ?]]]].
+      eapply (wfterm_T_not_E ((Γ₁ ++ [(a, U)] ++ x) ++ b ~ E ++ x0)
+             (term_open (typ_var_f b) e) (open_typ_wrt_typ t (typ_var_f b))
+             x1 x2); auto. auto.
+      eapply (wfterm_Eq_not_E ((Γ₁ ++ [(a, U)] ++ x) ++ b ~ E ++ x0)
+             (term_open (typ_var_f b) e) (open_typ_wrt_typ t (typ_var_f b))
+             x1 x2); auto. auto.
+      repeat rewrite ftv_env_app in H1. auto.
+      apply tsubst_typ_fresh_eq.
+   intro. eapply (H3 b); auto.
+   intros a0 H6 H7. eapply (H3 a0); auto.
+  solve_uniq.
+Case "nu".
+  pick fresh b and apply wfterm_nu.
+  rewrite_env ((b ~ E ++ Γ₁) ++ a ~ Eq τ₂ ++ Γ₂). auto.
+Case "sigma".
+  assert (binds b E (Γ₁ ++ (a, U) :: Γ₂)). rewrite <- H2; auto.
+  pick fresh c.
+  assert (uniq (c ~ Eq t' ++ G2 ++ G1)) by eauto with lngen. clear Fr.
+  analyze_binds H5.
+  SCase "b binds in Γ₁". apply binds_decomp in BindsTac. destruct BindsTac as [? [? ?]]; subst.
+  simpl_env in *.
+  apply uniq_app_inv in H2. destruct H2; subst.
+  apply wfterm_sigma with (L := L); intros.
+    solve_uniq.
+    rewrite_env ((a0 ~ Eq t' ++ x ++ x0) ++ [(a, Eq τ₂)] ++ Γ₂). apply H1; simpl_env; auto.
+  solve_uniq.
+  SCase "b binds in Γ₂". apply binds_decomp in BindsTac0. destruct BindsTac0 as [? [? ?]]; subst.
+  simpl_env in *.
+  rewrite_env ((Γ₁ ++ [(a, U)] ++ x) ++ [(b, E)] ++ x0) in H2.
+  apply uniq_app_inv in H2. destruct H2; subst.
+  rewrite_env ((Γ₁ ++ [(a, Eq τ₂)] ++ x) ++ [(b, E)] ++ x0).
+  apply wfterm_sigma with (L := L); intros.
+    solve_uniq.
+    rewrite_env (([(a0, Eq t')] ++ Γ₁) ++ [(a, Eq τ₂)] ++ x ++ x0).
+    apply H1; simpl_env; auto.
+    replace τ₂ with (tsubst_typ (typ_forall (typ_var_b 0)) b τ₂).
+    replace x with (env_map (tsubst_typ (typ_forall (typ_var_b 0)) b) x).
+    apply wftyp_tsubst. apply wftyp_EU; auto.
+    apply wftyp_forall with (L := dom x0); intros. unfold open_typ_wrt_typ; simpl; simpl_env.
+      constructor; auto. constructor; auto. apply wfenv_strip with (Γ' := x ++ [(b, E)]); simpl_env; eauto with fzip.
+    apply tsubst_env_fresh_eq.
+    assert (b ∉ ftv_env ((Γ₁ ++ [(a, U)] ++ x) ++ b ~ E ++ x0)). intro.
+      apply ftv_env_binds in H5. destruct H5 as [? [? [? [? | ?]]]].
+      eapply (wfterm_T_not_E ((Γ₁ ++ [(a, U)] ++ x) ++ b ~ E ++ x0)
+             (term_sigma (typ_var_f b) t' e) t x1 x2); eauto.
+      eapply (wfterm_Eq_not_E ((Γ₁ ++ [(a, U)] ++ x) ++ b ~ E ++ x0)
+             (term_sigma (typ_var_f b) t' e) t x1 x2); eauto.
+      repeat rewrite ftv_env_app in H5. auto.
+      apply tsubst_typ_fresh_eq.
+   intro. eapply (H4 b); auto.
+   intros b0 H7 H8. eapply (H4 b0); auto.
+  solve_uniq.
+Case "coerce". eauto using wftypeq_instantiate.
+Qed.
+
+Lemma wfterm_subst_eq : forall Γ₁ Γ₂ a τ₁ e₁ τ₂,
+  wfterm (Γ₁ ++ a ~ Eq τ₂ ++ Γ₂) e₁ τ₁ →
+  wfterm (env_map (tsubst_typ τ₂ a) Γ₁ ++ Γ₂) (tsubst_term τ₂ a e₁) (tsubst_typ τ₂ a τ₁).
+Proof.
+intros Γ₁ Γ₂ a τ₁ e₁ τ₂ H. dependent induction H; simpl; simpl_env; auto.
+Case "var". constructor.
+auto using pure_subst_eq.
+auto using wfenv_subst_eq.
+analyze_binds H1.
+unfold env_map.
+replace (T (tsubst_typ τ₂ a t)) with (tag_map (tsubst_typ τ₂ a) (T t)) by reflexivity.
+auto.
+rewrite tsubst_typ_fresh_eq; auto.
+  assert (ftv_typ t [<=] dom Γ₂).
+    apply wftyp_ftv. eapply wfenv_wftyp_T2; eauto. apply wfenv_strip with (Γ' := Γ₁ ++ [(a, Eq τ₂)]). simpl_env; auto.
+  assert (uniq (Γ₁ ++ [(a, Eq τ₂)] ++ Γ₂)) by auto with lngen.
+  destruct_uniq. fsetdec.
+Case "app".
+destruct (zip_app_Eq_inv G1 G2 Γ₁ a τ₂ Γ₂) as [? [? [? [? [? ?]]]]]; subst; auto.
+apply wfterm_app with (G1 := env_map (tsubst_typ τ₂ a) x ++ x0) (G2 := env_map (tsubst_typ τ₂ a) x1 ++ x2) (t2 := tsubst_typ τ₂ a t2).
+auto using zip_subst_eq.
+apply IHwfterm1; auto.
+apply IHwfterm2; auto.
+Case "abs".
+pick fresh x and apply wfterm_abs.
+auto using pure_subst_eq.
+rewrite tsubst_term_open_term_wrt_term_var.
+rewrite_env (env_map (tsubst_typ τ₂ a) (x ~ T t1 ++ Γ₁) ++ Γ₂).
+auto.
+Case "pair".
+destruct (zip_app_Eq_inv G1 G2 Γ₁ a τ₂ Γ₂) as [? [? [? [? [? ?]]]]]; subst; auto.
+apply wfterm_pair with (G1 := env_map (tsubst_typ τ₂ a) x ++ x0) (G2 := env_map (tsubst_typ τ₂ a) x1 ++ x2).
+auto using zip_subst_eq.
+apply IHwfterm1; auto.
+apply IHwfterm2; auto.
+Case "fst". apply wfterm_fst with (t2 := tsubst_typ τ₂ a t2). apply IHwfterm; auto.
+Case "snd". apply wfterm_snd with (t1 := tsubst_typ τ₂ a t1). apply IHwfterm; auto.
+Case "inst".
+rewrite tsubst_typ_open_typ_wrt_typ.
+apply wfterm_inst.
+auto using wftyp_subst_eq.
+apply IHwfterm; auto.
+apply wfenv_regular_Eq with (x := a) (Γ := Γ₁ ++ [(a, Eq τ₂)] ++ Γ₂); eauto with fzip.
+Case "gen".
+
+
+
+
+
+
+
+Lemma wfterm_tsubst : forall Γ₁ Γ₂ a τ₁ e₁ τ₂,
+  wfterm (Γ₁ ++ a ~ U ++ Γ₂) e₁ τ₁ →
+  wftyp Γ₂ τ₂ →
+  (forall a, a ∈ ftv_typ τ₂ → not (binds a E Γ₂)) →
   wfterm (env_map (tsubst_typ τ₂ a) Γ₁ ++ Γ₂) (tsubst_term τ₂ a e₁) (tsubst_typ τ₂ a τ₁).
 Proof with eauto.
 intros Γ₁ Γ₂ a τ₁ e₁ τ₂ H. dependent induction H; intro; simpl...
