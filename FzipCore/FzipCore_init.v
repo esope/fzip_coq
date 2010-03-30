@@ -42,6 +42,12 @@ Definition env_map {A : Type} (f : typ → A) (env : typing_env) :=
   map (tag_map f) env.
 Hint Unfold env_map.
 
+Lemma env_map_app {A : Type} (f : typ → A) (Γ₁ Γ₂ : typing_env) :
+env_map f (Γ₁ ++ Γ₂) = env_map f Γ₁ ++ env_map f Γ₂.
+Proof.
+intros A f Γ₁ Γ₂. unfold env_map. simpl_env. auto.
+Qed.
+
 Lemma binds_E_tsubst_inv : forall a Γ b τ,
   binds a E (env_map (tsubst_typ τ b) Γ) → binds a E Γ.
 Proof.
