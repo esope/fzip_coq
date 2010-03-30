@@ -170,3 +170,14 @@ Case "E". elimtype False. eapply (H0 a). auto.
 Case "EU". elimtype False. eapply (H0 a). auto.
 Case "Eq". rewrite IHzip; eauto with fzip; subst; auto.
 Qed.
+
+Lemma pure_renameU : forall Γ₁ Γ₂ a b,
+  pure (Γ₁ ++ a ~ U ++ Γ₂) →
+  pure (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ U ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ a b H.
+unfold env_map.
+intros a0 H0.
+replace (@U typ) with (tag_map (tsubst_typ (typ_var_f b) a) U) in H0 by reflexivity.
+eapply (H a0). analyze_binds H0; eauto with lngen.
+Qed.

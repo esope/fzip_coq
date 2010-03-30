@@ -555,3 +555,15 @@ Case "Eq". destruct Γ₃'; inversion H3; subst.
 destruct (IHzip Γ₃' a0 Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
 subst. exists (a ~ Eq t ++ x); exists x0; exists (a ~ Eq t ++ x1); exists x2; split; auto.
 Qed.
+
+Lemma zip_renameU : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a b,
+  zip (Γ₁ ++ a ~ U ++ Γ₁') (Γ₂ ++ a ~ U ++ Γ₂') (Γ₃ ++ a ~ U ++ Γ₃') →
+  zip (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ U ++ Γ₁')
+      (env_map (tsubst_typ (typ_var_f b) a) Γ₂ ++ b ~ U ++ Γ₂')
+      (env_map (tsubst_typ (typ_var_f b) a) Γ₃ ++ b ~ U ++ Γ₃').
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a b H.
+dependent induction H.
+Case "nil". destruct Γ₁; inversion H.
+ICI
+Qed.
