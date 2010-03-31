@@ -259,6 +259,26 @@ Case "exists". f_equal. pick fresh c.
   simpl in *. fsetdec.
 Qed.
 
+Lemma tsubst_typ_var_self : forall τ a,
+  tsubst_typ (typ_var_f a) a τ = τ.
+Proof.
+intros τ a. induction τ; simpl; try congruence.
+destruct (t == a); subst; auto.
+Qed.
+
+Lemma tsubst_term_var_self : forall e a,
+  tsubst_term (typ_var_f a) a e = e.
+Proof.
+intros e a. induction e; simpl; f_equal; try congruence; auto using tsubst_typ_var_self.
+Qed.
+
+Lemma subst_term_var_self : forall e x,
+  subst_term (term_var_f x) x e = e.
+Proof.
+intros e x. induction e; simpl; try congruence.
+destruct (t == x); subst; auto.
+Qed.
+
 Lemma tsubst_typ_lc_typ_inv :
   forall t1 a1 t2,
     lc_typ t1 →

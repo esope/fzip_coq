@@ -3039,35 +3039,173 @@ constructor.
 apply pure_app. eauto with fzip.
   rewrite_env (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ nil).
   apply pure_tsubst; simpl_env; eauto with fzip.
-apply wfenv_renameU. ICI
-
+auto using wfenv_renameU.
+analyze_binds H1.
+replace (T (tsubst_typ (typ_var_f b) a t)) with (tag_map (tsubst_typ (typ_var_f b) a) (T t)) by reflexivity.
+  unfold env_map; auto.
+rewrite tsubst_typ_fresh_eq; auto.
+assert (ftv_typ t [<=] dom Γ₂). apply wftyp_ftv.
+apply wfenv_wftyp_T2 with (x := x); auto.
+apply wfenv_strip with (Γ' := Γ₁ ++ [(a, U)]). simpl_env; auto.
+apply wfenv_uniq in H0. solve_uniq.
 Case "app".
 assert (uniq G1) by eauto with lngen.
 assert (uniq G2) by eauto with lngen.
-assert (uniq (Γ₁ ++ [(a, E)] ++ Γ₂)) by eauto with lngen.
-apply zip_app_inv in H; decompose record H; subst; clear H.
-inversion H10; subst.
-SCase "E left".
-apply wfterm_app with
-  (G1 := env_map (tsubst_typ (typ_var_f b) a) x ++ b ~ E ++ G1)
-  (G2 := env_map (tsubst_typ (typ_var_f b) a) x1 ++ b ~ U ++ G2)
-  (t2 := tsubst_typ (typ_var_f b) a t2).
+assert (uniq (Γ₁ ++ [(a, U)] ++ Γ₂)) by eauto with lngen.
+destruct (zip_app_inv G1 G2 Γ₁ ([(a, U)] ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; auto; subst.
+inversion H9; subst.
 simpl_env in *.
-apply zip_app.
-  assert (dom x [<=] dom Γ₁) by eauto with fzip;
-  assert (b ∉ dom x) by fsetdec; unfold env_map; solve_uniq.
-  assert (dom x1 [=] dom Γ₁) by eauto with fzip;
-  assert (b ∉ dom x1) by fsetdec; unfold env_map; solve_uniq.
-  unfold env_map; solve_uniq.
-  auto using zip_stable_tsubst.
-  constructor; auto.
-    assert (dom G1 [<=] dom Γ₂) by eauto with fzip; fsetdec.
-    assert (dom G2 [=] dom Γ₂) by eauto with fzip; fsetdec.
-apply IHwfterm1; auto.
-  assert (dom x [<=] dom Γ₁) by eauto with fzip;
-  assert (dom G1 [<=] dom Γ₂) by eauto with fzip;
-    simpl_env in *; fsetdec.
-
+assert (dom x [<=] dom Γ₁) by eauto with fzip.
+assert (dom x1 [=] dom Γ₁) by eauto with fzip.
+assert (dom G1 [<=] dom Γ₂) by eauto with fzip.
+assert (dom G2 [=] dom Γ₂) by eauto with fzip.
+apply wfterm_app with
+  (G1 := env_map (tsubst_typ (typ_var_f b) a) x ++ [(b, U)] ++ G1)
+  (G2 := env_map (tsubst_typ (typ_var_f b) a) x1 ++ [(b, U)] ++ G2)
+  (t2 := tsubst_typ (typ_var_f b) a t2).
+apply zip_renameU; auto. simpl_env. fsetdec.
+apply IHwfterm1; auto. simpl_env; fsetdec.
+apply IHwfterm2; auto. simpl_env; fsetdec.
+Case "abs".
+pick fresh x and apply wfterm_abs. auto using pure_renameU.
+rewrite tsubst_term_open_term_wrt_term_var.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (x ~ T t1 ++ Γ₁) ++ [(b, U)] ++ Γ₂).
+auto.
+Case "pair".
+assert (uniq G1) by eauto with lngen.
+assert (uniq G2) by eauto with lngen.
+assert (uniq (Γ₁ ++ [(a, U)] ++ Γ₂)) by eauto with lngen.
+destruct (zip_app_inv G1 G2 Γ₁ ([(a, U)] ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; auto; subst.
+inversion H9; subst.
+simpl_env in *.
+assert (dom x [<=] dom Γ₁) by eauto with fzip.
+assert (dom x1 [=] dom Γ₁) by eauto with fzip.
+assert (dom G1 [<=] dom Γ₂) by eauto with fzip.
+assert (dom G2 [=] dom Γ₂) by eauto with fzip.
+apply wfterm_pair with
+  (G1 := env_map (tsubst_typ (typ_var_f b) a) x ++ [(b, U)] ++ G1)
+  (G2 := env_map (tsubst_typ (typ_var_f b) a) x1 ++ [(b, U)] ++ G2).
+apply zip_renameU; auto. simpl_env. fsetdec.
+apply IHwfterm1; auto. simpl_env; fsetdec.
+apply IHwfterm2; auto. simpl_env; fsetdec.
+Case "fst".
+apply wfterm_fst with (t2 := tsubst_typ (typ_var_f b) a t2).
+apply IHwfterm; auto.
+Case "snd".
+apply wfterm_snd with (t1 := tsubst_typ (typ_var_f b) a t1).
+apply IHwfterm; auto.
+Case "inst".
+rewrite tsubst_typ_open_typ_wrt_typ; auto.
+apply wfterm_inst.
+auto using wftyp_renameU.
+apply IHwfterm; auto.
+Case "gen".
+pick fresh c and apply wfterm_gen. auto using pure_renameU.
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ U ++ Γ₁) ++ [(b, U)] ++ Γ₂).
+auto.
+Case "exists".
+pick fresh c and apply wfterm_exists.
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ E ++ Γ₁) ++ [(b, U)] ++ Γ₂).
+auto.
+Case "open".
+destruct (b0 == a); subst.
+SCase "b0 = a (absurd)".
+assert (@E typ = U). apply binds_unique with (x := a) (E := Γ₁ ++ (a, U) :: Γ₂); auto.
+  rewrite <- H2; auto.
+  assert (uniq (G2 ++ G1)) by eauto with lngen.
+  rewrite <- H2. solve_uniq.
+congruence.
+SCase "b0 ≠ a".
+assert (binds b0 E (Γ₁ ++ (a, U) :: Γ₂)). rewrite <- H2; auto.
+analyze_binds H3.
+SSCase "b0 binds in Γ₁".
+apply binds_decomp in BindsTac; destruct BindsTac as [? [? ?]]; subst.
+simpl_env in H2.
+apply uniq_app_inv in H2. destruct H2; subst.
+repeat rewrite env_map_app.
+unfold env_map at 2; simpl; simpl_env.
+rewrite <- tsubst_typ_open_typ_wrt_typ_var; auto.
+apply wfterm_open.
+unfold env_map; auto.
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) x ++
+   env_map (tsubst_typ (typ_var_f b) a) x0) ++ [(b, U)] ++ Γ₂).
+rewrite <- env_map_app.
+apply IHwfterm; simpl_env; auto.
+assert (uniq (G2 ++ G1)) by eauto with lngen. solve_uniq.
+SSCase "b0 binds in Γ₂".
+apply binds_decomp in BindsTac0; destruct BindsTac0 as [? [? ?]]; subst.
+simpl_env in H2.
+rewrite_env ((Γ₁ ++ [(a, U)] ++ x) ++ [(b0, E)] ++ x0) in H2.
+apply uniq_app_inv in H2. destruct H2; subst.
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++
+   [(b, U)] ++ x) ++ [(b0, E)] ++ x0).
+rewrite <- tsubst_typ_open_typ_wrt_typ_var; auto.
+apply wfterm_open.
+unfold env_map; auto.
+simpl_env.
+apply IHwfterm; simpl_env; auto.
+assert (uniq (G2 ++ G1)) by eauto with lngen. solve_uniq.
+Case "nu".
+pick fresh c and apply wfterm_nu.
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ E ++ Γ₁) ++ [(b, U)] ++ Γ₂).
+auto.
+Case "sigma".
+destruct (b0 == a); subst.
+SCase "b0 = a (absurd)".
+assert (@E typ = U). apply binds_unique with (x := a) (E := Γ₁ ++ (a, U) :: Γ₂); auto.
+  rewrite <- H3; auto.
+  pick fresh c.
+  assert (uniq (c ~ Eq t' ++ G2 ++ G1)) by eauto with lngen.
+  rewrite <- H3. solve_uniq.
+congruence.
+SCase "b0 ≠ a".
+assert (binds b0 E (Γ₁ ++ (a, U) :: Γ₂)). rewrite <- H3; auto.
+analyze_binds H4.
+SSCase "b0 binds in Γ₁".
+apply binds_decomp in BindsTac; destruct BindsTac as [? [? ?]]; subst.
+simpl_env in H3.
+apply uniq_app_inv in H3. destruct H3; subst.
+repeat rewrite env_map_app.
+unfold env_map at 2; simpl; simpl_env.
+pick fresh c and apply wfterm_sigma.
+unfold env_map; auto.
+rewrite tsubst_typ_tsubst_typ; auto.
+simpl. unfold typvar; destruct (b == b0); subst; simpl_env.
+SSSCase "b = b0". elimtype False. simpl_env in *. auto.
+SSSCase "b ≠ b0".
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (c ~ Eq t' ++ x) ++
+   env_map (tsubst_typ (typ_var_f b) a) x0) ++ [(b, U)] ++ Γ₂).
+rewrite <- env_map_app.
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+apply H1; simpl_env; auto.
+pick fresh c. assert (uniq (c ~ Eq t' ++ G2 ++ G1)) by eauto with lngen. solve_uniq.
+SSCase "b0 binds in Γ₂".
+apply binds_decomp in BindsTac0; destruct BindsTac0 as [? [? ?]]; subst.
+simpl_env in H3.
+rewrite_env ((Γ₁ ++ [(a, U)] ++ x) ++ [(b0, E)] ++ x0) in H3.
+apply uniq_app_inv in H3. destruct H3; subst.
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++
+   [(b, U)] ++ x) ++ [(b0, E)] ++ x0).
+pick fresh c and apply wfterm_sigma.
+unfold env_map; auto.
+rewrite tsubst_typ_tsubst_typ; auto.
+simpl. unfold typvar; destruct (b == b0); subst; simpl_env.
+SSSCase "b = b0". elimtype False. simpl_env in *. clear Fr. fsetdec.
+SSSCase "b ≠ b0".
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ Eq t' ++ Γ₁) ++ [(b, U)] ++ x ++ x0).
+apply H1; simpl_env; auto.
+pick fresh c. assert (uniq (c ~ Eq t' ++ G2 ++ G1)) by eauto with lngen. solve_uniq.
+Case "coerce".
+apply wfterm_coerce with (t' := tsubst_typ (typ_var_f b) a t').
+auto using wftypeq_renameU.
+auto.
+Qed.
 
 Lemma wfterm_renameE : forall Γ₁ Γ₂ a b e τ,
   wfterm (Γ₁ ++ a ~ E ++ Γ₂) e τ →
@@ -3081,32 +3219,249 @@ Case "app".
 assert (uniq G1) by eauto with lngen.
 assert (uniq G2) by eauto with lngen.
 assert (uniq (Γ₁ ++ [(a, E)] ++ Γ₂)) by eauto with lngen.
-apply zip_app_inv in H; decompose record H; subst; clear H.
-inversion H10; subst.
-SCase "E left".
+destruct (zip_app_inv G1 G2 Γ₁ (a ~ E ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; auto; subst.
+assert (dom x [<=] dom Γ₁) by eauto with fzip.
+assert (dom x1 [=] dom Γ₁) by eauto with fzip.
+assert (dom x0 [<=] dom (a ~ E ++ Γ₂)) by eauto with fzip.
+assert (dom x2 [=] dom (a ~ E ++ Γ₂)) by eauto with fzip.
+inversion H9; subst.
+SCase "EU".
 apply wfterm_app with
   (G1 := env_map (tsubst_typ (typ_var_f b) a) x ++ b ~ E ++ G1)
   (G2 := env_map (tsubst_typ (typ_var_f b) a) x1 ++ b ~ U ++ G2)
   (t2 := tsubst_typ (typ_var_f b) a t2).
 simpl_env in *.
-apply zip_app.
-  assert (dom x [<=] dom Γ₁) by eauto with fzip;
-  assert (b ∉ dom x) by fsetdec; unfold env_map; solve_uniq.
-  assert (dom x1 [=] dom Γ₁) by eauto with fzip;
-  assert (b ∉ dom x1) by fsetdec; unfold env_map; solve_uniq.
-  unfold env_map; solve_uniq.
-  auto using zip_stable_tsubst.
-  constructor; auto.
-    assert (dom G1 [<=] dom Γ₂) by eauto with fzip; fsetdec.
-    assert (dom G2 [=] dom Γ₂) by eauto with fzip; fsetdec.
-apply IHwfterm1; auto.
-  assert (dom x [<=] dom Γ₁) by eauto with fzip;
-  assert (dom G1 [<=] dom Γ₂) by eauto with fzip;
-    simpl_env in *; fsetdec.
+apply zip_renameEU; auto. simpl_env; fsetdec.
+apply IHwfterm1; auto. simpl_env in *; fsetdec.
+apply wfterm_renameU; auto. simpl_env in *; fsetdec.
+SCase "E".
+apply wfterm_app with
+  (G1 := env_map (tsubst_typ (typ_var_f b) a) x ++ x0)
+  (G2 := env_map (tsubst_typ (typ_var_f b) a) x1 ++ b ~ E ++ G2)
+  (t2 := tsubst_typ (typ_var_f b) a t2).
+apply zip_renameE; auto. simpl_env in *; fsetdec.
+replace (typ_arrow (tsubst_typ (typ_var_f b) a t2) (tsubst_typ (typ_var_f b) a t1))
+with (tsubst_typ (typ_var_f b) a (typ_arrow t2 t1)) by reflexivity.
+assert (a ∉ dom (x ++ x0)). simpl_env; destruct_uniq; fsetdec.
+rewrite tsubst_term_fresh_eq.
+rewrite tsubst_typ_fresh_eq.
+rewrite tsubst_env_fresh_eq.
+auto.
+intro H13. destruct (ftv_env_binds x a H13) as [? [? [? ?]]].
+  assert (ftv_typ x3 [<=] dom (x ++ x0)). apply wftyp_ftv.
+  destruct H16.
+    apply wfenv_wftyp_T2 with (x := x2). eapply wfterm_wfenv; eauto. auto.
+    apply wfenv_wftyp_Eq2 with (x := x2). eapply wfterm_wfenv; eauto. auto.
+  assert (a ∈ dom (x ++ x0)) by auto. contradiction.
+intro H13. apply H12. assert (ftv_typ (typ_arrow t2 t1) [<=] dom (x ++ x0)).
+  apply wftyp_ftv. eapply wfterm_wftyp; eauto.
+  auto.
+intro H13. apply H12. assert (ftv_term e1 [<=] dom (x ++ x0)).
+  eapply wfterm_ftv; eauto.
+  auto.
+apply IHwfterm2; auto. simpl_env in *; fsetdec.
+Case "abs". elimtype False. eapply (H a); auto.
+Case "pair".
+assert (uniq G1) by eauto with lngen.
+assert (uniq G2) by eauto with lngen.
+assert (uniq (Γ₁ ++ [(a, E)] ++ Γ₂)) by eauto with lngen.
+destruct (zip_app_inv G1 G2 Γ₁ (a ~ E ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; auto; subst.
+assert (dom x [<=] dom Γ₁) by eauto with fzip.
+assert (dom x1 [=] dom Γ₁) by eauto with fzip.
+assert (dom x0 [<=] dom (a ~ E ++ Γ₂)) by eauto with fzip.
+assert (dom x2 [=] dom (a ~ E ++ Γ₂)) by eauto with fzip.
+inversion H9; subst.
+SCase "EU".
+apply wfterm_pair with
+  (G1 := env_map (tsubst_typ (typ_var_f b) a) x ++ b ~ E ++ G1)
+  (G2 := env_map (tsubst_typ (typ_var_f b) a) x1 ++ b ~ U ++ G2).
+simpl_env in *.
+apply zip_renameEU; auto. simpl_env; fsetdec.
+apply IHwfterm1; auto. simpl_env in *; fsetdec.
+apply wfterm_renameU; auto. simpl_env in *; fsetdec.
+SCase "E".
+apply wfterm_pair with
+  (G1 := env_map (tsubst_typ (typ_var_f b) a) x ++ x0)
+  (G2 := env_map (tsubst_typ (typ_var_f b) a) x1 ++ b ~ E ++ G2).
+apply zip_renameE; auto. simpl_env in *; fsetdec.
+assert (a ∉ dom (x ++ x0)). simpl_env; destruct_uniq; fsetdec.
+rewrite tsubst_term_fresh_eq.
+rewrite tsubst_typ_fresh_eq.
+rewrite tsubst_env_fresh_eq.
+auto.
+intro H13. destruct (ftv_env_binds x a H13) as [? [? [? ?]]].
+  assert (ftv_typ x3 [<=] dom (x ++ x0)). apply wftyp_ftv.
+  destruct H16.
+    apply wfenv_wftyp_T2 with (x := x2). eapply wfterm_wfenv; eauto. auto.
+    apply wfenv_wftyp_Eq2 with (x := x2). eapply wfterm_wfenv; eauto. auto.
+  assert (a ∈ dom (x ++ x0)) by auto. contradiction.
+intro H13. apply H12. assert (ftv_typ t1 [<=] dom (x ++ x0)).
+  apply wftyp_ftv. eapply wfterm_wftyp; eauto.
+  auto.
+intro H13. apply H12. assert (ftv_term e1 [<=] dom (x ++ x0)).
+  eapply wfterm_ftv; eauto.
+  auto.
+apply IHwfterm2; auto. simpl_env in *; fsetdec.
+Case "fst".
+apply wfterm_fst with (t2 := tsubst_typ (typ_var_f b) a t2).
+apply IHwfterm; auto.
+Case "snd".
+apply wfterm_snd with (t1 := tsubst_typ (typ_var_f b) a t1).
+apply IHwfterm; auto.
+Case "inst".
+rewrite tsubst_typ_open_typ_wrt_typ; auto.
+apply wfterm_inst.
+auto using wftyp_renameE.
+apply IHwfterm; auto.
+Case "gen". elimtype False. eapply (H a); auto.
+Case "exists".
+pick fresh c and apply wfterm_exists.
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ E ++ Γ₁) ++ [(b, E)] ++ Γ₂).
+auto.
+Case "open".
+assert (uniq (G2 ++ G1)) by eauto with lngen.
+destruct (b0 == a); subst.
+SCase "b0 = a".
+rewrite tsubst_typ_open_typ_wrt_typ; auto.
+simpl. unfold typvar; destruct (a == a); subst; try congruence.
+simpl_env. apply wfterm_open.
+unfold env_map; auto.
+simpl_env in H2. apply uniq_app_inv in H2. destruct H2; subst.
+rewrite tsubst_term_fresh_eq.
+rewrite tsubst_typ_fresh_eq.
+rewrite tsubst_env_fresh_eq.
+auto.
+intro H13. destruct (ftv_env_binds Γ₁ a H13) as [? [? [? ?]]].
+  assert (ftv_typ x0 [<=] dom (Γ₁ ++ Γ₂)). apply wftyp_ftv.
+  destruct H4.
+    apply wfenv_wftyp_T2 with (x := x). eapply wfterm_wfenv; eauto. auto.
+    apply wfenv_wftyp_Eq2 with (x := x). eapply wfterm_wfenv; eauto. auto.
+  assert (a ∈ dom (Γ₁ ++ Γ₂)) by auto. contradiction.
+intro H13. apply H. assert (ftv_typ t [<=] dom (Γ₁ ++ Γ₂)).
+  replace (ftv_typ t) with (ftv_typ (typ_exists t)) by reflexivity.
+  apply wftyp_ftv. eapply wfterm_wftyp; eauto.
+  auto.
+intro H13. apply H. assert (ftv_term e [<=] dom (Γ₁ ++ Γ₂)).
+  eapply wfterm_ftv; eauto.
+  auto.
+solve_uniq.
+SCase "b0 ≠ a".
+assert (binds b0 E (Γ₁ ++ (a, E) :: Γ₂)). rewrite <- H2; auto.
+analyze_binds H4.
+SSCase "b0 binds in Γ₁".
+apply binds_decomp in BindsTac; destruct BindsTac as [? [? ?]]; subst.
+simpl_env in H2.
+apply uniq_app_inv in H2. destruct H2; subst.
+repeat rewrite env_map_app.
+unfold env_map at 2; simpl; simpl_env.
+rewrite <- tsubst_typ_open_typ_wrt_typ_var; auto.
+apply wfterm_open.
+unfold env_map; auto.
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) x ++
+   env_map (tsubst_typ (typ_var_f b) a) x0) ++ [(b, E)] ++ Γ₂).
+rewrite <- env_map_app.
+apply IHwfterm; simpl_env; auto.
+assert (uniq (G2 ++ G1)) by eauto with lngen. solve_uniq.
+SSCase "b0 binds in Γ₂".
+apply binds_decomp in BindsTac0; destruct BindsTac0 as [? [? ?]]; subst.
+simpl_env in H2.
+rewrite_env ((Γ₁ ++ [(a, E)] ++ x) ++ [(b0, E)] ++ x0) in H2.
+apply uniq_app_inv in H2. destruct H2; subst.
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++
+   [(b, E)] ++ x) ++ [(b0, E)] ++ x0).
+rewrite <- tsubst_typ_open_typ_wrt_typ_var; auto.
+apply wfterm_open.
+unfold env_map; auto.
+simpl_env.
+apply IHwfterm; simpl_env; auto.
+assert (uniq (G2 ++ G1)) by eauto with lngen. solve_uniq.
+Case "nu".
+pick fresh c and apply wfterm_nu.
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ E ++ Γ₁) ++ [(b, E)] ++ Γ₂).
+auto.
+Case "sigma".
+destruct (b0 == a); subst.
+SCase "b0 = a".
+pick fresh c and apply wfterm_sigma.
+unfold env_map; auto.
+simpl_env in H3. apply uniq_app_inv in H3. destruct H3; subst.
+simpl_env.
+rewrite tsubst_term_fresh_eq.
+rewrite tsubst_typ_fresh_eq.
+rewrite tsubst_env_fresh_eq.
+destruct (a == b); subst.
+SSCase "a = b". rewrite tsubst_typ_var_self. auto.
+SSCase "a ≠ b".
 
+ICI
 
-SCase "E right".
+rewrite tsubst_typ_tsubst_typ; auto. simpl. unfold typvar; destruct (b == b); try congruence.
+simpl_env. auto.
+intro H13. destruct (ftv_env_binds Γ₁ a H13) as [? [? [? ?]]].
+  assert (ftv_typ x0 [<=] dom (c ~ Eq t' ++ Γ₁ ++ Γ₂)). apply wftyp_ftv.
+  destruct H4.
+    apply wfenv_wftyp_T2 with (x := x). eapply wfterm_wfenv; eauto. auto.
+    apply wfenv_wftyp_Eq2 with (x := x). eapply wfterm_wfenv; eauto. auto.
+  assert (a ∈ dom (c ~ Eq t' ++ Γ₁ ++ Γ₂)) by auto.
+  assert (a ∉ dom (c ~ Eq t' ++ Γ₁ ++ Γ₂)) by auto. contradiction.
+admit.
+intro H13. apply H. assert (ftv_typ t' [<=] dom (Γ₁ ++ Γ₂)).
+  apply wftyp_ftv. eapply wfenv_wftyp_Eq3; eapply wfterm_wfenv; eauto.
+  auto.
+intro H13. apply H. assert (ftv_term e [<=] dom (c ~ Eq t' ++ Γ₁ ++ Γ₂)).
+  transitivity (ftv_term (open_term_wrt_typ e (typ_var_f c))).
+  auto with lngen.
+  eapply wfterm_ftv; eauto.
+  simpl_env in *. assert (c ≠ a) by fsetdec. clear Fr. fsetdec.
+assert (uniq (c ~ Eq t' ++ G2 ++ G1)) by eauto with lngen. solve_uniq.
+auto.
 
+SCase "b0 ≠ a".
+assert (binds b0 E (Γ₁ ++ (a, U) :: Γ₂)). rewrite <- H3; auto.
+analyze_binds H4.
+SSCase "b0 binds in Γ₁".
+apply binds_decomp in BindsTac; destruct BindsTac as [? [? ?]]; subst.
+simpl_env in H3.
+apply uniq_app_inv in H3. destruct H3; subst.
+repeat rewrite env_map_app.
+unfold env_map at 2; simpl; simpl_env.
+pick fresh c and apply wfterm_sigma.
+unfold env_map; auto.
+rewrite tsubst_typ_tsubst_typ; auto.
+simpl. unfold typvar; destruct (b == b0); subst; simpl_env.
+SSSCase "b = b0". elimtype False. simpl_env in *. auto.
+SSSCase "b ≠ b0".
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (c ~ Eq t' ++ x) ++
+   env_map (tsubst_typ (typ_var_f b) a) x0) ++ [(b, U)] ++ Γ₂).
+rewrite <- env_map_app.
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+apply H1; simpl_env; auto.
+pick fresh c. assert (uniq (c ~ Eq t' ++ G2 ++ G1)) by eauto with lngen. solve_uniq.
+SSCase "b0 binds in Γ₂".
+apply binds_decomp in BindsTac0; destruct BindsTac0 as [? [? ?]]; subst.
+simpl_env in H3.
+rewrite_env ((Γ₁ ++ [(a, U)] ++ x) ++ [(b0, E)] ++ x0) in H3.
+apply uniq_app_inv in H3. destruct H3; subst.
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++
+   [(b, U)] ++ x) ++ [(b0, E)] ++ x0).
+pick fresh c and apply wfterm_sigma.
+unfold env_map; auto.
+rewrite tsubst_typ_tsubst_typ; auto.
+simpl. unfold typvar; destruct (b == b0); subst; simpl_env.
+SSSCase "b = b0". elimtype False. simpl_env in *. clear Fr. fsetdec.
+SSSCase "b ≠ b0".
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ Eq t' ++ Γ₁) ++ [(b, U)] ++ x ++ x0).
+apply H1; simpl_env; auto.
+pick fresh c. assert (uniq (c ~ Eq t' ++ G2 ++ G1)) by eauto with lngen. solve_uniq.
+Case "coerce".
+apply wfterm_coerce with (t' := tsubst_typ (typ_var_f b) a t').
+auto using wftypeq_renameU.
+auto.
+Qed.
 
 
 

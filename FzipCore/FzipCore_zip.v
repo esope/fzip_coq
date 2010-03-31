@@ -557,13 +557,91 @@ subst. exists (a ~ Eq t ++ x); exists x0; exists (a ~ Eq t ++ x1); exists x2; sp
 Qed.
 
 Lemma zip_renameU : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a b,
+  b ∉ dom (Γ₁ ++ Γ₁') ∪ dom (Γ₂ ++ Γ₂') ∪ dom (Γ₃ ++ Γ₃') →
   zip (Γ₁ ++ a ~ U ++ Γ₁') (Γ₂ ++ a ~ U ++ Γ₂') (Γ₃ ++ a ~ U ++ Γ₃') →
   zip (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ U ++ Γ₁')
       (env_map (tsubst_typ (typ_var_f b) a) Γ₂ ++ b ~ U ++ Γ₂')
       (env_map (tsubst_typ (typ_var_f b) a) Γ₃ ++ b ~ U ++ Γ₃').
 Proof.
-intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a b H.
-dependent induction H.
-Case "nil". destruct Γ₁; inversion H.
-ICI
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a b Hb H.
+assert (uniq (Γ₁ ++ [(a, U)] ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ [(a, U)] ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ [(a, U)] ++ Γ₃')) by eauto with lngen.
+simpl_env in *.
+apply zip_app_inv in H. decompose record H; clear H; simpl_env in *.
+inversion H7; subst.
+apply uniq_app_inv in H3; auto.
+apply uniq_app_inv in H4; auto.
+destruct H3; destruct H4; subst; auto.
+apply zip_app; auto.
+  unfold env_map. solve_uniq.
+  unfold env_map. solve_uniq.
+  unfold env_map. solve_uniq.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) x ++ nil).
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) x1 ++ nil).
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) Γ₃ ++ nil).
+apply zip_tsubst; auto.
+simpl_env. apply zip_app; my_auto.
+Qed.
+
+Lemma zip_renameEU : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a b,
+  b ∉ dom (Γ₁ ++ Γ₁') ∪ dom (Γ₂ ++ Γ₂') ∪ dom (Γ₃ ++ Γ₃') →
+  zip (Γ₁ ++ a ~ E ++ Γ₁') (Γ₂ ++ a ~ U ++ Γ₂') (Γ₃ ++ a ~ E ++ Γ₃') →
+  zip (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ E ++ Γ₁')
+      (env_map (tsubst_typ (typ_var_f b) a) Γ₂ ++ b ~ U ++ Γ₂')
+      (env_map (tsubst_typ (typ_var_f b) a) Γ₃ ++ b ~ E ++ Γ₃').
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a b Hb H.
+assert (uniq (Γ₁ ++ [(a, E)] ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ [(a, U)] ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ [(a, E)] ++ Γ₃')) by eauto with lngen.
+simpl_env in *.
+apply zip_app_inv in H. decompose record H; clear H; simpl_env in *.
+inversion H7; subst.
+SCase "EU".
+apply uniq_app_inv in H3; auto.
+apply uniq_app_inv in H4; auto.
+destruct H3; destruct H4; subst; auto.
+apply zip_app; auto.
+  unfold env_map. solve_uniq.
+  unfold env_map. solve_uniq.
+  unfold env_map. solve_uniq.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) x ++ nil).
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) x1 ++ nil).
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) Γ₃ ++ nil).
+apply zip_tsubst; auto.
+simpl_env. apply zip_app; my_auto.
+SCase "E (absurd)".
+assert (@U typ = @E typ). apply binds_unique with (x := a) (E := Γ₂ ++ [(a, U)] ++ Γ₂'); auto.
+  rewrite H4; auto.
+congruence.
+Qed.
+
+Lemma zip_renameE : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a b,
+  b ∉ dom (Γ₁ ++ Γ₁') ∪ dom (Γ₂ ++ Γ₂') ∪ dom (Γ₃ ++ Γ₃') →
+  zip Γ₁ Γ₂ Γ₃ → zip Γ₁' Γ₂' Γ₃' →
+  zip (Γ₁ ++ Γ₁') (Γ₂ ++ a ~ E ++ Γ₂') (Γ₃ ++ a ~ E ++ Γ₃') →
+  zip (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ Γ₁')
+      (env_map (tsubst_typ (typ_var_f b) a) Γ₂ ++ b ~ E ++ Γ₂')
+      (env_map (tsubst_typ (typ_var_f b) a) Γ₃ ++ b ~ E ++ Γ₃').
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a b Hb Hzip1 Hzip2 H.
+assert (uniq (Γ₁ ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ [(a, E)] ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ [(a, E)] ++ Γ₃')) by eauto with lngen.
+simpl_env in *.
+apply zip_app; auto.
+  unfold env_map. solve_uniq.
+  unfold env_map. solve_uniq.
+  unfold env_map. solve_uniq.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ nil).
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) Γ₂ ++ nil).
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) Γ₃ ++ nil).
+apply zip_tsubst; auto.
+simpl_env. apply zip_app.
+  assert (dom Γ₁ [<=] dom Γ₃) by eauto with fzip. destruct_uniq; fsetdec.
+  assert (dom Γ₂ [=] dom Γ₃) by eauto with fzip. destruct_uniq; fsetdec.
+  solve_uniq.
+  auto.
+  my_auto.
 Qed.
