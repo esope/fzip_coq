@@ -48,6 +48,28 @@ Proof.
 intros A f Γ₁ Γ₂. unfold env_map. simpl_env. auto.
 Qed.
 
+Lemma list_map_id {A : Type} (l : list A) :
+  List.map (fun x => x) l = l.
+Proof.
+intros A l. induction l; simpl; congruence.
+Qed.
+
+Lemma env_map_id (env : typing_env) :
+  env_map (fun x => x) env = env.
+Proof.
+intro env. unfold env_map. unfold map. rewrite map_ext with (g := fun x => x).
+apply list_map_id.
+intros [x a]. destruct a; simpl; auto.
+Qed.
+
+Lemma env_map_ext {A : Type} (f g: typ → A):
+  (forall a, f a = g a) → forall Γ, env_map f Γ = env_map g Γ.
+Proof.
+intros A f g H Γ.
+unfold env_map. unfold map.
+apply map_ext. intros [x a]; destruct a; simpl; congruence.
+Qed.
+
 Lemma binds_E_tsubst_inv : forall a Γ b τ,
   binds a E (env_map (tsubst_typ τ b) Γ) → binds a E Γ.
 Proof.
@@ -277,6 +299,15 @@ Lemma subst_term_var_self : forall e x,
 Proof.
 intros e x. induction e; simpl; try congruence.
 destruct (t == x); subst; auto.
+Qed.
+
+Lemma tsubst_env_var_self : forall Γ a,
+  env_map (tsubst_typ (typ_var_f a) a) Γ = Γ.
+Proof.
+intros Γ a.
+rewrite env_map_ext with (g := fun x => x).
+apply env_map_id.
+intro. apply tsubst_typ_var_self.
 Qed.
 
 Lemma tsubst_typ_lc_typ_inv :
