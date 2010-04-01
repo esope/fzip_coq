@@ -404,6 +404,38 @@ Case "Eq". constructor; simpl_env; my_auto.
 apply IHzip; my_auto. apply zip_app; my_auto.
 Qed.
 
+Lemma zip_remove_U : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a,
+  zip (Γ₁ ++ a ~ U ++ Γ₁') (Γ₂ ++ a ~ U ++ Γ₂') (Γ₃ ++ a ~ U ++ Γ₃') →
+  zip (Γ₁ ++ Γ₁') (Γ₂ ++ Γ₂') (Γ₃ ++ Γ₃').
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a H.
+assert (uniq (Γ₁ ++ a ~ U ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ a ~ U ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ a ~ U ++ Γ₃')) by eauto with lngen.
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+apply uniq_app_inv in H4; my_auto.
+apply uniq_app_inv in H3; my_auto.
+destruct H4; destruct H3; subst.
+apply zip_app; my_auto.
+Qed.
+
+Lemma zip_remove_Eq : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ,
+  zip (Γ₁ ++ a ~ Eq τ ++ Γ₁') (Γ₂ ++ a ~ Eq τ ++ Γ₂') (Γ₃ ++ a ~ Eq τ ++ Γ₃') →
+  zip (Γ₁ ++ Γ₁') (Γ₂ ++ Γ₂') (Γ₃ ++ Γ₃').
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ H.
+assert (uniq (Γ₁ ++ a ~ Eq τ ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ a ~ Eq τ ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ a ~ Eq τ ++ Γ₃')) by eauto with lngen.
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+apply uniq_app_inv in H4; my_auto.
+apply uniq_app_inv in H3; my_auto.
+destruct H4; destruct H3; subst.
+apply zip_app; my_auto.
+Qed.
+
 Lemma zip_subst : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' x τ,
   zip (Γ₁ ++ x ~ T τ ++ Γ₁') (Γ₂ ++ x ~ T τ ++ Γ₂') (Γ₃ ++ x ~ T τ ++ Γ₃') →
   zip (Γ₁ ++ Γ₁') (Γ₂ ++ Γ₂') (Γ₃ ++ Γ₃').
@@ -644,4 +676,107 @@ simpl_env. apply zip_app.
   solve_uniq.
   auto.
   my_auto.
+Qed.
+
+Lemma zip_app_inv1 : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃',
+  zip Γ₁ Γ₂ Γ₃ →
+  zip (Γ₁ ++ Γ₁') (Γ₂ ++ Γ₂') (Γ₃ ++ Γ₃') →
+  zip Γ₁' Γ₂' Γ₃'.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' H H0.
+induction H; simpl_env in *; auto;
+inversion H0; subst; auto.
+Qed.
+
+Lemma zip_app_inv2 : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃',
+  zip Γ₁' Γ₂' Γ₃' →
+  zip (Γ₁ ++ Γ₁') (Γ₂ ++ Γ₂') (Γ₃ ++ Γ₃') →
+  zip Γ₁ Γ₂ Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' H H0.
+induction H; intros; simpl_env in *; auto.
+apply IHzip; eapply zip_subst; eauto.
+apply IHzip; eapply zip_remove_U; eauto.
+
+
+
+Lemma zip_upperU : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ₁'' Γ₂'' Γ₃'' a,
+  zip (Γ₁ ++ a ~ U ++ Γ₁' ++ Γ₁'')
+      (Γ₂ ++ a ~ U ++ Γ₂' ++ Γ₂'')
+      (Γ₃ ++ a ~ U ++ Γ₃' ++ Γ₃'') →
+  zip Γ₁' Γ₂' Γ₃' →
+  zip Γ₁'' Γ₂'' Γ₃'' →
+  zip (Γ₁ ++ Γ₁' ++ a ~ U ++ Γ₁'')
+      (Γ₂ ++ Γ₂' ++ a ~ U ++ Γ₂'')
+      (Γ₃ ++ Γ₃' ++ a ~ U ++ Γ₃'').
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ₁'' Γ₂'' Γ₃'' a H H' H''.
+assert (uniq (Γ₁ ++ [(a, U)] ++ Γ₁' ++ Γ₁'')) by eauto with lngen. 
+assert (uniq (Γ₂ ++ [(a, U)] ++ Γ₂' ++ Γ₂'')) by eauto with lngen. 
+assert (uniq (Γ₃ ++ [(a, U)] ++ Γ₃' ++ Γ₃'')) by eauto with lngen. 
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+apply uniq_app_inv in H4; auto.
+apply uniq_app_inv in H3; auto.
+destruct H4; destruct H3; subst.
+apply zip_app; my_auto.
+apply zip_app; my_auto.
+Qed.
+
+Lemma zip_upperEU : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ₁'' Γ₂'' Γ₃'' a,
+  zip (Γ₁ ++ a ~ E ++ Γ₁' ++ Γ₁'')
+      (Γ₂ ++ a ~ U ++ Γ₂' ++ Γ₂'')
+      (Γ₃ ++ a ~ E ++ Γ₃' ++ Γ₃'') →
+  zip Γ₁' Γ₂' Γ₃' →
+  zip Γ₁'' Γ₂'' Γ₃'' →
+  zip (Γ₁ ++ Γ₁' ++ a ~ E ++ Γ₁'')
+      (Γ₂ ++ Γ₂' ++ a ~ U ++ Γ₂'')
+      (Γ₃ ++ Γ₃' ++ a ~ E ++ Γ₃'').
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ₁'' Γ₂'' Γ₃'' a H H' H''.
+assert (uniq (Γ₁ ++ [(a, E)] ++ Γ₁' ++ Γ₁'')) by eauto with lngen. 
+assert (uniq (Γ₂ ++ [(a, U)] ++ Γ₂' ++ Γ₂'')) by eauto with lngen. 
+assert (uniq (Γ₃ ++ [(a, E)] ++ Γ₃' ++ Γ₃'')) by eauto with lngen. 
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+Case "EU".
+apply uniq_app_inv in H4; auto.
+apply uniq_app_inv in H3; auto.
+destruct H4; destruct H3; subst.
+apply zip_app; my_auto.
+apply zip_app; my_auto.
+Case "E".
+assert (@E typ = U).
+apply binds_unique with (x := a) (E := Γ₂ ++ [(a, U)] ++ Γ₂' ++ Γ₂''); auto.
+rewrite H4; auto.
+congruence.
+Qed.
+
+Lemma zip_upperE : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ₁'' Γ₂'' Γ₃'' a,
+  zip (Γ₁ ++ Γ₁' ++ Γ₁'')
+      (Γ₂ ++ a ~ E ++ Γ₂' ++ Γ₂'')
+      (Γ₃ ++ a ~ E ++ Γ₃' ++ Γ₃'') →
+  zip Γ₁' Γ₂' Γ₃' →
+  zip Γ₁'' Γ₂'' Γ₃'' →
+  zip (Γ₁ ++ Γ₁' ++ a ~ E ++ Γ₁'')
+      (Γ₂ ++ Γ₂' ++ a ~ U ++ Γ₂'')
+      (Γ₃ ++ Γ₃' ++ a ~ E ++ Γ₃'').
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ₁'' Γ₂'' Γ₃'' a H H' H''.
+assert (uniq (Γ₁ ++ [(a, E)] ++ Γ₁' ++ Γ₁'')) by eauto with lngen. 
+assert (uniq (Γ₂ ++ [(a, U)] ++ Γ₂' ++ Γ₂'')) by eauto with lngen. 
+assert (uniq (Γ₃ ++ [(a, E)] ++ Γ₃' ++ Γ₃'')) by eauto with lngen. 
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+Case "EU".
+apply uniq_app_inv in H4; auto.
+apply uniq_app_inv in H3; auto.
+destruct H4; destruct H3; subst.
+apply zip_app; my_auto.
+apply zip_app; my_auto.
+Case "E".
+assert (@E typ = U).
+apply binds_unique with (x := a) (E := Γ₂ ++ [(a, U)] ++ Γ₂' ++ Γ₂''); auto.
+rewrite H4; auto.
+congruence.
 Qed.
