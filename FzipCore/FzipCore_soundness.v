@@ -2474,6 +2474,43 @@ eapply H1; eauto.
     contradiction.
 Qed.
 
+Lemma wfterm_upperU : forall Γ₁ a Γ₂ Γ₃ e τ,
+  wfterm (Γ₁ ++ a ~ U ++ Γ₂ ++ Γ₃) e τ →
+  wfterm (Γ₁ ++ Γ₂ ++ a ~ U ++ Γ₃) e τ.
+Proof.
+intros Γ₁ a Γ₂ Γ₃ e τ H. dependent induction H; eauto.
+Case "var". constructor.
+intros b Hb; eapply (H b); analyze_binds Hb.
+auto using wfenv_upperU.
+analyze_binds H1.
+Case "app".
+destruct (zip_app_U_inv G1 G2 Γ₁ a (Γ₂ ++ Γ₃)) as [? [? [? [? [? ?]]]]]; auto; subst.
+assert (zip x0 x2 (Γ₂ ++ Γ₃)) as H2 by eauto using zip_remove_U2, zip_U.
+apply zip_app_inv in H2. decompose record H2; clear H2; subst.
+apply wfterm_app with
+  (G1 := x ++ x3 ++ [(a, U)] ++ x4)
+  (G2 := x1 ++ x5 ++ [(a, U)] ++ x6) (t2 := t2); auto using zip_upperU.
+Case "abs". pick fresh x and apply wfterm_abs.
+intros b Hb; eapply (H b); analyze_binds Hb.
+rewrite_env (([(x, T t1)] ++ Γ₁) ++ Γ₂ ++ [(a, U)] ++ Γ₃).
+apply H1; simpl_env; auto.
+Case "pair".
+destruct (zip_app_U_inv G1 G2 Γ₁ a (Γ₂ ++ Γ₃)) as [? [? [? [? [? ?]]]]]; auto; subst.
+assert (zip x0 x2 (Γ₂ ++ Γ₃)) as H2 by eauto using zip_remove_U2, zip_U.
+apply zip_app_inv in H2. decompose record H2; clear H2; subst.
+apply wfterm_pair with
+  (G1 := x ++ x3 ++ [(a, U)] ++ x4)
+  (G2 := x1 ++ x5 ++ [(a, U)] ++ x6); auto using zip_upperU.
+Case "inst". auto using wftyp_upperU.
+Case "gen". pick fresh b and apply wfterm_gen.
+intros b Hb; eapply (H b); analyze_binds Hb.
+rewrite_env (([(b, U)] ++ Γ₁) ++ Γ₂ ++ [(a, U)] ++ Γ₃).
+apply H1; simpl_env; auto.
+Case "exists". pick fresh b and apply wfterm_exists.
+rewrite_env (([(b, E)] ++ Γ₁) ++ Γ₂ ++ [(a, U)] ++ Γ₃).
+apply H0; simpl_env; auto.
+Case "open". ICI
+
 (** Major lemmas about [wfterm] *)
 Lemma wfterm_weakening : forall Γ₁ Γ₂ Γ₃ e τ,
   wfterm (Γ₁ ++ Γ₃) e τ →
