@@ -721,6 +721,102 @@ simpl_env. apply zip_app.
   my_auto.
 Qed.
 
+Lemma zip_remove_T1 : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' x τ,
+  zip (Γ₁ ++ x ~ T τ ++ Γ₁') (Γ₂ ++ x ~ T τ ++ Γ₂') (Γ₃ ++ x ~ T τ ++ Γ₃') →
+  zip Γ₁ Γ₂ Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' x τ H.
+assert (uniq (Γ₁ ++ x ~ T τ ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ x ~ T τ ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ x ~ T τ ++ Γ₃')) by eauto with lngen.
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+apply uniq_app_inv in H4; my_auto.
+apply uniq_app_inv in H3; my_auto.
+destruct H4; destruct H3; subst.
+auto.
+Qed.
+
+Lemma zip_remove_T2 : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' x τ,
+  zip (Γ₁ ++ x ~ T τ ++ Γ₁') (Γ₂ ++ x ~ T τ ++ Γ₂') (Γ₃ ++ x ~ T τ ++ Γ₃') →
+  zip Γ₁' Γ₂' Γ₃'.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' x τ H.
+assert (uniq (Γ₁ ++ x ~ T τ ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ x ~ T τ ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ x ~ T τ ++ Γ₃')) by eauto with lngen.
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+apply uniq_app_inv in H4; my_auto.
+apply uniq_app_inv in H3; my_auto.
+destruct H4; destruct H3; subst.
+auto.
+Qed.
+
+Lemma zip_remove_U1 : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a,
+  zip (Γ₁ ++ a ~ U ++ Γ₁') (Γ₂ ++ a ~ U ++ Γ₂') (Γ₃ ++ a ~ U ++ Γ₃') →
+  zip Γ₁ Γ₂ Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a H.
+assert (uniq (Γ₁ ++ a ~ U ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ a ~ U ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ a ~ U ++ Γ₃')) by eauto with lngen.
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+apply uniq_app_inv in H4; my_auto.
+apply uniq_app_inv in H3; my_auto.
+destruct H4; destruct H3; subst.
+auto.
+Qed.
+
+Lemma zip_remove_U2 : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a,
+  zip (Γ₁ ++ a ~ U ++ Γ₁') (Γ₂ ++ a ~ U ++ Γ₂') (Γ₃ ++ a ~ U ++ Γ₃') →
+  zip Γ₁' Γ₂' Γ₃'.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a H.
+assert (uniq (Γ₁ ++ a ~ U ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ a ~ U ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ a ~ U ++ Γ₃')) by eauto with lngen.
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+apply uniq_app_inv in H4; my_auto.
+apply uniq_app_inv in H3; my_auto.
+destruct H4; destruct H3; subst.
+auto.
+Qed.
+
+Lemma zip_remove_Eq1 : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ,
+  zip (Γ₁ ++ a ~ Eq τ ++ Γ₁') (Γ₂ ++ a ~ Eq τ ++ Γ₂') (Γ₃ ++ a ~ Eq τ ++ Γ₃') →
+  zip Γ₁ Γ₂ Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ H.
+assert (uniq (Γ₁ ++ a ~ Eq τ ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ a ~ Eq τ ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ a ~ Eq τ ++ Γ₃')) by eauto with lngen.
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+apply uniq_app_inv in H4; my_auto.
+apply uniq_app_inv in H3; my_auto.
+destruct H4; destruct H3; subst.
+auto.
+Qed.
+
+Lemma zip_remove_Eq2 : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ,
+  zip (Γ₁ ++ a ~ Eq τ ++ Γ₁') (Γ₂ ++ a ~ Eq τ ++ Γ₂') (Γ₃ ++ a ~ Eq τ ++ Γ₃') →
+  zip Γ₁' Γ₂' Γ₃'.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ H.
+assert (uniq (Γ₁ ++ a ~ Eq τ ++ Γ₁')) by eauto with lngen.
+assert (uniq (Γ₂ ++ a ~ Eq τ ++ Γ₂')) by eauto with lngen.
+assert (uniq (Γ₃ ++ a ~ Eq τ ++ Γ₃')) by eauto with lngen.
+apply zip_app_inv in H. decompose record H; clear H.
+inversion H7; subst.
+apply uniq_app_inv in H4; my_auto.
+apply uniq_app_inv in H3; my_auto.
+destruct H4; destruct H3; subst.
+auto.
+Qed.
+
 Lemma zip_app_inv_strong : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ₁'' Γ₂'' Γ₃'',
   zip Γ₁ Γ₂ Γ₃ →
   zip (Γ₁' ++ Γ₁ ++ Γ₁'') (Γ₂' ++ Γ₂ ++ Γ₂'') (Γ₃' ++ Γ₃ ++ Γ₃'') →
