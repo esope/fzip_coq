@@ -143,7 +143,6 @@ assert (a ∉ ftv_typ t0). unfold ftv_env in H; simpl in H; auto.
 simpl; autorewrite with lngen; auto.
 Qed.
 
-
 Lemma ftv_env_binds : forall Γ a,
   a ∈ ftv_env Γ → exists x, exists τ,
     a ∈ ftv_typ τ ∧ (binds x (T τ) Γ ∨ binds x (Eq τ) Γ).
