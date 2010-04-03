@@ -353,3 +353,12 @@ simpl_env in *. solve_uniq.
 split; congruence.
 Qed.
 
+Ltac gather_atoms ::=
+  let A := gather_atoms_with (fun x : vars => x) in
+  let B := gather_atoms_with (fun x : var => {{ x }}) in
+  let C := gather_atoms_with (fun x : typing_env => dom x) in
+  let D1 := gather_atoms_with (fun x => fv_term x) in
+  let D2 := gather_atoms_with (fun x => ftv_typ x) in
+  let D3 := gather_atoms_with (fun x => ftv_term x) in
+  let D4 := gather_atoms_with (fun x => ftv_env x) in
+  constr:(A \u B \u C \u D1 \u D2 \u D3 \u D4).

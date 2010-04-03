@@ -49,8 +49,13 @@ LNGEN_FILES = \
 
 FILES = \
 	FzipCore_init \
+	FzipCore_val \
+	FzipCore_red \
 	FzipCore_zip \
 	FzipCore_pure \
+	FzipCore_env_typ \
+	FzipCore_typeq \
+	FzipCore_term \
 	FzipCore_soundness \
 #	FzipCore_dec \
 #	FzipCore_sim \

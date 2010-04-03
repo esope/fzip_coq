@@ -1021,3 +1021,29 @@ apply zip_app; try solve_uniq.
 constructor; my_auto.
 apply zip_app; try solve_uniq.
 Qed.
+
+(*
+Lemma zip_assoc : forall Γ₁ Γ₂ Γ₃ Γ₁₂ Γ₂₃ Γ₁₂₃ Γ₁₂₃',
+  zip Γ₁ Γ₂ Γ₁₂ → zip Γ₁₂ Γ₃ Γ₁₂₃ →
+  zip Γ₁ Γ₂₃ Γ₁₂₃' → zip Γ₂ Γ₃ Γ₂₃ →
+  Γ₁₂₃ = Γ₁₂₃'.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁₂ Γ₂₃ Γ₁₂₃ Γ₁₂₃' H H0 H1 H2.
+generalize dependent Γ₃. generalize dependent Γ₂₃.
+generalize dependent Γ₁₂₃. generalize dependent Γ₁₂₃'.
+induction H; intros.
+Case "nil".
+inversion H0; subst; auto. inversion H1; subst.
+auto.
+inversion H2.
+inversion H2; subst. inversion H1; subst.
+  replace G3 with G in * by eauto using zip_unique.
+  f_equal. auto using zip_nil.
+Case "TT".
+inversion H1; subst.
+  inversion H2; subst.
+    inversion H3; subst. f_equal. eauto.
+    inversion H3; subst.
+  clear H1. inversion H3; subst. clear H3. inversion H2; subst. clear H2. f_equal.
+    eapply IHzip; eauto.
+*)
