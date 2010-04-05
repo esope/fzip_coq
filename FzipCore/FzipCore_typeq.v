@@ -517,6 +517,38 @@ apply wftyp_regular with (Γ := b ~ U ++ G).
 simpl; unfold typvar in *; destruct (b == a); subst; auto; try congruence.
 Qed.
 
+Lemma wftypeq_zip12 : forall Γ₁ Γ₂ Γ₃ τ τ',
+  zip Γ₁ Γ₂ Γ₃ → wftypeq Γ₁ τ τ' → wftypeq Γ₂ τ τ'.
+Proof.
+intros Γ₁ Γ₂ Γ₃ τ τ' H H0.
+generalize dependent Γ₃. generalize dependent Γ₂. induction H0; intros; eauto.
+Case "var".
+destruct H. constructor. eauto with fzip. eauto using wfenv_zip12.
+destruct H. constructor. eauto with fzip. eauto using wfenv_zip12.
+destruct H. constructor. eauto with fzip. eauto using wfenv_zip12.
+Case "eq". constructor. eauto with fzip. eauto using wfenv_zip12.
+Case "forall". pick fresh a and apply wftypeq_forall; intros.
+apply H0 with (Γ₃ := a ~ U ++ Γ₃); auto.
+Case "exists". pick fresh a and apply wftypeq_exists; intros.
+apply H0 with (Γ₃ := a ~ U ++ Γ₃); auto.
+Qed.
+
+Lemma wftypeq_zip13 : forall Γ₁ Γ₂ Γ₃ τ τ',
+  zip Γ₁ Γ₂ Γ₃ → wftypeq Γ₁ τ τ' → wftypeq Γ₃ τ τ'.
+Proof.
+intros Γ₁ Γ₂ Γ₃ τ τ' H H0.
+generalize dependent Γ₃. generalize dependent Γ₂. induction H0; intros; eauto.
+Case "var".
+destruct H. constructor. eauto with fzip. eauto using wfenv_zip13.
+destruct H. constructor. eauto with fzip. eauto using wfenv_zip13.
+destruct H. constructor. eauto with fzip. eauto using wfenv_zip13.
+Case "eq". constructor. eauto with fzip. eauto using wfenv_zip13.
+Case "forall". pick fresh a and apply wftypeq_forall; intros.
+apply H0 with (Γ₂ := a ~ U ++ Γ₂); auto.
+Case "exists". pick fresh a and apply wftypeq_exists; intros.
+apply H0 with (Γ₂ := a ~ U ++ Γ₂); auto.
+Qed.
+
 Inductive typeq_unfold : typing_env → typ → typ → Prop :=
 | typeq_unfold_var : forall Γ a,
     wfenv Γ → (binds a U Γ ∨ binds a E Γ) →
