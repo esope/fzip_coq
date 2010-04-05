@@ -70,22 +70,22 @@ rewrite <- tsubst_typ_fresh_eq with (t1 := typ_var_f a) (a1 := b) (t2 := τ); au
 solve_uniq.
 Case "coerce_app".
 inversion H9; subst. inversion H14; subst.
-assert (wftypeq G1 t2' t3) by admit.
-assert (wftypeq G1 t2 τ) by admit. (* wftypeq_arrow_inv *)
+assert (wftypeq G1 t2' t3) by eauto using wftypeq_arrow_inv1.
+assert (wftypeq G1 t2 τ) by eauto using wftypeq_arrow_inv2.
 apply wfterm_coerce with (t' := t2); auto.
-admit. (* wftypeq_zip13 *)
+eauto using wftypeq_zip13.
 apply wfterm_app with (G1 := G1) (G2 := G2) (t2 := t2'); auto.
 apply wfterm_coerce with (t' := t3); auto. apply wftypeq_sym.
-admit. (* wftypeq_zip12 *)
+eauto using wftypeq_zip12.
 Case "coerce_fst".
 inversion H5; subst.
 inversion H10; subst.
-assert (wftypeq Γ t1 τ) by admit. (* wftypeq_prod_inv1 *)
+assert (wftypeq Γ t1 τ) by eauto using wftypeq_prod_inv1.
 apply wfterm_coerce with (t' := t1); eauto.
 Case "coerce_snd".
 inversion H5; subst.
 inversion H10; subst.
-assert (wftypeq Γ t2 τ) by admit. (* wftypeq_prod_inv2 *)
+assert (wftypeq Γ t2 τ) by eauto using wftypeq_prod_inv2.
 apply wfterm_coerce with (t' := t2); eauto.
 Case "coerce_inst".
 inversion H8; subst.
@@ -93,7 +93,7 @@ inversion H10; subst.
 assert (forall a, a ∉ dom Γ →
   wftypeq (a ~ U ++ Γ)
   (open_typ_wrt_typ t (typ_var_f a))
-  (open_typ_wrt_typ t' (typ_var_f a))) by admit. (* wftypeq_forall_inv *)
+  (open_typ_wrt_typ t' (typ_var_f a))) by eauto using wftypeq_forall_inv.
 apply wfterm_coerce with (t' := open_typ_wrt_typ t t2); auto.
 pick fresh a.
 rewrite tsubst_typ_intro with (a1 := a) (t1 := t); auto.
@@ -106,7 +106,7 @@ inversion H9; subst.
 assert (forall a, a ∉ dom (G2 ++ G1) →
   wftypeq (a ~ U ++ G2 ++ G1)
   (open_typ_wrt_typ t (typ_var_f a))
-  (open_typ_wrt_typ t0 (typ_var_f a))) by admit. (* wftypeq_forall_exists *)
+  (open_typ_wrt_typ t0 (typ_var_f a))) by eauto using wftypeq_exists_inv.
 apply wfterm_coerce with (t' := open_typ_wrt_typ t (typ_var_f b)).
 rewrite_env (nil ++ G2 ++ [(b, E)] ++ G1). apply wftypeq_upperE. apply wftypeq_UE. simpl_env; auto.
 pick fresh a.
