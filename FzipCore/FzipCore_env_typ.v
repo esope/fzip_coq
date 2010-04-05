@@ -1138,6 +1138,136 @@ eapply H0 with (Γ₁ := a ~ U ++ Γ₁); auto.
 Qed.
 Hint Resolve wftyp_zip12 wftyp_zip13 wftyp_zip23: fzip.
 
+Lemma wfenv_wftyp_zip13_aux :
+  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+    (wfenv Γ₁ -> wfenv Γ₃)
+    ∧ (forall τ Γ, wftyp (Γ ++ Γ₁) τ -> disjoint Γ Γ₃ →
+      wftyp (Γ ++ Γ₃) τ).
+Proof.
+intros Γ₁ Γ₂ Γ₃ H; induction H; try destruct IHzip as [IHzip1 IHzip2];
+  split; intros; auto.
+Case "wfenv_T".
+inversion H3; subst.
+constructor; auto.
+  assert (dom G2 [=] dom G) by eauto with fzip. fsetdec.
+  rewrite_env (nil ++ G). auto.
+Case "wftype_T".
+rewrite_env ((Γ ++ [(x, T t)]) ++ G); apply IHzip2; simpl_env; auto.
+assert (dom G2 [=] dom G) by eauto with fzip.
+assert (x ∉ dom G). fsetdec.
+solve_uniq.
+Case "wfenv_U".
+inversion H2; inversion H3; subst; auto.
+constructor; auto.
+  assert (dom G2 [=] dom G) by eauto with fzip. fsetdec.
+Case "wftype_U".
+rewrite_env ((Γ ++ [(a, U)]) ++ G); apply IHzip2; simpl_env; auto.
+assert (dom G2 [=] dom G) by eauto with fzip.
+assert (a ∉ dom G). fsetdec.
+solve_uniq.
+Case "wfenv_E".
+inversion H2; inversion H3; subst; auto.
+constructor; auto.
+  assert (dom G2 [=] dom G) by eauto with fzip. fsetdec.
+Case "wftype_E".
+rewrite_env ((Γ ++ [(a, E)]) ++ G); apply IHzip2; simpl_env; auto using wftyp_UE.
+assert (dom G2 [=] dom G) by eauto with fzip.
+assert (a ∉ dom G). fsetdec.
+solve_uniq.
+Case "wfenv_E".
+constructor; auto.
+  assert (dom G2 [=] dom G) by eauto with fzip. fsetdec.
+Case "wftyp_E".
+rewrite_env ((Γ ++ [(a, E)]) ++ G); apply IHzip2; simpl_env; auto.
+apply wftyp_weakening; auto.
+  constructor; auto. apply wfenv_strip with (Γ' := Γ); auto.
+  eauto with fzip.
+  solve_uniq.
+assert (dom G2 [=] dom G) by eauto with fzip.
+assert (a ∉ dom G). fsetdec.
+solve_uniq.
+Case "wfenv_Eq".
+inversion H3; inversion H4; subst; auto.
+constructor; auto.
+  assert (dom G2 [=] dom G) by eauto with fzip. fsetdec.
+  rewrite_env (nil ++ G); auto.
+Case "wftype_Eq".
+rewrite_env ((Γ ++ [(a, Eq t)]) ++ G); apply IHzip2; simpl_env; auto.
+assert (dom G2 [=] dom G) by eauto with fzip.
+assert (a ∉ dom G). fsetdec.
+solve_uniq.
+Qed.
+
+Lemma wfenv_wftyp_zip12_aux :
+  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+    (wfenv Γ₁ -> wfenv Γ₂)
+    ∧ (forall τ Γ, wftyp (Γ ++ Γ₁) τ -> disjoint Γ Γ₂ →
+      wftyp (Γ ++ Γ₂) τ).
+Proof.
+intros Γ₁ Γ₂ Γ₃ H; induction H; try destruct IHzip as [IHzip1 IHzip2];
+  split; intros; auto.
+Case "wfenv_T".
+inversion H3; subst.
+constructor; auto.
+  rewrite_env (nil ++ G2). auto.
+Case "wftype_T".
+rewrite_env ((Γ ++ [(x, T t)]) ++ G2); apply IHzip2; simpl_env; auto.
+solve_uniq.
+Case "wfenv_U".
+inversion H2; subst.
+constructor; auto.
+Case "wftype_U".
+rewrite_env ((Γ ++ [(a, U)]) ++ G2); apply IHzip2; simpl_env; auto.
+solve_uniq.
+Case "wfenv_E".
+inversion H2; inversion H3; subst; auto.
+Case "wftype_E".
+rewrite_env ((Γ ++ [(a, U)]) ++ G2); apply IHzip2; simpl_env; auto using wftyp_EU.
+solve_uniq.
+Case "wfenv_E".
+rewrite_env ((Γ ++ [(a, E)]) ++ G2); apply IHzip2; simpl_env; auto.
+apply wftyp_weakening; auto.
+  constructor; auto. apply wfenv_strip with (Γ' := Γ); auto.
+  eauto with fzip.
+  solve_uniq.
+solve_uniq.
+Case "wfenv_Eq".
+inversion H3; inversion H4; subst; auto.
+constructor; auto.
+  rewrite_env (nil ++ G2); auto.
+Case "wftype_Eq".
+rewrite_env ((Γ ++ [(a, Eq t)]) ++ G2); apply IHzip2; simpl_env; auto.
+solve_uniq.
+Qed.
+
+Lemma wfenv_zip13 : forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+    wfenv Γ₁ -> wfenv Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0. edestruct wfenv_wftyp_zip13_aux; eauto.
+Qed.
+
+Lemma wfenv_zip12 : forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+    wfenv Γ₁ -> wfenv Γ₂.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0. edestruct wfenv_wftyp_zip12_aux; eauto.
+Qed.
+
+Lemma wftyp_zip13_bis : forall Γ₁ Γ₂ Γ₃ τ, zip Γ₁ Γ₂ Γ₃ ->
+    wftyp Γ₁ τ -> wftyp Γ₃ τ.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0 H1.
+rewrite_env (nil ++ Γ₃). rewrite_env (nil ++ Γ₁) in H1.
+edestruct wfenv_wftyp_zip13_aux; eauto.
+Qed.
+
+Lemma wftyp_zip12_bis : forall Γ₁ Γ₂ Γ₃ τ, zip Γ₁ Γ₂ Γ₃ ->
+    wftyp Γ₁ τ -> wftyp Γ₂ τ.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0 H1.
+rewrite_env (nil ++ Γ₂). rewrite_env (nil ++ Γ₁) in H1.
+edestruct wfenv_wftyp_zip12_aux; eauto.
+Qed.
+
 Lemma wfenv_wftyp_zip_inv_aux :
   (forall Γ, wfenv Γ →
     (forall a, a ∈ ftv_env Γ → not (binds a E Γ)) →
