@@ -1096,7 +1096,7 @@ Proof.
 intros Γ₁ Γ₂ Γ₃ τ H H0. generalize dependent Γ₃. generalize dependent Γ₂.
 induction H0; intros; eauto.
 Case "var". constructor; auto.
-destruct H. eapply zip_binds_U12 in H; eauto. tauto.
+destruct H. eauto with fzip.
 destruct H. eauto with fzip.
 destruct H. eauto with fzip.
 Case "forall". apply wftyp_forall with (L := L ∪ dom G ∪ dom Γ₂); intros; auto.
