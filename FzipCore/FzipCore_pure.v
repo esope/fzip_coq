@@ -171,6 +171,28 @@ Case "EU". elimtype False. eapply (H0 a). auto.
 Case "Eq". rewrite IHzip; eauto with fzip; subst; auto.
 Qed.
 
+Lemma zip_pure_eq1 : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ → pure Γ₁ → Γ₂ = Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0. induction H; auto.
+Case "T". f_equal. apply IHzip. intros a Ha. eapply (H0 a); auto.
+Case "U". f_equal. apply IHzip. intros b Hb. eapply (H0 b); auto.
+Case "UE". elimtype False. eapply (H0 a); auto.
+Case "E". f_equal. apply IHzip. intros b Hb. eapply (H0 b); auto.
+Case "Eq". f_equal. apply IHzip. intros b Hb. eapply (H0 b); auto.
+Qed.
+
+Lemma zip_pure_eq2 : forall Γ₁ Γ₂ Γ₃,
+  zip Γ₁ Γ₂ Γ₃ → pure Γ₂ → Γ₁ = Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0. induction H; auto.
+Case "T". f_equal. apply IHzip. intros a Ha. eapply (H0 a); auto.
+Case "U". f_equal. apply IHzip. intros b Hb. eapply (H0 b); auto.
+Case "UE". f_equal. apply IHzip. intros b Hb. eapply (H0 b); auto.
+Case "E". elimtype False. eapply (H0 a); auto.
+Case "Eq". f_equal. apply IHzip. intros b Hb. eapply (H0 b); auto.
+Qed.
+
 Lemma pure_renameU : forall Γ₁ Γ₂ a b,
   pure (Γ₁ ++ a ~ U ++ Γ₂) →
   pure (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ U ++ Γ₂).
