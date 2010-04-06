@@ -196,7 +196,7 @@ Hint Resolve zip_binds_E12 zip_binds_E13 zip_binds_E23 zip_binds_E3_inv: fzip.
 
 Lemma zip_binds_U12 :
   forall Γ₁ Γ₂ Γ₃ a, zip Γ₁ Γ₂ Γ₃ →
-    binds a U Γ₁ → binds a U Γ₂ ∨ binds a E Γ₂.
+    binds a U Γ₁ → binds a U Γ₂.
 Proof.
 intros Γ₁ Γ₂ Γ₃ a H H0. dependent induction H; auto; try solve [analyze_binds H0; intuition].
 Qed.
