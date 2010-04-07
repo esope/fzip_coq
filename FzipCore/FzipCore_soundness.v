@@ -439,38 +439,92 @@ Case "sigma". pick fresh a and apply wfterm_sigma; eauto.
 Qed.
 
 Theorem progress : forall Γ e τ,
+  (forall x τ, not (binds x (T τ) Γ)) →
   wfterm Γ e τ →
   (exists e', e ⇝ e') ∨ result e.
-Proof.
-  intros Γ e τ H.
-  dependent induction H; simpl...
-  Case "typing_app".
-    destruct IHwfterm1 as [[e1' ?] | ?]...
-    destruct IHwfterm2 as [[e2' ?] | ?]...
-    destruct e1; simpl in H1; inversion H1; subst; try solve [inversion H]; eauto 7.
-  Case "abs".
-    pick fresh z. edestruct (H0 z) as [[e1 ?] | ?]...
-    left.
-      exists (term_abs t1 (close_term_wrt_term z e1)).
-      apply red1_abs with (L := L `union` {{z}}); intros...
-      rewrite <- subst_term_spec.
-      rewrite (subst_term_intro z)...
-    right.
-      apply val_abs with (L := L `union` {{z}}); intros...
-      rewrite (subst_term_intro z)...
-  Case "inst".
-    destruct IHwfterm as [[e' ? ] | ? ]...
-    destruct e; simpl in H1; inversion H1; subst; eauto.
-    inversion H0.
-    eauto 7.
-  Case "gen".
-    pick fresh a. edestruct (H0 a) as [[e1 ?] | ?]...
-    left.
-      exists (term_gen (close_term_wrt_typ a e1)).
-      apply red1_gen with (L := L `union` {{a}}); intros.
-      rewrite <- tsubst_term_spec.
-      rewrite (tsubst_term_intro a)...
-    right.
-      apply val_gen with (L := L `union` {{a}}); intros.
-      rewrite (tsubst_term_intro a)...
+Proof with eauto with lngen.
+intros Γ e τ Henv H. induction H; simpl.
+Case "var". elimtype False. intuition eauto.
+Case "app".
+destruct IHwfterm1 as [[? ?] | ?]... intuition eauto with fzip.
+destruct IHwfterm2 as [[? ?] | ?]... intuition eauto with fzip.
+destruct H2.
+  SCase "e val". destruct H3; subst.
+    SSCase "e0 val". destruct H2; subst; eauto; try solve [inversion H0].
+      SSSCase "e coerce". inversion H0; subst. destruct H4; subst.
+        SSSSCase "coerce lam". inversion H2; subst. eauto.
+        SSSSCase "coerce gen (absurd)". elimtype False.
+          inversion H11; subst. eapply wftypeq_arrow_forall_absurd; eauto.
+        SSSSCase "coerce pair (absurd)". elimtype False.
+          inversion H11; subst. eapply wftypeq_prod_arrow_absurd; eauto.
+        SSSSCase "coerce coerce (absurd)". elimtype False. eapply H5; eauto.
+        SSSSCase "coerce exists (absurd)". elimtype False.
+          inversion H11; subst. eapply wftypeq_arrow_exists_absurd; eauto.
+    SSCase "e0 result". left.
+      exists (term_sigma (typ_var_f b) t (term_app (close_term_wrt_typ b e) e0)).
+      constructor. apply red0_sigma_appR with (L := ftv_term e); eauto; auto with lngen.
+  SCase "e result". left.
+    exists (term_sigma (typ_var_f b) t (term_app e (close_term_wrt_typ b e2))).
+    constructor. apply red0_sigma_appL with (L := ftv_term e2); eauto; auto with lngen.
+Case "abs". pick fresh x.
+assert (lc_typ t1). eapply wftyp_regular. eapply wfenv_wftyp_T3.
+  eapply wfterm_wfenv. eauto.
+eauto 6 with lngen.
+Case "pair".
+destruct IHwfterm1 as [[? ?] | ?]... intuition eauto with fzip.
+destruct IHwfterm2 as [[? ?] | ?]... intuition eauto with fzip.
+destruct H2.
+  SCase "e val". destruct H3; subst; auto.
+    SSCase "e0 result". left.
+      exists (term_sigma (typ_var_f b) t (term_pair (close_term_wrt_typ b e) e0)).
+      constructor. apply red0_sigma_pairR with (L := ftv_term e); eauto; auto with lngen.
+  SCase "e result". left.
+    exists (term_sigma (typ_var_f b) t (term_pair e (close_term_wrt_typ b e2))).
+    constructor. apply red0_sigma_pairL with (L := ftv_term e2); eauto; auto with lngen.
+Case "fst". destruct IHwfterm as [[? ?] | ?]... destruct H0; subst.
+  SSCase "e val". destruct H0; subst; try solve [inversion H]; eauto 6.
+    SSSCase "coerce". inversion H; subst. destruct H1; subst.
+      SSSSCase "coerce abs (absurd)". elimtype False.
+        inversion H8; subst. eapply wftypeq_arrow_prod_absurd; eauto.
+      SSSSCase "coerce gen (absurd)". elimtype False.
+        inversion H8; subst. eapply wftypeq_prod_forall_absurd; eauto.
+      SSSSCase "coerce pair". inversion H0; subst. eauto 6.
+      SSSSCase "coerce coerce (absurd)". elimtype False. intuition eauto.
+      SSSSCase "coerce exists (absurd)". elimtype False.
+        inversion H8; subst. eapply wftypeq_prod_exists_absurd; eauto.
+  SSCase "e result". eauto 6.
+Case "snd". destruct IHwfterm as [[? ?] | ?]... destruct H0; subst.
+  SSCase "e val". destruct H0; subst; try solve [inversion H]; eauto 6.
+    SSSCase "coerce". inversion H; subst. destruct H1; subst.
+      SSSSCase "coerce abs (absurd)". elimtype False.
+        inversion H8; subst. eapply wftypeq_arrow_prod_absurd; eauto.
+      SSSSCase "coerce gen (absurd)". elimtype False.
+        inversion H8; subst. eapply wftypeq_prod_forall_absurd; eauto.
+      SSSSCase "coerce pair". inversion H0; subst. eauto 6.
+      SSSSCase "coerce coerce (absurd)". elimtype False. intuition eauto.
+      SSSSCase "coerce exists (absurd)". elimtype False.
+        inversion H8; subst. eapply wftypeq_prod_exists_absurd; eauto.
+  SSCase "e result". eauto 6.
+Case "inst". destruct IHwfterm as [[? ?] | ?]... destruct H1; subst.
+  SCase "e val". destruct H1; subst; try solve [inversion H0]...
+    SSCase "gen". eauto 6 with lngen.
+    SSCase "coerce". inversion H0; subst. destruct H2; subst.
+      SSSCase "abs (absurd)". elimtype False. inversion H9; subst.
+        eapply wftypeq_arrow_forall_absurd; eauto.
+      SSSCase "gen". eauto 6 with lngen.
+      SSSCase "pair (absurd)". elimtype False. inversion H9; subst.
+        eapply wftypeq_prod_forall_absurd; eauto.
+      SSSCase "coerce (absurd)". elimtype False. intuition eauto.
+      SSSCase "exists (absurd)". elimtype False. inversion H9; subst.
+        eapply wftypeq_exists_forall_absurd; eauto.
+  SCase "e result". left.
+    exists (term_sigma (typ_var_f b) t0 (term_inst e (close_typ_wrt_typ b t))).
+    constructor. apply red0_sigma_inst with (L := ftv_typ t); eauto with lngen.
+Case "gen". pick fresh a. eauto 6 with lngen.
+Case "exists". pick fresh a. destruct (H0 a) as [[? ?] | ?]...
+  intros. intro. eapply (Henv x τ). analyze_binds H1.
+  SCase "e reduces". left. exists (term_exists (close_term_wrt_typ a x)).
+
+ICI (needs renaming lemma for reduction)
+
 Qed.
