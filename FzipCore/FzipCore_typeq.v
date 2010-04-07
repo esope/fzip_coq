@@ -413,6 +413,58 @@ rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ U ++ Γ₁) ++ [(b, E)] +
 auto.
 Qed.
 
+Lemma wftypeq_renameEq : forall Γ₁ a Γ₂ τ τ' b τ₀,
+  wftypeq (Γ₁ ++ a ~ Eq τ₀ ++ Γ₂) τ τ' →
+  b ∉ dom (Γ₁ ++ Γ₂) →
+  wftypeq (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ Eq τ₀ ++ Γ₂)
+    (tsubst_typ (typ_var_f b) a τ)
+    (tsubst_typ (typ_var_f b) a τ').
+Proof.
+intros Γ₁ a Γ₂ τ τ' b τ₀ H H0. dependent induction H; simpl; simpl_env; eauto.
+Case "var". destruct (a == a0); subst.
+SCase "a = a0". constructor. eauto 7. auto using wfenv_renameEq.
+SCase "a ≠ a0". constructor.
+destruct H. analyze_binds H.
+  replace (@U typ) with (tag_map (tsubst_typ (typ_var_f b) a0) U) by reflexivity.
+    unfold env_map. auto.
+destruct H. analyze_binds H.
+  replace (@E typ) with (tag_map (tsubst_typ (typ_var_f b) a0) E) by reflexivity.
+    unfold env_map. auto.
+destruct H. right; right. unfold env_map. analyze_binds H; eauto.
+  exists (tsubst_typ (typ_var_f b) a0 x).
+    replace (Eq (tsubst_typ (typ_var_f b) a0 x)) with (tag_map (tsubst_typ (typ_var_f b) a0) (Eq x)) by reflexivity.
+    auto.
+auto using wfenv_renameEq.
+Case "eq". destruct (a == a0); subst.
+SCase "a = a0".
+assert (t = τ₀). assert (Eq t = Eq τ₀). eapply binds_unique; eauto with lngen. congruence.
+subst.
+rewrite tsubst_typ_fresh_eq. constructor; auto using wfenv_renameEq.
+assert (ftv_typ τ₀ [<=] dom Γ₂).
+  apply wftyp_ftv. apply wfenv_wftyp_Eq3 with (x := a0). eauto using wfenv_strip.
+assert (uniq (Γ₁ ++ [(a0, Eq τ₀)] ++ Γ₂)) by eauto with lngen.
+solve_uniq.
+SCase "a ≠ a0". constructor.
+analyze_binds H.
+replace (Eq (tsubst_typ (typ_var_f b) a0 t)) with (tag_map (tsubst_typ (typ_var_f b) a0) (Eq t)) by reflexivity.
+unfold env_map. auto.
+rewrite tsubst_typ_fresh_eq. auto.
+assert (ftv_typ t [<=] dom Γ₂).
+  apply wftyp_ftv. eapply wfenv_wftyp_Eq2; eauto.
+  apply wfenv_strip with (Γ' := Γ₁ ++ a0 ~ Eq τ₀). simpl_env; auto.
+assert (uniq (Γ₁ ++ a0 ~ Eq τ₀ ++ Γ₂)) by auto with lngen.
+solve_uniq.
+auto using wfenv_renameEq.
+Case "forall". pick fresh c and apply wftypeq_forall.
+repeat rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ U ++ Γ₁) ++ [(b, Eq τ₀)] ++ Γ₂).
+auto.
+Case "exists". pick fresh c and apply wftypeq_exists.
+repeat rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ U ++ Γ₁) ++ [(b, Eq τ₀)] ++ Γ₂).
+auto.
+Qed.
+
 Lemma wftypeq_upperE: forall Γ₁ Γ₂ Γ₃ a τ τ',
     wftypeq (Γ₁ ++ a ~ E ++ Γ₂ ++ Γ₃) τ τ' →
     wftypeq (Γ₁ ++ Γ₂ ++ a ~ E ++ Γ₃) τ τ'.

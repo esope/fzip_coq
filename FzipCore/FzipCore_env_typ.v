@@ -778,6 +778,64 @@ Proof.
 destruct wfenv_wftyp_renameE_aux as [_ H]. intros. eapply H; eauto.
 Qed.
 
+Lemma wfenv_wftyp_renameEq_aux:
+  (forall Γ, wfenv Γ → forall Γ₁ Γ₂ a b τ,
+    Γ = Γ₁ ++ a ~ Eq τ ++ Γ₂ →
+    b ∉ dom (Γ₂ ++ Γ₁) →
+    wfenv (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ Eq τ ++ Γ₂))
+  ∧ (forall Γ τ, wftyp Γ τ → forall Γ₁ Γ₂ a b τ',
+    Γ = Γ₁ ++ a ~ Eq τ' ++ Γ₂ →
+    b ∉ dom (Γ₂ ++ Γ₁) →
+    wftyp (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ Eq τ' ++ Γ₂) (tsubst_typ (typ_var_f b) a τ)).
+Proof.
+apply wfenv_wftyp_mut_ind; intros; subst; simpl; simpl_env; eauto.
+Case "nil".
+assert (binds a (Eq τ) nil) as H1. rewrite H; auto.
+analyze_binds H1.
+Case "T". destruct Γ₁; inversion H0; subst; simpl; simpl_env in *.
+constructor. unfold env_map; auto. eauto.
+Case "U". destruct Γ₁; inversion H0; subst; simpl; simpl_env in *; auto.
+constructor. unfold env_map; auto. eauto.
+Case "E". destruct Γ₁; inversion H0; subst; simpl; simpl_env in *; auto.
+constructor. unfold env_map; auto. eauto.
+Case "Eq". destruct Γ₁; inversion H0; subst; simpl; simpl_env in *; auto.
+constructor. unfold env_map; auto. eauto.
+Case "var". destruct (a == a0); subst; constructor; simpl_env in *; eauto 7.
+unfold env_map.
+destruct o. replace (@U typ) with (tag_map (tsubst_typ (typ_var_f b) a0) U) by reflexivity.
+  analyze_binds H0.
+destruct H0. replace (@E typ) with (tag_map (tsubst_typ (typ_var_f b) a0) E) by reflexivity.
+  analyze_binds H0.
+destruct H0. right; right.
+  analyze_binds H0; eauto.
+  exists (tsubst_typ (typ_var_f b) a0 x).
+  replace (Eq (tsubst_typ (typ_var_f b) a0 x)) with
+  (tag_map (tsubst_typ (typ_var_f b) a0) (Eq x)) by reflexivity.
+  auto.
+Case "forall". apply wftyp_forall with (L := L ∪ {{a}} ∪ {{b}}); intros.
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ Eq τ' ++ Γ₂). rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
+Case "exists". apply wftyp_exists with (L := L ∪ {{a}} ∪ {{b}}); intros.
+rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ Eq τ' ++ Γ₂). rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
+Qed.
+
+Lemma wfenv_renameEq:
+  forall Γ₁ Γ₂ a b τ,
+    wfenv (Γ₁ ++ a ~ Eq τ ++ Γ₂) →
+    b ∉ dom (Γ₂ ++ Γ₁) →
+    wfenv (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ Eq τ ++ Γ₂).
+Proof.
+destruct wfenv_wftyp_renameEq_aux as [H _]. intros. eapply H; eauto.
+Qed.
+
+Lemma wftyp_renameEq:
+  forall Γ₁ Γ₂ τ a b τ',
+    wftyp (Γ₁ ++ a ~ Eq τ' ++ Γ₂) τ →
+    b ∉ dom (Γ₂ ++ Γ₁) →
+    wftyp (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ Eq τ' ++ Γ₂) (tsubst_typ (typ_var_f b) a τ).
+Proof.
+destruct wfenv_wftyp_renameEq_aux as [_ H]. intros. eapply H; eauto.
+Qed.
+
 (** Swapping in the context *)
 Lemma wfenv_wftyp_upperE_aux:
   (forall Γ, wfenv Γ → forall Γ₁ Γ₂ Γ₃ a,

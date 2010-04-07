@@ -203,3 +203,18 @@ intros a0 H0.
 replace (@U typ) with (tag_map (tsubst_typ (typ_var_f b) a) U) in H0 by reflexivity.
 eapply (H a0). analyze_binds H0; eauto with lngen.
 Qed.
+
+Lemma pure_renameEq : forall Γ₁ Γ₂ a b τ,
+  pure (Γ₁ ++ a ~ Eq τ ++ Γ₂) →
+  pure (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ Eq τ ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ a b τ H.
+unfold env_map.
+intros a0 H0.
+eapply (H a0). analyze_binds H0. clear H.
+induction Γ₁; simpl_env in *.
+inversion BindsTac.
+destruct a1. destruct t; analyze_binds BindsTac.
+simpl in *. analyze_binds BindsTac0.
+simpl in *. analyze_binds BindsTac0.
+Qed.
