@@ -109,27 +109,17 @@ Case "sigma_open".
 Case "sigma_sigma".
   pick fresh a2; pick fresh a1.
   apply result_regular in H; inversion H; subst.
-  apply (lc_term_sigma_exists a2); auto.
-  rewrite (H3 a2); auto.
-    assert
-      (lc_term
-        (open_term_wrt_typ
-          (term_sigma (typ_var_f b2) t2 e)
-          (typ_var_f a2))) as H11 by auto;
-      inversion H11; subst; auto.
+  assert (lc_term
+       (open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1)))
+  by auto.
+  unfold open_term_wrt_typ in H3; simpl open_term_wrt_typ_rec in H3; inversion H3; subst.
+  apply (lc_term_sigma_exists a2); auto. rewrite (H0 a1); auto with lngen.
   unfold open_term_wrt_typ; simpl.
+  unfold open_typ_wrt_typ in H1.
+  rewrite <- (H1 a2); auto.
   apply (lc_term_sigma_exists a1); auto.
-  rewrite (H2 a2) in H9; auto.
-  assert (open_term_wrt_typ_rec 1 (typ_var_f a2) e'
-  = open_term_wrt_typ_rec 1 (typ_var_f a1) e) as Heq.
-    apply (H4 a1 a2); auto.
-    unfold open_term_wrt_typ; simpl; rewrite (H3 a1); auto.
-    unfold open_term_wrt_typ; simpl; rewrite (H2 a2); auto.
-  rewrite Heq; clear Heq.
-  assert
-    (lc_term (open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1))) as H11 by auto.
-  unfold open_term_wrt_typ in H11; simpl in H11; inversion H11; subst.
-  auto.
+  unfold open_term_wrt_typ in H12.
+  unfold open_term_wrt_typ. rewrite <- H2; auto.
 Qed.
 Hint Resolve red0_regular1 red0_regular2: lngen.
 
