@@ -1075,10 +1075,42 @@ apply wftypeq_algtypeq in H. destruct H as [? [? ?]].
 inversion H; subst. inversion H0; subst.
 Qed.
 
+Lemma wftypeq_forall_arrow_absurd : forall Γ τ τ₁' τ₂',
+  wftypeq Γ (typ_forall τ) (typ_arrow τ₁' τ₂') → False.
+Proof.
+intros Γ τ τ₁' τ₂' H.
+apply wftypeq_algtypeq in H. destruct H as [? [? ?]].
+inversion H; subst. inversion H0; subst.
+Qed.
+
+Lemma wftypeq_forall_prod_absurd : forall Γ τ τ₁' τ₂',
+  wftypeq Γ (typ_forall τ) (typ_prod τ₁' τ₂') → False.
+Proof.
+intros Γ τ τ₁' τ₂' H.
+apply wftypeq_algtypeq in H. destruct H as [? [? ?]].
+inversion H; subst. inversion H0; subst.
+Qed.
+
 Lemma wftypeq_forall_exists_absurd : forall Γ τ τ',
   wftypeq Γ (typ_forall τ) (typ_exists τ') → False.
 Proof.
 intros Γ τ τ' H.
+apply wftypeq_algtypeq in H. destruct H as [? [? ?]].
+inversion H; subst. inversion H0; subst.
+Qed.
+
+Lemma wftypeq_exists_arrow_absurd : forall Γ τ τ₁' τ₂',
+  wftypeq Γ (typ_exists τ) (typ_arrow τ₁' τ₂') → False.
+Proof.
+intros Γ τ τ₁' τ₂' H.
+apply wftypeq_algtypeq in H. destruct H as [? [? ?]].
+inversion H; subst. inversion H0; subst.
+Qed.
+
+Lemma wftypeq_exists_prod_absurd : forall Γ τ τ₁' τ₂',
+  wftypeq Γ (typ_exists τ) (typ_prod τ₁' τ₂') → False.
+Proof.
+intros Γ τ τ₁' τ₂' H.
 apply wftypeq_algtypeq in H. destruct H as [? [? ?]].
 inversion H; subst. inversion H0; subst.
 Qed.
