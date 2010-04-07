@@ -379,55 +379,7 @@ rewrite_env (([(a, Eq t)] ++ G2) ++ [(c, E)] ++ x ++ G0).
 apply wfterm_open. solve_uniq.
 rewrite_env ([(a, Eq t)] ++ (G2 ++ x) ++ G0). apply H10; auto.
 solve_uniq.
-Case "sigma_sigma".
-pick fresh a0.
-assert (wfterm ([(a0, Eq t1)] ++ G2 ++ G1)
-(open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a0))
-(tsubst_typ (typ_var_f a0) b1 τ))
-by auto.
-unfold open_term_wrt_typ in H4; simpl open_term_wrt_typ_rec in H4.
-inversion H4; subst.
-destruct G3; inversion H5; subst.
-assert (binds b2 E ((a0, Eq t1) :: G2 ++ G1)). rewrite <- H5; auto.
-assert (uniq ([(a0, Eq t1)] ++ G2 ++ G1)) by eauto with lngen.
-assert (uniq (G3 ++ (b2, E) :: G0)). rewrite H8. solve_uniq.
-clear H4 H13 L1.
-analyze_binds H6.
-SCase "b2 binds in G2".
-apply binds_decomp in BindsTac0. destruct BindsTac0 as [? [? ?]]. subst.
-simpl_env in *. apply uniq_app_inv in H8; auto. destruct H8; subst.
-pick fresh a2 and apply wfterm_sigma. solve_uniq.
-unfold open_term_wrt_typ; simpl open_term_wrt_typ_rec.
-rewrite_env (([(a2, Eq t2')] ++ x ++ x0) ++ [(b1, E)] ++ G1).
-pick fresh a1 and apply wfterm_sigma. solve_uniq.
-(* unfold open_term_wrt_typ. rewrite <- H3; auto. *)
-rewrite tsubst_typ_tsubst_typ; auto.
-simpl tsubst_typ. unfold typvar; destruct (a2 == b1); subst.
-SSCase "a2 = b1 (absurd)". clear H9 H7 H12 H11 Fr Fr1.
-  assert (b1 ≠ b1). fsetdec. congruence.
-SSCase "a2 ≠ b1".
-assert (wfterm ([(a1, Eq t1)] ++ x ++ b2 ~ E ++ x0 ++ G1)
-(open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1))
-(tsubst_typ (typ_var_f a1) b1 τ))
-by auto. clear H10.
-unfold open_term_wrt_typ in H4; simpl open_term_wrt_typ_rec in H4.
-inversion H4; subst. destruct G2; inversion H6; subst.
-simpl_env in H13.
-apply uniq_app_inv in H13. decompose record H13; clear H13; subst. clear H6.
-unfold open_typ_wrt_typ in H2; rewrite <- (H2 a2); auto.
-unfold open_term_wrt_typ. rewrite <- H3; auto.
-
-
-
-
-
-rewrite (H1 a1); auto.
-
-
-
-
-
-SCase "b2 binds in G1".
+Case "sigma_nu".
 
 
 ICI

@@ -13,6 +13,12 @@ Case "nu_sigma".
   apply H; auto.
   apply result_regular.
   eapply (H2 b a); auto; reflexivity.
+Case "sigma_nu".
+  apply (lc_term_nu_exists c).
+  unfold open_term_wrt_typ; simpl.
+  pick fresh a. apply (lc_term_sigma_exists a); auto.
+  apply H; auto.
+  apply result_regular. apply H1; auto.
 Qed.
 
 Lemma red0_regular2 : forall e e', red0 e e' → lc_term e'.
@@ -106,20 +112,12 @@ Case "sigma_open".
   apply (lc_term_sigma_exists a); auto.
   unfold open_term_wrt_typ; simpl.
   constructor; auto. apply H5.
-Case "sigma_sigma".
-  pick fresh a2; pick fresh a1.
-  apply result_regular in H; inversion H; subst.
-  assert (lc_term
-       (open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1)))
-  by auto.
-  unfold open_term_wrt_typ in H3; simpl open_term_wrt_typ_rec in H3; inversion H3; subst.
-  apply (lc_term_sigma_exists a2); auto. rewrite (H0 a1); auto with lngen.
+Case "sigma_nu".
+  pick fresh a. apply (lc_term_sigma_exists a); auto.
   unfold open_term_wrt_typ; simpl.
-  unfold open_typ_wrt_typ in H1.
-  rewrite <- (H1 a2); auto.
-  apply (lc_term_sigma_exists a1); auto.
-  unfold open_term_wrt_typ in H12.
+  apply (lc_term_nu_exists c); auto.
   unfold open_term_wrt_typ. rewrite <- H2; auto.
+  apply result_regular; auto.
 Qed.
 Hint Resolve red0_regular1 red0_regular2: lngen.
 
