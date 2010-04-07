@@ -380,48 +380,68 @@ apply wfterm_open. solve_uniq.
 rewrite_env ([(a, Eq t)] ++ (G2 ++ x) ++ G0). apply H10; auto.
 solve_uniq.
 Case "sigma_nu".
-
-
-ICI
-
-
+pick fresh a.
+assert (wfterm ([(a, E)] ++ Γ)
+(open_term_wrt_typ (term_sigma (typ_var_f b) t e) (typ_var_f a)) τ)
+by auto.
+unfold open_term_wrt_typ in H5; simpl open_term_wrt_typ_rec in H5.
+inversion H5; subst.
+destruct G2; inversion H6; subst.
+SCase "b = a (absurd)". assert (a ∉ singleton a) by auto. elimtype False. clear Fr. fsetdec.
+SCase "b ≠ a". simpl_env in *.
+apply wfterm_sigma with (L := L ∪ L1 ∪ {{ a }}); auto; intros.
+unfold open_term_wrt_typ; simpl open_term_wrt_typ_rec.
+apply wfterm_nu with (L := L ∪ {{ a0 }} ∪ dom (G2 ++ G1)); intros.
+unfold open_term_wrt_typ. rewrite <- H3; auto.
+replace (open_term_wrt_typ_rec 0 (typ_var_f a0)
+       (open_term_wrt_typ_rec 1 (typ_var_f a1) e)) with
+(tsubst_term (typ_var_f a1) a
+  (open_term_wrt_typ_rec 0 (typ_var_f a0)
+    (open_term_wrt_typ_rec 1 (typ_var_f a) e))).
+replace (tsubst_typ (typ_var_f a0) b τ) with
+(tsubst_typ (typ_var_f a1) a (tsubst_typ (typ_var_f a0) b τ)).
+rewrite_env (env_map (tsubst_typ (typ_var_f a1) a) nil ++ [(a1, E)] ++ [(a0, Eq (open_typ_wrt_typ t (typ_var_f c)))] ++ G2 ++ G1).
+apply wfterm_renameE. apply wfterm_lowerE. 
+replace (open_typ_wrt_typ t (typ_var_f c)) with
+  (open_typ_wrt_typ t (typ_var_f a)).
+apply H13; auto.
+rewrite tsubst_typ_intro with (a1 := a) (t1 := t) (t2 := typ_var_f c); auto.
+rewrite tsubst_typ_fresh_eq; auto.
+unfold ftv_env; simpl.
+assert (ftv_typ (open_typ_wrt_typ t (typ_var_f c)) [<=]
+ftv_typ (typ_var_f c) ∪ ftv_typ t) by auto with lngen.
+simpl in H10. assert (a ∉ ftv_typ t) by auto. assert (a ∉ singleton c) by auto.
+clear Fr H4 H12 H8. fsetdec.
+simpl_env; auto.
+apply tsubst_typ_fresh_eq.
+assert (ftv_typ (tsubst_typ (typ_var_f a0) b τ) [<=]
+  ftv_typ (typ_var_f a0) ∪ remove b (ftv_typ τ))
+by auto with lngen.
+simpl in H10. assert (a ∉ ftv_typ τ) by auto. clear H4 Fr H12 H9. fsetdec.
+rewrite tsubst_term_open_term_wrt_typ_rec; auto.
+rewrite tsubst_term_open_term_wrt_typ_rec; auto.
+simpl.
+unfold typvar; destruct (a0 == a); subst.
+assert (a ≠ a) by auto. congruence.
+destruct (a == a); subst; try congruence.
+rewrite tsubst_term_fresh_eq; auto.
+Qed.
 
 Theorem subject_reduction : forall Γ e e' τ,
   wfterm Γ e τ → e ⇝ e' → wfterm Γ e' τ.
-Proof with eauto.
-  intros Γ e e' τ H. generalize dependent e'.
-  dependent induction H.
-  Case "var".
-    intros e' J; inversion J; subst; inversion H1.
-  Case "app".
-    intros e' J; inversion J; subst...
-    inversion H; subst; inversion H1; subst.
-    pick fresh z.
-    rewrite (subst_term_intro z)...
-    eapply wfterm_subst with (Γ₁ := nil); simpl_env...
-  Case "abs".
-    intros e' J; inversion J; subst.
-    inversion H1.
-    pick fresh z and apply wfterm_abs...
-  Case "inst".
-    intros e' J; inversion J; subst; auto.
-    inversion H1; subst.
-    inversion H0; subst.
-    pick fresh a.
-    rewrite (tsubst_term_intro a)...
-    rewrite (tsubst_typ_intro a)...
-    rewrite_env (env_map (tsubst_typ t a) nil ++ G).
-    eapply wfterm_tsubst; simpl_env...
-  Case "gen".
-    intros e' J; inversion J; subst.
-    inversion H1.
-    pick fresh a and apply wfterm_gen...
+Proof.
+intros Γ e e' τ H. generalize dependent e'.
+induction H; intros e' Hred; inversion Hred; subst; eauto;
+try solve [ inversion H2 | eapply sr0; eauto ].
+Case "exists". pick fresh a and apply wfterm_exists; eauto.
+Case "nu". pick fresh a and apply wfterm_nu; eauto.
+Case "sigma". pick fresh a and apply wfterm_sigma; eauto.
 Qed.
 
 Theorem progress : forall Γ e τ,
   wfterm Γ e τ →
-  (exists e', e ⇝ e') ∨ val e.
-Proof with eauto.
+  (exists e', e ⇝ e') ∨ result e.
+Proof.
   intros Γ e τ H.
   dependent induction H; simpl...
   Case "typing_app".
