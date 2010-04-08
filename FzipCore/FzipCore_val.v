@@ -51,44 +51,60 @@ Lemma value_is_normal : forall v, val v → ~ exists e, v ⇝ e.
 Proof.
 destruct value_is_normal_aux as [_ Th]. intuition auto.
 Qed.
+*)
 
 (** Renaming lemmas *)
-Lemma pval_val_renaming : forall x y,
-  (forall v, pval v → pval (subst_term (term_var_f y) x v)) ∧
-  (forall v, val v → val (subst_term (term_var_f y) x v)).
-Proof.
-intros x y.
-apply pval_val_mut_ind; intros; simpl; auto.
-Case "var". destruct (x0 == x); auto.
-Case "abs". pick fresh z and apply val_abs; auto.
-  rewrite subst_term_open_term_wrt_term_var; auto.
-Case "gen". pick fresh a and apply val_gen; auto.
-  rewrite subst_term_open_term_wrt_typ_var; auto.
-Qed.
-
-Lemma val_renaming : forall x y v,
-  val v → val (subst_term (term_var_f y) x v).
-Proof.
-intros x y v H. destruct (pval_val_renaming x y); auto.
-Qed.
-Hint Resolve val_renaming.
-
-Lemma pval_val_trenaming : forall a b,
-  (forall v, pval v → pval (tsubst_term (typ_var_f b) a v)) ∧
-  (forall v, val v → val (tsubst_term (typ_var_f b) a v)).
+Lemma val_result_trenaming : forall a b,
+  (forall v, val v → val (tsubst_term (typ_var_f b) a v)) ∧
+  (forall r, result r → result (tsubst_term (typ_var_f b) a r)).
 Proof.
 intros a b.
-apply pval_val_mut_ind; intros; simpl; auto with lngen.
-Case "abs". pick fresh z and apply val_abs; auto with lngen.
-  rewrite tsubst_term_open_term_wrt_term_var; auto.
-Case "gen". pick fresh c and apply val_gen; auto.
-  rewrite tsubst_term_open_term_wrt_typ_var; auto.
+apply val_result_mut_ind; intros; subst; simpl; auto.
+Case "val abs". inversion l0; subst.
+  constructor. auto with lngen.
+  constructor; intros. auto with lngen.
+  rewrite tsubst_term_open_term_wrt_term_var. auto with lngen.
+Case "val gen". inversion l; subst.
+  constructor. apply lc_term_gen_exists with (a1 := b).
+  replace (open_term_wrt_typ (tsubst_term (typ_var_f b) a e) (typ_var_f b))
+  with (open_term_wrt_typ (tsubst_term (typ_var_f b) a e)
+    (tsubst_typ (typ_var_f b) a (typ_var_f a))).
+  rewrite <- tsubst_term_open_term_wrt_typ; auto with lngen.
+  simpl. destruct (a == a); congruence.
+Case "val coerce". constructor; intros; auto with lngen.
+  destruct e; simpl; congruence.
+Case "val exists". pick fresh b1 and apply val_exists; intros; subst.
+  reflexivity.
+  replace (typ_var_f b1) with (tsubst_typ (typ_var_f b) a (typ_var_f b1)).
+  rewrite <- tsubst_typ_open_typ_wrt_typ; auto with lngen.
+    autorewrite with lngen; auto.
+  inversion H2; subst.
+  replace (typ_var_f b0) with (tsubst_typ (typ_var_f b) a (typ_var_f b0)).
+  rewrite <- tsubst_term_open_term_wrt_typ_rec; auto.
+  replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0)).
+  rewrite <- tsubst_term_open_term_wrt_typ; auto.
+  eapply (H b0 a0); auto. reflexivity.
+  autorewrite with lngen; auto.
+  autorewrite with lngen; auto.
+Case "result". destruct (b0 == a); subst.
+SCase "b0 = a". pick fresh a0 and apply result_sigma. auto with lngen.
+replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0)).
+rewrite <- tsubst_term_open_term_wrt_typ; auto.
+autorewrite with lngen; auto.
+SCase "b0 ≠ a". pick fresh a0 and apply result_sigma. auto with lngen.
+replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0)).
+rewrite <- tsubst_term_open_term_wrt_typ; auto.
+autorewrite with lngen; auto.
 Qed.
 
 Lemma val_trenaming : forall a b v,
   val v → val (tsubst_term (typ_var_f b) a v).
 Proof.
-intros a b v H. destruct (pval_val_trenaming a b); auto.
+intros. edestruct val_result_trenaming; eauto.
 Qed.
-Hint Resolve val_trenaming.
-*)
+
+Lemma result_trenaming : forall a b r,
+  result r → result (tsubst_term (typ_var_f b) a r).
+Proof.
+intros. edestruct val_result_trenaming; eauto.
+Qed.
