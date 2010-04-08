@@ -170,18 +170,116 @@ rewrite subst_term_intro with (x1 := x) (e1 := e); auto.
 rewrite subst_term_intro with (x1 := x) (e1 := e'); auto.
 Qed.
 Hint Resolve red1_open.
+*)
 
-Lemma red0_tsubst : forall a τ e e', lc_typ τ → red0 e e' →
-  red0 (tsubst_term τ a e) (tsubst_term τ a e').
-Proof.
-intros a τ e e' Hlc H.
-inversion H; subst; simpl.
-rewrite tsubst_term_open_term_wrt_term; auto. apply red0_beta; auto with lngen.
-assert (lc_term (tsubst_term τ a (term_abs t e1))) by auto with lngen; auto.
-rewrite tsubst_term_open_term_wrt_typ; auto. apply red0_beta_t; auto with lngen.
-assert (lc_term (tsubst_term τ a (term_gen e0))) by auto with lngen; auto.
+Lemma red0_trenaming : forall a b e e', red0 e e' →
+  red0 (tsubst_term (typ_var_f b) a e) (tsubst_term (typ_var_f b) a e').
+Proof with auto using val_trenaming, result_trenaming with lngen.
+intros a b e e' H. inversion H; subst; simpl.
+Case "beta_v". rewrite tsubst_term_open_term_wrt_term; auto.
+constructor... unsimpl (tsubst_term (typ_var_f b) a (term_abs t e1))...
+Case "projL". inversion H0; subst; try congruence...
+Case "projR". inversion H0; subst; try congruence...
+Case "beta_t". rewrite tsubst_term_open_term_wrt_typ; auto.
+constructor... unsimpl (tsubst_term (typ_var_f b) a (term_gen e0))...
+Case "open exists". destruct (b0 == a); subst.
+SCase "b0 = a". rewrite tsubst_term_open_term_wrt_typ; auto.
+simpl. destruct (a == a); try congruence.
+pick fresh c and apply red0_open_exists.
+rewrite tsubst_term_open_term_wrt_typ_var...
+SCase "b0 ≠ a". rewrite tsubst_term_open_term_wrt_typ; auto.
+simpl. destruct (b0 == a); try congruence.
+pick fresh c and apply red0_open_exists.
+rewrite tsubst_term_open_term_wrt_typ_var...
+Case "nu sigma".  pick fresh c and apply red0_nu_sigma; intros; subst.
+rewrite tsubst_typ_open_typ_wrt_typ_var...
+rewrite tsubst_typ_open_typ_wrt_typ_var...
+rewrite tsubst_term_open_term_wrt_typ_var...
+inversion H7; subst; clear H7.
+replace (typ_var_f b0) with (tsubst_typ (typ_var_f b) a (typ_var_f b0)).
+rewrite <- tsubst_term_open_term_wrt_typ_rec; auto.
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+apply result_trenaming. eapply (H3 b0 a0); auto. reflexivity.
+autorewrite with lngen; auto.
+inversion H7; subst; clear H7.
+rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
+replace (open_term_wrt_typ_rec 1 (typ_var_f b0) (tsubst_term (typ_var_f b) a e0))
+with (open_term_wrt_typ_rec 1 (tsubst_typ (typ_var_f b) a (typ_var_f b0)) (tsubst_term (typ_var_f b) a e0)).
+rewrite <- tsubst_term_open_term_wrt_typ_rec; auto.
+rewrite tsubst_term_open_term_wrt_typ_var; auto.
+rewrite <- tsubst_term_tsubst_term; auto.
+f_equal. eapply H4; auto. reflexivity.
+f_equal. apply tsubst_typ_fresh_eq; auto.
+Case "coerce app". constructor...
+unsimpl (tsubst_term (typ_var_f b) a (term_abs t2' e1))...
+Case "coerce fst". inversion H2; subst; try congruence...
+Case "coerce snd". inversion H2; subst; try congruence...
+Case "coerce inst". rewrite tsubst_typ_open_typ_wrt_typ; auto.
+constructor...
+unsimpl (tsubst_typ (typ_var_f b) a (typ_forall t1))...
+unsimpl (tsubst_term (typ_var_f b) a (term_gen e0))...
+Case "coerce open". destruct (b0 == a); subst.
+SCase "b0 = a". rewrite tsubst_typ_open_typ_wrt_typ; auto.
+simpl. destruct (a == a); try congruence. constructor...
+unsimpl (tsubst_typ (typ_var_f b) a (typ_exists t))...
+unsimpl (tsubst_term (typ_var_f b) a (term_exists e0))...
+SCase "b0 ≠ a". rewrite tsubst_typ_open_typ_wrt_typ; auto.
+simpl. destruct (b0 == a); try congruence. constructor...
+unsimpl (tsubst_typ (typ_var_f b) a (typ_exists t))...
+unsimpl (tsubst_term (typ_var_f b) a (term_exists e0))...
+Case "coerce coerce". constructor...
+unsimpl (tsubst_term (typ_var_f b) a (term_coerce e0 t1))...
+Case "sigma app". destruct (b0 == a); subst.
+SCase "b0 = a". destruct (b == a); subst.
+SSCase "b = a".
+repeat rewrite tsubst_term_var_self. repeat rewrite tsubst_typ_var_self...
+SSCase "b ≠ a". pick fresh c and apply red0_sigma_appL...
+replace (term_sigma (typ_var_f b) (tsubst_typ (typ_var_f b) a t)
+        (tsubst_term (typ_var_f b) a e1))
+ with (tsubst_term (typ_var_f b) a (term_sigma (typ_var_f a) t e1))...
+simpl. destruct (a == a); subst; try congruence.
+rewrite tsubst_term_open_term_wrt_typ_var; auto. rewrite H2...
+rewrite tsubst_term_fresh_eq with (e1 := tsubst_term (typ_var_f c) a e2)...
+rewrite <- H2...
+rewrite tsubst_term_tsubst_term... simpl. destruct (b == b); try congruence.
+rewrite tsubst_term_tsubst_term... simpl. unfold typvar; destruct (c == a); subst.
+elimtype False. auto.
+
+
+
+
+pick fresh c.
+rewrite <- close_term_wrt_typ_open_term_wrt_typ with (e1 := e2') (a1 := c)...
+rewrite H2... rewrite tsubst_term_close_term_wrt_typ...
+rewrite tsubst_term_tsubst_term...
+
+tsubst_term_spec
+
+open_term_wrt_typ_close_term_wrt_typ
+close_term_wrt_typ_open_term_wrt_typ
+
+ rewrite <- tsubst_term_intro with 
+
+
+
+(*
+assert (a ∉ ftv_term e2').
+  assert (a ∉ ftv_term (open_term_wrt_typ e2' (typ_var_f c))).
+  rewrite H2; auto. auto with lngen.
+  assert (ftv_term e2' [<=] ftv_term (open_term_wrt_typ e2' (typ_var_f c)))
+    by auto with lngen.
+  auto.
+rewrite tsubst_term_fresh_eq... rewrite H2...
+*)
+
+
+
+
+SCase "b0 ≠ a".
+
+
+
 Qed.
-Hint Resolve red0_tsubst.
 
 Lemma red1_tsubst : forall a τ e e', lc_typ τ → e ⇝ e' →
   (tsubst_term τ a e) ⇝ (tsubst_term τ a e').
@@ -195,8 +293,8 @@ apply red1_gen with (L := L `union` {{a}}); intros b Hb.
 replace (typ_var_f b) with (tsubst_typ τ a (typ_var_f b)) by auto with lngen.
 repeat rewrite <- tsubst_term_open_term_wrt_typ; eauto.
 Qed.
-Hint Resolve red1_tsubst.
 
+(*
 Lemma red1_topen : forall L τ e e',
   lc_typ τ →
   (forall a, a ∉ L → open_term_wrt_typ e (typ_var_f a) ⇝ open_term_wrt_typ e' (typ_var_f a)) →
