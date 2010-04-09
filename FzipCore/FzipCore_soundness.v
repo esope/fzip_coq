@@ -379,52 +379,105 @@ rewrite_env (([(a, Eq t)] ++ G2) ++ [(c, E)] ++ x ++ G0).
 apply wfterm_open. solve_uniq.
 rewrite_env ([(a, Eq t)] ++ (G2 ++ x) ++ G0). apply H10; auto.
 solve_uniq.
-Case "sigma_nu".
-pick fresh a.
-assert (wfterm ([(a, E)] ++ Γ)
-(open_term_wrt_typ (term_sigma (typ_var_f b) t e) (typ_var_f a)) τ)
-by auto.
-unfold open_term_wrt_typ in H6; simpl open_term_wrt_typ_rec in H6.
-inversion H6; subst.
-destruct G2; inversion H7; subst.
-SCase "b = a (absurd)". assert (a ∉ singleton a) by auto. elimtype False. clear Fr. fsetdec.
-SCase "b ≠ a". simpl_env in *.
-apply wfterm_sigma with (L := L ∪ L1 ∪ {{ a }}); auto; intros.
+Case "sigma sigma".
+assert (uniq (G2 ++ b1 ~ E ++ G1)) by eauto with lngen.
+assert (binds b2 E (G2 ++ G1)).
+  pick fresh a1. pick fresh a2.
+  assert (wfterm (a1 ~ Eq t1 ++ G2 ++ G1)
+  (open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1))
+  (tsubst_typ (typ_var_f a1) b1 τ)) by auto.
+  unfold open_term_wrt_typ in H5; simpl open_term_wrt_typ_rec in H5;
+    inversion H5; subst.
+  destruct G3; inversion H6; subst. auto.
+analyze_binds H5; apply binds_decomp in BindsTac;
+destruct BindsTac as [? [? ?]]; subst.
+SCase "b binds in G2".
+simpl_env in *.
+pick fresh a2 and apply wfterm_sigma. solve_uniq.
 unfold open_term_wrt_typ; simpl open_term_wrt_typ_rec.
-apply wfterm_nu with (L := L ∪ {{ a0 }} ∪ dom (G2 ++ G1)); intros.
-unfold open_term_wrt_typ. rewrite <- H4; auto.
-replace (open_term_wrt_typ_rec 0 (typ_var_f a0)
-       (open_term_wrt_typ_rec 1 (typ_var_f a1) e)) with
-(tsubst_term (typ_var_f a1) a
-  (open_term_wrt_typ_rec 0 (typ_var_f a0)
-    (open_term_wrt_typ_rec 1 (typ_var_f a) e))).
-replace (tsubst_typ (typ_var_f a0) b τ) with
-(tsubst_typ (typ_var_f a1) a (tsubst_typ (typ_var_f a0) b τ)).
-rewrite_env (env_map (tsubst_typ (typ_var_f a1) a) nil ++ [(a1, E)] ++ [(a0, Eq t')] ++ G2 ++ G1).
-apply wfterm_renameE. apply wfterm_lowerE. 
-replace (open_typ_wrt_typ t (typ_var_f c)) with
-  (open_typ_wrt_typ t (typ_var_f a)).
-rewrite <- (H3 a); auto. apply H14; auto.
-rewrite tsubst_typ_intro with (a1 := a) (t1 := t) (t2 := typ_var_f c); auto.
-rewrite tsubst_typ_fresh_eq; auto.
-unfold ftv_env; simpl.
-assert (ftv_typ (open_typ_wrt_typ t (typ_var_f c)) [<=]
-ftv_typ (typ_var_f c) ∪ ftv_typ t) by auto with lngen.
-simpl in H11. assert (a ∉ ftv_typ t) by auto. assert (a ∉ singleton c) by auto.
-rewrite <- (H3 a); auto.
-simpl_env; auto.
-apply tsubst_typ_fresh_eq.
-assert (ftv_typ (tsubst_typ (typ_var_f a0) b τ) [<=]
-  ftv_typ (typ_var_f a0) ∪ remove b (ftv_typ τ))
-by auto with lngen.
-simpl in H11. assert (a ∉ ftv_typ τ) by auto. clear H5 Fr H13 H10. fsetdec.
-rewrite tsubst_term_open_term_wrt_typ_rec; auto.
-rewrite tsubst_term_open_term_wrt_typ_rec; auto.
-simpl.
-unfold typvar; destruct (a0 == a); subst.
-assert (a ≠ a) by auto. congruence.
-destruct (a == a); subst; try congruence.
-rewrite tsubst_term_fresh_eq; auto.
+rewrite_env ((a2 ~ Eq (open_typ_wrt_typ t2 t1) ++ x ++ x0) ++ [(b1, E)] ++ G1).
+pick fresh a1 and apply wfterm_sigma. solve_uniq.
+assert (wfterm ([(a1, Eq t1)] ++ x ++ [(b2, E)] ++ x0 ++ G1)
+(open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1))
+(tsubst_typ (typ_var_f a1) b1 τ)) by auto.
+inversion H5; subst.
+simpl_env in H6. rewrite_env ((a1 ~ Eq t1 ++ x) ++ [(b2, E)] ++ x0 ++ G1) in H6.
+symmetry in H6. apply uniq_app_inv in H6. destruct H6; subst.
+assert (wfterm ([(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
+          ([(a1, Eq t1)] ++ x) ++ x0 ++ G1)
+(open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) e) (typ_var_f a2))
+(tsubst_typ (typ_var_f a2) b2 (tsubst_typ (typ_var_f a1) b1 τ))).
+  pick fresh c.
+  rewrite_env (env_map (tsubst_typ (typ_var_f a2) c) nil ++
+    [(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
+    ([(a1, Eq t1)] ++ x) ++ x0 ++ G1).
+  replace (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) e)
+       (typ_var_f a2))
+    with (tsubst_term (typ_var_f a2) c
+      (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) e)
+       (typ_var_f c))).
+  replace (tsubst_typ (typ_var_f a2) b2 (tsubst_typ (typ_var_f a1) b1 τ))
+    with (tsubst_typ (typ_var_f a2) c
+      (tsubst_typ (typ_var_f c) b2 (tsubst_typ (typ_var_f a1) b1 τ))).
+  apply wfterm_renameEq; simpl_env; auto.
+  rewrite tsubst_typ_tsubst_typ; simpl; auto.
+    unfold typvar; destruct (c == c); try congruence.
+    f_equal. apply tsubst_typ_fresh_eq.
+    assert (ftv_typ (tsubst_typ (typ_var_f a1) b1 τ) [<=]
+      ftv_typ (typ_var_f a1) `union` remove b1 (ftv_typ τ)) by auto with lngen.
+    simpl in H6. clear H4 Fr Fr0 H13. fsetdec.
+  rewrite tsubst_term_open_term_wrt_typ; auto.
+  rewrite tsubst_term_open_term_wrt_typ_rec; auto.
+  autorewrite with lngen. auto.
+unfold open_term_wrt_typ; rewrite <- H3; auto.
+rewrite tsubst_typ_tsubst_typ; auto.
+rewrite tsubst_typ_fresh_eq with (t2 := typ_var_f a2); auto.
+admit.
+solve_uniq.
+SCase "b binds in G1".
+simpl_env in *.
+rewrite_env ((G2 ++ [(b1, E)] ++ x) ++ [(b2, E)] ++ x0).
+pick fresh a2 and apply wfterm_sigma. solve_uniq.
+unfold open_term_wrt_typ; simpl open_term_wrt_typ_rec.
+rewrite_env ((a2 ~ Eq (open_typ_wrt_typ t2 t1) ++ G2) ++ [(b1, E)] ++ x ++ x0).
+pick fresh a1 and apply wfterm_sigma. solve_uniq.
+assert (wfterm ([(a1, Eq t1)] ++ G2 ++ x ++ [(b2, E)] ++ x0)
+(open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1))
+(tsubst_typ (typ_var_f a1) b1 τ)) by auto.
+inversion H5; subst.
+simpl_env in H6. rewrite_env ((a1 ~ Eq t1 ++ G2 ++ x) ++ [(b2, E)] ++ x0) in H6.
+symmetry in H6. apply uniq_app_inv in H6. destruct H6; subst.
+assert (wfterm ([(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
+          ([(a1, Eq t1)] ++ G2 ++ x) ++ G1)
+(open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) e) (typ_var_f a2))
+(tsubst_typ (typ_var_f a2) b2 (tsubst_typ (typ_var_f a1) b1 τ))).
+  pick fresh c.
+  rewrite_env (env_map (tsubst_typ (typ_var_f a2) c) nil ++
+    [(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
+    ([(a1, Eq t1)] ++ G2++ x) ++ G1).
+  replace (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) e)
+       (typ_var_f a2))
+    with (tsubst_term (typ_var_f a2) c
+      (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) e)
+       (typ_var_f c))).
+  replace (tsubst_typ (typ_var_f a2) b2 (tsubst_typ (typ_var_f a1) b1 τ))
+    with (tsubst_typ (typ_var_f a2) c
+      (tsubst_typ (typ_var_f c) b2 (tsubst_typ (typ_var_f a1) b1 τ))).
+  apply wfterm_renameEq. apply H14; auto. simpl_env; auto.
+  rewrite tsubst_typ_tsubst_typ; simpl; auto.
+    unfold typvar; destruct (c == c); try congruence.
+    f_equal. apply tsubst_typ_fresh_eq.
+    assert (ftv_typ (tsubst_typ (typ_var_f a1) b1 τ) [<=]
+      ftv_typ (typ_var_f a1) `union` remove b1 (ftv_typ τ)) by auto with lngen.
+    simpl in H6. clear H4 Fr Fr0 H13. fsetdec.
+  rewrite tsubst_term_open_term_wrt_typ; auto.
+  rewrite tsubst_term_open_term_wrt_typ_rec; auto.
+  autorewrite with lngen. auto.
+unfold open_term_wrt_typ; rewrite <- H3; auto.
+rewrite tsubst_typ_tsubst_typ; auto.
+rewrite tsubst_typ_fresh_eq with (t2 := typ_var_f a2); auto.
+admit.
+simpl_env. solve_uniq.
 Qed.
 
 Theorem subject_reduction : forall Γ e e' τ,
