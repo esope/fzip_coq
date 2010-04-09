@@ -114,9 +114,10 @@ Case "sigma_open".
   constructor; auto. apply H5.
 Case "sigma_nu".
   pick fresh a. apply (lc_term_sigma_exists a); auto.
+  rewrite <- (H2 a); auto.
   unfold open_term_wrt_typ; simpl.
   apply (lc_term_nu_exists c); auto.
-  unfold open_term_wrt_typ. rewrite <- H2; auto.
+  unfold open_term_wrt_typ. rewrite <- H3; auto.
   apply result_regular; auto.
 Qed.
 Hint Resolve red0_regular1 red0_regular2: lngen.
@@ -198,7 +199,8 @@ rewrite tsubst_typ_open_typ_wrt_typ_var...
 rewrite tsubst_typ_open_typ_wrt_typ_var...
 rewrite tsubst_term_open_term_wrt_typ_var...
 inversion H7; subst; clear H7.
-replace (typ_var_f b0) with (tsubst_typ (typ_var_f b) a (typ_var_f b0)).
+replace (typ_var_f b0) with (tsubst_typ (typ_var_f b) a (typ_var_f b0))
+  by auto with lngen.
 rewrite <- tsubst_term_open_term_wrt_typ_rec; auto.
 rewrite tsubst_term_open_term_wrt_typ_var; auto.
 apply result_trenaming. eapply (H3 b0 a0); auto. reflexivity.
@@ -211,7 +213,7 @@ rewrite <- tsubst_term_open_term_wrt_typ_rec; auto.
 rewrite tsubst_term_open_term_wrt_typ_var; auto.
 rewrite <- tsubst_term_tsubst_term; auto.
 f_equal. eapply H4; auto. reflexivity.
-f_equal. apply tsubst_typ_fresh_eq; auto.
+f_equal. auto with lngen.
 Case "coerce app". constructor...
 unsimpl (tsubst_term (typ_var_f b) a (term_abs t2' e1))...
 Case "coerce fst". inversion H2; subst; try congruence...
@@ -253,7 +255,6 @@ simpl. unfold typvar; destruct (b == b0); subst.
 elimtype False. auto.
 rewrite tsubst_term_open_term_wrt_typ_var...
 rewrite H2...
-
 Case "sigma appR". destruct (b0 == a); subst.
 SCase "b0 = a". pick fresh c and apply red0_sigma_appR...
 replace (term_sigma (typ_var_f b) (tsubst_typ (typ_var_f b) a t)
@@ -276,7 +277,6 @@ simpl. unfold typvar; destruct (b == b0); subst.
 elimtype False. auto.
 rewrite tsubst_term_open_term_wrt_typ_var...
 rewrite H2...
-
 Case "sigma pairL". destruct (b0 == a); subst.
 SCase "b0 = a". pick fresh c and apply red0_sigma_pairL...
 replace (term_sigma (typ_var_f b) (tsubst_typ (typ_var_f b) a t)
@@ -299,7 +299,6 @@ simpl. unfold typvar; destruct (b == b0); subst.
 elimtype False. auto.
 rewrite tsubst_term_open_term_wrt_typ_var...
 rewrite H2...
-
 Case "sigma pairR". destruct (b0 == a); subst.
 SCase "b0 = a". pick fresh c and apply red0_sigma_pairR...
 replace (term_sigma (typ_var_f b) (tsubst_typ (typ_var_f b) a t)
@@ -322,7 +321,6 @@ simpl. unfold typvar; destruct (b == b0); subst.
 elimtype False. auto.
 rewrite tsubst_term_open_term_wrt_typ_var...
 rewrite H2...
-
 Case "sigma fst". destruct (b0 == a); subst.
 SCase "b0 = a". apply red0_sigma_fst...
 replace (term_sigma (typ_var_f b) (tsubst_typ (typ_var_f b) a t)
@@ -334,8 +332,6 @@ replace (term_sigma (typ_var_f b0) (tsubst_typ (typ_var_f b) a t)
         (tsubst_term (typ_var_f b) a e0))
  with (tsubst_term (typ_var_f b) a (term_sigma (typ_var_f b0) t e0))...
 simpl. f_equal. destruct (b0 == a); try congruence.
-
-
 Case "sigma snd". destruct (b0 == a); subst.
 SCase "b0 = a". apply red0_sigma_snd...
 replace (term_sigma (typ_var_f b) (tsubst_typ (typ_var_f b) a t)
@@ -347,7 +343,6 @@ replace (term_sigma (typ_var_f b0) (tsubst_typ (typ_var_f b) a t)
         (tsubst_term (typ_var_f b) a e0))
  with (tsubst_term (typ_var_f b) a (term_sigma (typ_var_f b0) t e0))...
 simpl. f_equal. destruct (b0 == a); try congruence.
-
 Case "sigma inst". destruct (b0 == a); subst.
 SCase "b0 = a". pick fresh c and apply red0_sigma_inst...
 replace (term_sigma (typ_var_f b) (tsubst_typ (typ_var_f b) a t)
@@ -370,7 +365,6 @@ simpl. unfold typvar; destruct (b == b0); subst.
 elimtype False. auto.
 rewrite tsubst_typ_open_typ_wrt_typ_var...
 rewrite H2...
-
 Case "sigma open". destruct (b0 == a); subst.
 SCase "b0 = a". destruct (c == a); subst.
 SSCase "c = a". apply red0_sigma_open...
@@ -394,54 +388,87 @@ replace (term_sigma (typ_var_f b0) (tsubst_typ (typ_var_f b) a t)
         (tsubst_term (typ_var_f b) a e0))
  with (tsubst_term (typ_var_f b) a (term_sigma (typ_var_f b0) t e0))...
 simpl. destruct (b0 == a); try congruence.
-
-Case "sigma nu". rewrite tsubst_typ_open_typ_wrt_typ...
-simpl. destruct (b0 == a); subst.
-SCase "b0 = a". unfold typvar; destruct (c == a); subst.
-SSCase "c = a".
-
-ICI
-
- pick fresh c and apply red0_sigma_nu; intros.
+Case "sigma nu". destruct (b0 == a); subst.
+SCase "b0 = a". pick fresh d.
+apply red0_sigma_nu with (c := d)
+  (L := L ∪ {{ a }} ∪ {{ b }} ∪ {{ c }}); intros...
 rewrite tsubst_typ_open_typ_wrt_typ_var...
 rewrite tsubst_typ_open_typ_wrt_typ_var...
-replace (typ_var_f c) with (tsubst_typ (typ_var_f b) a (typ_var_f c)).
-replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0)).
+replace (typ_var_f c0) with (tsubst_typ (typ_var_f b) a (typ_var_f c0))
+  by auto with lngen.
+replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0))
+  by auto with lngen.
 repeat rewrite <- tsubst_term_open_term_wrt_typ_rec...
-simpl. unfold typvar; destruct (a0 == a); subst; auto.
-  assert (a ≠ a) by auto. congruence.
-simpl. unfold typvar; destruct (c == a); subst; auto.
-  assert (a ≠ a) by auto. congruence.
-replace (typ_var_f c) with (tsubst_typ (typ_var_f b) a (typ_var_f c)).
-replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0)).
+rewrite tsubst_typ_open_typ_wrt_typ_var... rewrite H3...
+replace (typ_var_f c0) with (tsubst_typ (typ_var_f b) a (typ_var_f c0))
+  by auto with lngen.
+replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0))
+  by auto with lngen.
 repeat rewrite <- tsubst_term_open_term_wrt_typ_rec...
-rewrite H3...
-simpl. unfold typvar; destruct (a0 == a); subst; auto.
-  assert (a ≠ a) by auto. congruence.
-simpl. unfold typvar; destruct (c == a); subst; auto.
-  assert (a ≠ a) by auto. congruence.
-
-
-SSCase "c ≠ a".
-
-
-
-
-SCase "b0 ≠ a".
-
+rewrite H4...
+SCase "b0 ≠ a". pick fresh d.
+apply red0_sigma_nu with (c := d)
+  (L := L ∪ {{ a }} ∪ {{ b }} ∪ {{ b0 }} ∪ {{ c }}); intros...
+rewrite tsubst_typ_open_typ_wrt_typ_var...
+rewrite tsubst_typ_open_typ_wrt_typ_var...
+replace (typ_var_f c0) with (tsubst_typ (typ_var_f b) a (typ_var_f c0))
+  by auto with lngen.
+replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0))
+  by auto with lngen.
+repeat rewrite <- tsubst_term_open_term_wrt_typ_rec...
+rewrite tsubst_typ_open_typ_wrt_typ_var... rewrite H3...
+replace (typ_var_f c0) with (tsubst_typ (typ_var_f b) a (typ_var_f c0))
+  by auto with lngen.
+replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0))
+  by auto with lngen.
+repeat rewrite <- tsubst_term_open_term_wrt_typ_rec...
+rewrite H4...
 Qed.
 
-Lemma red1_tsubst : forall a τ e e', lc_typ τ → e ⇝ e' →
-  (tsubst_term τ a e) ⇝ (tsubst_term τ a e').
+Lemma red1_trenaming : forall a b e e',
+  b ∉ ftv_term e →
+  e ⇝ e' →
+  (tsubst_term (typ_var_f b) a e) ⇝ (tsubst_term (typ_var_f b) a e').
 Proof.
-intros a τ e e' Hlc H.
-induction H; subst; simpl; auto with lngen.
-apply red1_abs with (L := L `union` {{a}}); auto with lngen ; intros z Hz.
-replace (term_var_f z) with (tsubst_term τ a (term_var_f z)) by reflexivity.
-repeat rewrite <- tsubst_term_open_term_wrt_term; eauto.
-apply red1_gen with (L := L `union` {{a}}); intros b Hb.
-replace (typ_var_f b) with (tsubst_typ τ a (typ_var_f b)) by auto with lngen.
+intros a b e e' Hb H.
+induction H; subst; simpl in *; auto with lngen.
+Case "empty". auto using red0_trenaming.
+Case "exists".
+apply red1_exists with (L := L ∪ {{a}} ∪ {{b}} ∪ ftv_term e); intros c Hc.
+replace (typ_var_f c) with (tsubst_typ (typ_var_f b) a (typ_var_f c)) by auto with lngen.
 repeat rewrite <- tsubst_term_open_term_wrt_typ; eauto.
+apply H0; auto.
+assert (ftv_term (open_term_wrt_typ e (typ_var_f c))
+  [<=] ftv_typ (typ_var_f c) ∪ ftv_term e) by auto with lngen.
+simpl in *; fsetdec.
+Case "open". destruct (b0 == a); subst; auto.
+Case "nu".
+apply red1_nu with (L := L ∪ {{a}} ∪ {{b}} ∪ ftv_term e); intros c Hc.
+replace (typ_var_f c) with (tsubst_typ (typ_var_f b) a (typ_var_f c)) by auto with lngen.
+repeat rewrite <- tsubst_term_open_term_wrt_typ; eauto.
+apply H0; auto.
+assert (ftv_term (open_term_wrt_typ e (typ_var_f c))
+  [<=] ftv_typ (typ_var_f c) ∪ ftv_term e) by auto with lngen.
+simpl in *; fsetdec.
+Case "sigma". destruct (b0 == a); subst.
+SCase "b0 = a".
+apply red1_sigma with (L := L ∪ {{a}} ∪ {{b}} ∪ ftv_term e); auto with lngen.
+intros c Hc.
+replace (typ_var_f c) with (tsubst_typ (typ_var_f b) a (typ_var_f c)) by auto with lngen.
+repeat rewrite <- tsubst_term_open_term_wrt_typ; eauto.
+apply H1; auto.
+assert (ftv_term (open_term_wrt_typ e (typ_var_f c))
+  [<=] ftv_typ (typ_var_f c) ∪ ftv_term e) by auto with lngen.
+simpl in *; fsetdec.
+SCase "b0 ≠ a".
+apply red1_sigma with (L := L ∪ {{a}} ∪ {{b}} ∪ {{b0}} ∪ ftv_term e);
+ auto with lngen. intros c Hc.
+replace (typ_var_f c) with (tsubst_typ (typ_var_f b) a (typ_var_f c)) by auto with lngen.
+repeat rewrite <- tsubst_term_open_term_wrt_typ; eauto.
+apply H1; auto.
+assert (ftv_term (open_term_wrt_typ e (typ_var_f c))
+  [<=] ftv_typ (typ_var_f c) ∪ ftv_term e) by auto with lngen.
+simpl in *; fsetdec.
 Qed.
 
 (*

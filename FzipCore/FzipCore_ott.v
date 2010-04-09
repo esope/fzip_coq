@@ -576,14 +576,15 @@ Inductive red0 : term -> term -> Prop :=    (* defn red0 *)
  | red0_sigma_open : forall (c b:typvar) (t:typ) (e:term),
      result (term_sigma (typ_var_f b) t e) ->
      red0 (term_open (typ_var_f c) (term_sigma (typ_var_f b) t e)) (term_sigma (typ_var_f b) t (term_open (typ_var_f c) e))
- | red0_sigma_nu : forall (L:vars) (b:typvar) (t:typ) (e e':term),
+ | red0_sigma_nu : forall (L:vars) (b:typvar) (t t':typ) (e e':term),
       ( forall c , c \notin  L  ->  lc_typ (open_typ_wrt_typ t (typ_var_f c)) )  ->
       ( forall c , c \notin  L  ->  c  `notin` ftv_typ (  ( open_typ_wrt_typ t (typ_var_f c) )  )  )  ->
       ( forall c , c \notin  L  ->  ( forall a , a \notin   L  \u {{ c }}  -> result  ( open_term_wrt_typ_rec 0 (typ_var_f a) ( open_term_wrt_typ_rec 1 (typ_var_f c) e )  )  )  )  ->
+      ( forall c, c \notin L -> open_typ_wrt_typ t (typ_var_f c) = t' ) ->
       ( forall c a, c \notin L -> a \notin L \u {{ c }} ->
           open_term_wrt_typ_rec 0 (typ_var_f a) (open_term_wrt_typ_rec 1 (typ_var_f c) e)
         = open_term_wrt_typ_rec 0 (typ_var_f c) (open_term_wrt_typ_rec 1 (typ_var_f a) e') ) ->
-      ( forall c , c \notin  L  -> red0 (term_nu (term_sigma (typ_var_f b) t e)) (term_sigma (typ_var_f b)  ( open_typ_wrt_typ t (typ_var_f c) )  (term_nu e')) ) .
+      ( forall c , c \notin  L  -> red0 (term_nu (term_sigma (typ_var_f b) t e)) (term_sigma (typ_var_f b) t' (term_nu e')) ) .
 
 (* defns Jred1 *)
 Inductive red1 : term -> term -> Prop :=    (* defn red1 *)

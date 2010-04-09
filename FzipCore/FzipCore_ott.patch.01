@@ -2,14 +2,15 @@
 <  | red0_sigma_nu : forall (L:vars) (b:typvar) (t:typ) (e:term),
 <       b  <>  c  ->
 ---
->  | red0_sigma_nu : forall (L:vars) (b:typvar) (t:typ) (e e':term),
+>  | red0_sigma_nu : forall (L:vars) (b:typvar) (t t':typ) (e e':term),
 >       ( forall c , c \notin  L  ->  lc_typ (open_typ_wrt_typ t (typ_var_f c)) )  ->
-582,583c582,586
+582,583c582,587
 <       ( forall c , c \notin  L  ->  ( forall a , a \notin   L  \u {{ c }}  -> result  ( open_term_wrt_typ  ( open_term_wrt_typ e (typ_var_f a) )  (typ_var_f c) )  )  )  ->
 <       ( forall c , c \notin  L  -> red0 (term_nu (term_sigma (typ_var_f b) t e)) (term_sigma (typ_var_f b)  ( open_typ_wrt_typ t (typ_var_f c) )  (term_nu e)) ) .
 ---
 >       ( forall c , c \notin  L  ->  ( forall a , a \notin   L  \u {{ c }}  -> result  ( open_term_wrt_typ_rec 0 (typ_var_f a) ( open_term_wrt_typ_rec 1 (typ_var_f c) e )  )  )  )  ->
+>       ( forall c, c \notin L -> open_typ_wrt_typ t (typ_var_f c) = t' ) ->
 >       ( forall c a, c \notin L -> a \notin L \u {{ c }} ->
 >           open_term_wrt_typ_rec 0 (typ_var_f a) (open_term_wrt_typ_rec 1 (typ_var_f c) e)
 >         = open_term_wrt_typ_rec 0 (typ_var_f c) (open_term_wrt_typ_rec 1 (typ_var_f a) e') ) ->
->       ( forall c , c \notin  L  -> red0 (term_nu (term_sigma (typ_var_f b) t e)) (term_sigma (typ_var_f b)  ( open_typ_wrt_typ t (typ_var_f c) )  (term_nu e')) ) .
+>       ( forall c , c \notin  L  -> red0 (term_nu (term_sigma (typ_var_f b) t e)) (term_sigma (typ_var_f b) t' (term_nu e')) ) .
