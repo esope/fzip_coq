@@ -17,7 +17,7 @@ XDECODE = $(XCODEC) decode
 ## Paths to executables. Do not include options here.
 ## Modify these to suit your Coq installation, if necessary.
 
-COQC = coqc
+COQC = coqc -dont-load-proofs
 COQDEP = coqdep
 COQDOC = coqdoc --utf8 --light --quiet --noindex --html
 
