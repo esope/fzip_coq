@@ -432,7 +432,13 @@ assert (wfterm ([(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
 unfold open_term_wrt_typ; rewrite <- H3; auto.
 rewrite tsubst_typ_tsubst_typ; auto.
 rewrite tsubst_typ_fresh_eq with (t2 := typ_var_f a2); auto.
-admit.
+replace (open_typ_wrt_typ_rec 0 (typ_var_f a2) t1') with
+(open_typ_wrt_typ t1' (typ_var_f a2)) by reflexivity.
+rewrite <- H2; auto. rewrite tsubst_typ_intro with (a1 := a1); auto.
+rewrite_env (nil ++ [(a1, Eq t1)] ++
+  [(a2, Eq (tsubst_typ t1 a1 (open_typ_wrt_typ t2 (typ_var_f a1))))]
+ ++ x ++ x0 ++ G1).
+apply wfterm_swap_Eq. apply H6.
 solve_uniq.
 SCase "b binds in G1".
 simpl_env in *.
@@ -476,7 +482,13 @@ assert (wfterm ([(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
 unfold open_term_wrt_typ; rewrite <- H3; auto.
 rewrite tsubst_typ_tsubst_typ; auto.
 rewrite tsubst_typ_fresh_eq with (t2 := typ_var_f a2); auto.
-admit.
+replace (open_typ_wrt_typ_rec 0 (typ_var_f a2) t1') with
+(open_typ_wrt_typ t1' (typ_var_f a2)) by reflexivity.
+rewrite <- H2; auto. rewrite tsubst_typ_intro with (a1 := a1); auto.
+rewrite_env (nil ++ [(a1, Eq t1)] ++
+  [(a2, Eq (tsubst_typ t1 a1 (open_typ_wrt_typ t2 (typ_var_f a1))))]
+ ++ G2 ++ x ++ G1).
+apply wfterm_swap_Eq. simpl_env in H6. apply H6.
 simpl_env. solve_uniq.
 Qed.
 
