@@ -1085,6 +1085,53 @@ Proof.
 destruct wfenv_wftyp_lowerU_aux as [_ H]; intros; eapply H; eauto.
 Qed.
 
+(** Swapping equations *)
+Lemma wfenv_wftyp_swap_Eq:
+  (forall Γ, wfenv Γ → forall Γ₁ Γ₂ a₁ a₂ τ₁ τ₂,
+    Γ = Γ₁ ++ a₁ ~ Eq τ₁ ++ a₂ ~ Eq τ₂ ++ Γ₂ →
+    wfenv (Γ₁ ++ a₂ ~ Eq τ₂ ++ a₁ ~ Eq (tsubst_typ τ₂ a₂ τ₁) ++ Γ₂))
+  ∧ (forall Γ τ, wftyp Γ τ → forall Γ₁ Γ₂ a₁ a₂ τ₁ τ₂,
+    Γ = Γ₁ ++ a₁ ~ Eq τ₁ ++ a₂ ~ Eq τ₂ ++ Γ₂ →
+    wftyp (Γ₁ ++ a₂ ~ Eq τ₂ ++ a₁ ~ Eq (tsubst_typ τ₂ a₂ τ₁) ++ Γ₂) τ).
+Proof.
+apply wfenv_wftyp_mut_ind; intros; subst; auto.
+Case "nil".
+assert (binds a₁ (Eq τ₁) nil) as H1. rewrite H; auto.
+analyze_binds H1.
+Case "T". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "U". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "E". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+Case "Eq". destruct Γ₁; inversion H0; subst; simpl_env in *; eauto.
+eapply wfenv_weakening; auto. eauto with fzip.
+rewrite_env (env_map (tsubst_typ τ₂ a₂) (a₁ ~ Eq τ₁) ++ Γ₂).
+apply wfenv_subst_eq. auto.
+Case "var". constructor; simpl_env in *; auto 6.
+destruct o. analyze_binds H0; auto 6.
+destruct H0. analyze_binds H0; auto 7.
+destruct H0. analyze_binds H0; eauto 7.
+inversion BindsTacVal; subst. eauto 8.
+Case "forall". apply wftyp_forall with (L := L ∪ {{a₁}} ∪ {{a₂}}); intros.
+rewrite_env ((a ~ U ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂). eauto.
+Case "exists". apply wftyp_exists with (L := L ∪ {{a₁}} ∪ {{a₂}}); intros.
+rewrite_env ((a ~ U ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂). eauto.
+Qed.
+
+Lemma wfenv_swap_Eq: forall Γ₁ Γ₂ a₁ a₂ τ₁ τ₂,
+  wfenv (Γ₁ ++ a₁ ~ Eq τ₁ ++ a₂ ~ Eq τ₂ ++ Γ₂) →
+  wfenv (Γ₁ ++ a₂ ~ Eq τ₂ ++ a₁ ~ Eq (tsubst_typ τ₂ a₂ τ₁) ++ Γ₂).
+Proof.
+intros. edestruct wfenv_wftyp_swap_Eq. eauto.
+Qed.
+
+Lemma wftyp_swap_Eq: forall Γ₁ Γ₂ a₁ a₂ τ₁ τ₂ τ,
+  wftyp (Γ₁ ++ a₁ ~ Eq τ₁ ++ a₂ ~ Eq τ₂ ++ Γ₂) τ →
+  wftyp (Γ₁ ++ a₂ ~ Eq τ₂ ++ a₁ ~ Eq (tsubst_typ τ₂ a₂ τ₁) ++ Γ₂) τ.
+Proof.
+intros. edestruct wfenv_wftyp_swap_Eq. eauto.
+Qed.
+
 (** Use with zip *)
 Lemma wfenv_wftyp_zip_aux :
   forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->

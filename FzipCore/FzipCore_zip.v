@@ -1050,6 +1050,25 @@ constructor; my_auto.
 apply zip_app; try solve_uniq.
 Qed.
 
+Lemma zip_swap_Eq : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ a' τ',
+  zip (Γ₁ ++ a ~ Eq τ ++ a' ~ Eq τ' ++ Γ₁')
+      (Γ₂ ++ a ~ Eq τ ++ a' ~ Eq τ' ++ Γ₂')
+      (Γ₃ ++ a ~ Eq τ ++ a' ~ Eq τ' ++ Γ₃') →
+  zip (Γ₁ ++ a' ~ Eq τ' ++ a ~ Eq (tsubst_typ τ' a' τ) ++ Γ₁')
+      (Γ₂ ++ a' ~ Eq τ' ++ a ~ Eq (tsubst_typ τ' a' τ) ++ Γ₂')
+      (Γ₃ ++ a' ~ Eq τ' ++ a ~ Eq (tsubst_typ τ' a' τ) ++ Γ₃').
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ a' τ' H.
+assert (uniq (Γ₁ ++ [(a, Eq τ)] ++ [(a', Eq τ')] ++ Γ₁')) by eauto with lngen. 
+assert (uniq (Γ₂ ++ [(a, Eq τ)] ++ [(a', Eq τ')] ++ Γ₂')) by eauto with lngen. 
+assert (uniq (Γ₃ ++ [(a, Eq τ)] ++ [(a', Eq τ')] ++ Γ₃')) by eauto with lngen. 
+apply zip_app_inv in H. decompose record H; clear H; subst.
+inversion H7; subst. inversion H14; subst.
+apply uniq_app_inv in H3; auto. apply uniq_app_inv in H4; auto.
+destruct H3; destruct H4; subst. inversion H6; inversion H3; subst.
+apply zip_app; my_auto.
+Qed.
+
 (*
 Lemma zip_assoc : forall Γ₁ Γ₂ Γ₃ Γ₁₂ Γ₂₃ Γ₁₂₃ Γ₁₂₃',
   zip Γ₁ Γ₂ Γ₁₂ → zip Γ₁₂ Γ₃ Γ₁₂₃ →

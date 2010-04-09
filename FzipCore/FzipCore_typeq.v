@@ -569,6 +569,32 @@ apply wftyp_regular with (Γ := b ~ U ++ G).
 simpl; unfold typvar in *; destruct (b == a); subst; auto; try congruence.
 Qed.
 
+Lemma wftypeq_swap_Eq : forall Γ₁ Γ₂ a₁ a₂ τ₁ τ₂ τ τ',
+    wftypeq (Γ₁ ++ a₁ ~ Eq τ₁ ++ a₂ ~ Eq τ₂ ++ Γ₂) τ τ' →
+    wftypeq (Γ₁ ++ a₂ ~ Eq τ₂ ++ a₁ ~ Eq (tsubst_typ τ₂ a₂ τ₁) ++ Γ₂) τ τ'.
+Proof.
+intros Γ₁ Γ₂ a₁ a₂ τ₁ τ₂ τ τ' H. dependent induction H; auto.
+Case "var". constructor.
+destruct H. analyze_binds H; eauto.
+destruct H. analyze_binds H; eauto 6.
+destruct H. analyze_binds H; eauto 7.
+inversion BindsTacVal; subst. eauto 8.
+auto using wfenv_swap_Eq.
+Case "eq". analyze_binds H; auto using wfenv_swap_Eq.
+inversion BindsTacVal; subst.
+apply wftypeq_trans with (t2 := tsubst_typ τ₂ a₂ τ₁).
+auto 6 using wfenv_swap_Eq.
+apply wftypeq_sym. apply wftypeq_unfold_eq; auto. apply wftyp_swap_Eq.
+apply wfenv_wftyp_Eq2 with (x := a₁); auto.
+Case "forall". pick fresh a and apply wftypeq_forall.
+rewrite_env ((a ~ U ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂). auto.
+Case "exists". pick fresh a and apply wftypeq_exists.
+rewrite_env ((a ~ U ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂). auto.
+Case "trans". eauto.
+Qed.
+
 Lemma wftypeq_zip12 : forall Γ₁ Γ₂ Γ₃ τ τ',
   zip Γ₁ Γ₂ Γ₃ → wftypeq Γ₁ τ τ' → wftypeq Γ₂ τ τ'.
 Proof.

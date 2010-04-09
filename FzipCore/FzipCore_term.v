@@ -933,6 +933,96 @@ Case "coerce".
 apply wfterm_coerce with (t' := t'); auto using wftypeq_lowerE.
 Qed.
 
+Lemma wfterm_swap_Eq : forall Γ₁ Γ₂ a₁ a₂ τ₁ τ₂ e τ,
+    wfterm (Γ₁ ++ a₁ ~ Eq τ₁ ++ a₂ ~ Eq τ₂ ++ Γ₂) e τ →
+    wfterm (Γ₁ ++ a₂ ~ Eq τ₂ ++ a₁ ~ Eq (tsubst_typ τ₂ a₂ τ₁) ++ Γ₂) e τ.
+Proof.
+ intros Γ₁ Γ₂ a₁ a₂ τ₁ τ₂ e τ H. dependent induction H.
+Case "var". analyze_binds H1; constructor; auto using wfenv_swap_Eq.
+intros a Ha. eapply (H a). analyze_binds Ha.
+intros a Ha. eapply (H a). analyze_binds Ha.
+Case "app".
+assert (zip G1 G2 (Γ₁ ++ [(a₁, Eq τ₁)] ++ [(a₂, Eq τ₂)] ++ Γ₂)) as Hinv by auto.
+apply zip_app_inv in Hinv. decompose record Hinv; clear Hinv; subst.
+inversion H6; subst. inversion H12; subst.
+apply zip_swap_Eq in H. eauto.
+Case "abs". pick fresh x and apply wfterm_abs.
+intros a Ha; eapply (H a); analyze_binds Ha.
+rewrite_env ((x ~ T t1 ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂). auto.
+Case "pair".
+assert (zip G1 G2 (Γ₁ ++ [(a₁, Eq τ₁)] ++ [(a₂, Eq τ₂)] ++ Γ₂)) as Hinv by auto.
+apply zip_app_inv in Hinv. decompose record Hinv; clear Hinv; subst.
+inversion H6; subst. inversion H12; subst.
+apply zip_swap_Eq in H. eauto.
+Case "fst". eauto.
+Case "snd". eauto.
+Case "inst". eauto using wftyp_swap_Eq.
+Case "gen". pick fresh b and apply wfterm_gen.
+intros a Ha; eapply (H a); analyze_binds Ha.
+rewrite_env ((b ~ U ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂). auto.
+Case "exists". pick fresh b and apply wfterm_exists.
+rewrite_env ((b ~ E ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂). auto.
+Case "open".
+assert (binds b E (Γ₁ ++ (a₁, Eq τ₁) :: (a₂, Eq τ₂) :: Γ₂)).
+  rewrite <- H1; auto.
+analyze_binds H2;
+apply binds_decomp in BindsTac; destruct BindsTac as [? [? ?]]; subst.
+SCase "b binds in Γ₁".
+simpl_env in H1. apply uniq_app_inv in H1. destruct H1; subst.
+simpl_env. constructor. auto.
+rewrite_env ((x ++ x0) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂).
+apply IHwfterm; simpl_env; auto.
+assert (uniq (G2 ++ G1)) by eauto with lngen. solve_uniq.
+SCase "b binds in Γ₂".
+simpl_env in H1.
+rewrite_env ((Γ₁ ++ [(a₁, Eq τ₁)] ++ [(a₂, Eq τ₂)] ++ x)
+  ++ [(b, E)] ++ x0) in H1.
+apply uniq_app_inv in H1. destruct H1; subst.
+rewrite_env ((Γ₁ ++ [(a₂, Eq τ₂)] ++ [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ x) ++
+  [(b, E)] ++ x0).
+constructor. auto.
+simpl_env. apply IHwfterm; simpl_env; auto.
+simpl_env in *. assert (uniq (G2 ++ G1)) by eauto with lngen. solve_uniq.
+Case "nu". pick fresh b and apply wfterm_nu.
+rewrite_env ((b ~ E ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂). auto.
+Case "sigma".
+assert (binds b E (Γ₁ ++ (a₁, Eq τ₁) :: (a₂, Eq τ₂) :: Γ₂)).
+  rewrite <- H2; auto.
+analyze_binds H3;
+apply binds_decomp in BindsTac; destruct BindsTac as [? [? ?]]; subst.
+SCase "b binds in Γ₁".
+simpl_env in H2. apply uniq_app_inv in H2. destruct H2; subst.
+simpl_env. pick fresh a and apply wfterm_sigma. auto.
+rewrite_env ((a ~ Eq t' ++ x ++ x0) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂).
+apply H1; simpl_env; auto.
+assert (uniq (G2 ++ G1)).
+  pick fresh a. assert (uniq ( [(a, Eq t')] ++ G2 ++ G1)) by eauto with lngen.
+  solve_uniq.
+solve_uniq.
+SCase "b binds in Γ₂".
+simpl_env in H2.
+rewrite_env ((Γ₁ ++ [(a₁, Eq τ₁)] ++ [(a₂, Eq τ₂)] ++ x)
+  ++ [(b, E)] ++ x0) in H2.
+apply uniq_app_inv in H2. destruct H2; subst.
+rewrite_env ((Γ₁ ++ [(a₂, Eq τ₂)] ++ [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ x) ++
+  [(b, E)] ++ x0).
+pick fresh a and apply wfterm_sigma. auto.
+rewrite_env (([(a, Eq t')] ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
+  [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ x ++ x0).
+apply H1; simpl_env; auto.
+assert (uniq (G2 ++ G1)).
+  pick fresh a. assert (uniq ( [(a, Eq t')] ++ G2 ++ G1)) by eauto with lngen.
+  solve_uniq.
+solve_uniq.
+Case "coerce". eauto using wftypeq_swap_Eq.
+Qed.
+
 (** Major lemmas about [wfterm] *)
 Lemma wfterm_weakening : forall Γ₁ Γ₂ Γ₃ e τ,
   wfterm (Γ₁ ++ Γ₃) e τ →
