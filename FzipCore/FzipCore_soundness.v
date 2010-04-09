@@ -524,6 +524,45 @@ Case "gen". pick fresh a. eauto 6 with lngen.
 Case "exists". pick fresh a. destruct (H0 a) as [[? ?] | ?]...
   intros. intro. eapply (Henv x τ). analyze_binds H1.
   SCase "e reduces". left. exists (term_exists (close_term_wrt_typ a x)).
+  pick fresh b and apply red1_exists.
+  rewrite <- tsubst_term_spec.
+  replace (open_term_wrt_typ e (typ_var_f b)) with
+    (tsubst_term (typ_var_f b) a (open_term_wrt_typ e (typ_var_f a))).
+  apply red1_trenaming; auto.
+  assert (ftv_term (open_term_wrt_typ e (typ_var_f a))
+    [<=] ftv_typ (typ_var_f a) ∪ ftv_term e) by auto with lngen.
+  simpl in H2. fsetdec.
+  rewrite tsubst_term_open_term_wrt_typ; auto. autorewrite with lngen. auto.
+  SCase "e result". admit.
+Case "open". destruct IHwfterm as [[? ?] | ?]...
+  intros. intro. eapply (Henv x τ). analyze_binds H1. destruct H1; subst.
+  SCase "e val".  destruct H1; subst; try solve [inversion H0]...
+    SSCase "coerce". inversion H0; subst. destruct H2; subst.
+      SSSCase "abs (absurd)". elimtype False. inversion H9; subst.
+        eapply wftypeq_arrow_exists_absurd; eauto.
+      SSSCase "gen (absurd)". elimtype False. inversion H9; subst.
+        eapply wftypeq_forall_exists_absurd; eauto.
+      SSSCase "pair (absurd)". elimtype False. inversion H9; subst.
+        eapply wftypeq_prod_exists_absurd; eauto.
+      SSSCase "coerce (absurd)". elimtype False. intuition eauto.
+      SSSCase "exists". eauto 6 with lngen.
+    SSCase "exists". left.
+    exists (open_term_wrt_typ (term_sigma (typ_var_b 0) t' e') (typ_var_f b)).
+    constructor. pick fresh a and apply red0_open_exists.
+    unfold open_term_wrt_typ; simpl. pick fresh c and apply result_sigma.
+    apply H2...
+    unfold open_term_wrt_typ; simpl. constructor.
+    eapply H3 with (b := a) (a := c)...
+    unfold close_term_wrt_typ.
+    rewrite close_term_wrt_typ_rec_open_term_wrt_typ_rec. reflexivity.
+    assert (ftv_term (open_term_wrt_typ_rec 1 (typ_var_f a) e') [<=]
+    ftv_typ (typ_var_f a) ∪ ftv_term e') by auto with lngen. simpl in H1.
+    clear Fr. fsetdec.
+  SCase "e result". eauto 6.
+Case "nu".
+
+
+
 
 ICI (needs renaming lemma for reduction)
 
