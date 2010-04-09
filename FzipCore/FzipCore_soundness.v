@@ -384,15 +384,15 @@ pick fresh a.
 assert (wfterm ([(a, E)] ++ Γ)
 (open_term_wrt_typ (term_sigma (typ_var_f b) t e) (typ_var_f a)) τ)
 by auto.
-unfold open_term_wrt_typ in H5; simpl open_term_wrt_typ_rec in H5.
-inversion H5; subst.
-destruct G2; inversion H6; subst.
+unfold open_term_wrt_typ in H6; simpl open_term_wrt_typ_rec in H6.
+inversion H6; subst.
+destruct G2; inversion H7; subst.
 SCase "b = a (absurd)". assert (a ∉ singleton a) by auto. elimtype False. clear Fr. fsetdec.
 SCase "b ≠ a". simpl_env in *.
 apply wfterm_sigma with (L := L ∪ L1 ∪ {{ a }}); auto; intros.
 unfold open_term_wrt_typ; simpl open_term_wrt_typ_rec.
 apply wfterm_nu with (L := L ∪ {{ a0 }} ∪ dom (G2 ++ G1)); intros.
-unfold open_term_wrt_typ. rewrite <- H3; auto.
+unfold open_term_wrt_typ. rewrite <- H4; auto.
 replace (open_term_wrt_typ_rec 0 (typ_var_f a0)
        (open_term_wrt_typ_rec 1 (typ_var_f a1) e)) with
 (tsubst_term (typ_var_f a1) a
@@ -400,24 +400,24 @@ replace (open_term_wrt_typ_rec 0 (typ_var_f a0)
     (open_term_wrt_typ_rec 1 (typ_var_f a) e))).
 replace (tsubst_typ (typ_var_f a0) b τ) with
 (tsubst_typ (typ_var_f a1) a (tsubst_typ (typ_var_f a0) b τ)).
-rewrite_env (env_map (tsubst_typ (typ_var_f a1) a) nil ++ [(a1, E)] ++ [(a0, Eq (open_typ_wrt_typ t (typ_var_f c)))] ++ G2 ++ G1).
+rewrite_env (env_map (tsubst_typ (typ_var_f a1) a) nil ++ [(a1, E)] ++ [(a0, Eq t')] ++ G2 ++ G1).
 apply wfterm_renameE. apply wfterm_lowerE. 
 replace (open_typ_wrt_typ t (typ_var_f c)) with
   (open_typ_wrt_typ t (typ_var_f a)).
-apply H13; auto.
+rewrite <- (H3 a); auto. apply H14; auto.
 rewrite tsubst_typ_intro with (a1 := a) (t1 := t) (t2 := typ_var_f c); auto.
 rewrite tsubst_typ_fresh_eq; auto.
 unfold ftv_env; simpl.
 assert (ftv_typ (open_typ_wrt_typ t (typ_var_f c)) [<=]
 ftv_typ (typ_var_f c) ∪ ftv_typ t) by auto with lngen.
-simpl in H10. assert (a ∉ ftv_typ t) by auto. assert (a ∉ singleton c) by auto.
-clear Fr H4 H12 H8. fsetdec.
+simpl in H11. assert (a ∉ ftv_typ t) by auto. assert (a ∉ singleton c) by auto.
+rewrite <- (H3 a); auto.
 simpl_env; auto.
 apply tsubst_typ_fresh_eq.
 assert (ftv_typ (tsubst_typ (typ_var_f a0) b τ) [<=]
   ftv_typ (typ_var_f a0) ∪ remove b (ftv_typ τ))
 by auto with lngen.
-simpl in H10. assert (a ∉ ftv_typ τ) by auto. clear H4 Fr H12 H9. fsetdec.
+simpl in H11. assert (a ∉ ftv_typ τ) by auto. clear H5 Fr H13 H10. fsetdec.
 rewrite tsubst_term_open_term_wrt_typ_rec; auto.
 rewrite tsubst_term_open_term_wrt_typ_rec; auto.
 simpl.
