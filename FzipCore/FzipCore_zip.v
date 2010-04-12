@@ -1157,3 +1157,57 @@ constructor; auto.  assert (dom x0 [<=] dom x1) by eauto with fzip.
   assert (dom x1 [=] dom G4) by eauto with fzip.
   assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
 Qed.
+
+Lemma zip_weakenU_inv : forall Γ₁ Γ₂ Γ₃ Γ₃',
+  zip Γ₁ Γ₂ Γ₃ → weakenU Γ₃' Γ₃ →
+  exists Γ₁', exists Γ₂', zip Γ₁' Γ₂' Γ₃' ∧
+    weakenU Γ₁' Γ₁ ∧ weakenU Γ₂' Γ₂.
+Proof.
+intros Γ₁ Γ₂ Γ₃ Γ₃' H H0.
+generalize dependent Γ₂. generalize dependent Γ₁.
+induction H0; intros.
+Case "nil". inversion H; subst; eauto.
+Case "T". inversion H2; subst.
+destruct (IHweakenU G0 G3) as [? [? [? [? ?]]]]; auto; clear IHweakenU.
+assert (x ∉ dom x0).
+  assert (dom x0 [<=] dom G1) by eauto with fzip. fsetdec.
+assert (x ∉ dom x1).
+  assert (dom x1 [=] dom G1) by eauto with fzip. fsetdec.
+exists (x ~ T t ++ x0). exists (x ~ T t ++ x1). auto.
+Case "U". inversion H1; subst.
+destruct (IHweakenU G0 G3) as [? [? [? [? ?]]]]; auto; clear IHweakenU.
+assert (a ∉ dom x).
+  assert (dom x [<=] dom G1) by eauto with fzip. fsetdec.
+assert (a ∉ dom x0).
+  assert (dom x0 [=] dom G1) by eauto with fzip. fsetdec.
+exists (a ~ U ++ x). exists (a ~ U ++ x0). auto.
+Case "E". inversion H1; subst.
+SCase "EU".
+destruct (IHweakenU G0 G3) as [? [? [? [? ?]]]]; auto; clear IHweakenU.
+assert (a ∉ dom x).
+  assert (dom x [<=] dom G1) by eauto with fzip. fsetdec.
+assert (a ∉ dom x0).
+  assert (dom x0 [=] dom G1) by eauto with fzip. fsetdec.
+exists (a ~ E ++ x). exists (a ~ U ++ x0). auto.
+SCase "E".
+destruct (IHweakenU Γ₁ G3) as [? [? [? [? ?]]]]; auto; clear IHweakenU.
+assert (a ∉ dom x).
+  assert (dom x [<=] dom G1) by eauto with fzip. fsetdec.
+assert (a ∉ dom x0).
+  assert (dom x0 [=] dom G1) by eauto with fzip. fsetdec.
+exists x. exists (a ~ E ++ x0). auto.
+Case "Eq". inversion H2; subst.
+destruct (IHweakenU G0 G3) as [? [? [? [? ?]]]]; auto; clear IHweakenU.
+assert (a ∉ dom x).
+  assert (dom x [<=] dom G1) by eauto with fzip. fsetdec.
+assert (a ∉ dom x0).
+  assert (dom x0 [=] dom G1) by eauto with fzip. fsetdec.
+exists (a ~ Eq t ++ x). exists (a ~ Eq t ++ x0). auto.
+Case "weaken".
+destruct (IHweakenU Γ₁ Γ₂) as [? [? [? [? ?]]]]; auto; clear IHweakenU.
+assert (a ∉ dom x).
+  assert (dom x [<=] dom G1) by eauto with fzip. fsetdec.
+assert (a ∉ dom x0).
+  assert (dom x0 [=] dom G1) by eauto with fzip. fsetdec.
+exists (a ~ U ++ x). exists (a ~ U ++ x0). auto.
+Qed.

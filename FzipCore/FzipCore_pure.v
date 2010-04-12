@@ -1,6 +1,7 @@
 Add LoadPath "../metatheory".
 Require Import FzipCore_init.
 Require Import FzipCore_zip.
+Require Import FzipCore_weakenU.
 
 (** Lemmas about [pure] *)
 Lemma pure_T (A: Type) : forall x t, pure (x ~ @T A t).
@@ -217,4 +218,11 @@ inversion BindsTac.
 destruct a1. destruct t; analyze_binds BindsTac.
 simpl in *. analyze_binds BindsTac0.
 simpl in *. analyze_binds BindsTac0.
+Qed.
+
+Lemma pure_weakenU : forall Γ Γ',
+  pure Γ → weakenU Γ' Γ → pure Γ'.
+Proof.
+intros Γ Γ' H H0. induction H0; auto; apply pure_app;
+ eauto using pure_app_inv1, pure_app_inv2, pure_U.
 Qed.

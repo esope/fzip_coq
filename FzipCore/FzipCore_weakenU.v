@@ -101,3 +101,29 @@ intros Γ₁ Γ₂ a H H0. induction H; auto; analyze_binds H0; auto.
 Qed.
 Hint Resolve bindsT_weakenU1 bindsT_weakenU2 bindsEq_weakenU1 bindsEq_weakenU2
 bindsE_weakenU1 bindsE_weakenU2 bindsU_weakenU1 bindsU_weakenU2 : fzip.
+
+Lemma weakenU_refl : forall Γ, uniq Γ → lc_env Γ →
+  weakenU Γ Γ.
+Proof.
+intros Γ H H0. induction Γ; simpl_env in *; auto.
+destruct a; destruct t.
+constructor. destruct H0; eauto. solve_uniq.
+  apply IHΓ. solve_uniq. eauto with lngen.
+constructor. solve_uniq.
+  apply IHΓ. solve_uniq. eauto with lngen.
+constructor. solve_uniq.
+  apply IHΓ. solve_uniq. eauto with lngen.
+constructor. destruct H0; eauto. solve_uniq.
+  apply IHΓ. solve_uniq. eauto with lngen.
+Qed.
+
+Lemma weakenU_trans : forall Γ₁ Γ₂ Γ₃,
+  weakenU Γ₁ Γ₂ → weakenU Γ₂ Γ₃ → weakenU Γ₁ Γ₃.
+Proof.
+intros Γ₁ Γ₂ Γ₃ H H0. generalize dependent Γ₃.
+induction H; intros; auto.
+inversion H2; subst; auto.
+inversion H1; subst; auto.
+inversion H1; subst; auto.
+inversion H2; subst; auto.
+Qed.
