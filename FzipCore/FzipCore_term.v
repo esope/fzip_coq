@@ -141,7 +141,8 @@ auto.
 Case "sigma". pick fresh a.
 assert (x ≠ b). analyze_binds_uniq H0. eauto with lngen.
 assert (x ∉ ftv_typ t').
-  assert (wftyp (G2 ++ G1) t'). eauto with fzip.
+  assert (wftyp (G2 ++ G1) t'). eapply wfenv_wftyp_Eq3.
+    eapply wfterm_wfenv. eauto. 
   analyze_binds_uniq H0; eauto with lngen.
 assert (x ∉ ftv_term (open_term_wrt_typ e (typ_var_f a))) by eauto.
 assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
@@ -319,7 +320,7 @@ assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto wi
 fsetdec.
 Case "sigma". pick fresh a.
 assert (ftv_typ t' [<=] dom (G2 ++ G1)).
-  apply wftyp_ftv; eauto with fzip.
+  apply wftyp_ftv. eapply wfenv_wftyp_Eq3. eapply wfterm_wfenv. eauto.
 assert (ftv_term e [<=] dom G2 ∪ dom G1).
   assert (ftv_term (open_term_wrt_typ e (typ_var_f a))[<=] add a (dom (G2 ++ G1))) by auto.
   assert (ftv_term e [<=] ftv_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
