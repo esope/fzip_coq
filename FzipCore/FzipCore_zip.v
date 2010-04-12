@@ -1,5 +1,6 @@
 Add LoadPath "../metatheory".
 Require Import FzipCore_init.
+Require Import FzipCore_weakenU.
 
 (** Lemmas about [zip] *)
 Lemma zip_lc1 : forall Γ₁ Γ₂ Γ₃,
@@ -1069,28 +1070,90 @@ destruct H3; destruct H4; subst. inversion H6; inversion H3; subst.
 apply zip_app; my_auto.
 Qed.
 
-(*
-Lemma zip_assoc : forall Γ₁ Γ₂ Γ₃ Γ₁₂ Γ₂₃ Γ₁₂₃ Γ₁₂₃',
-  zip Γ₁ Γ₂ Γ₁₂ → zip Γ₁₂ Γ₃ Γ₁₂₃ →
-  zip Γ₁ Γ₂₃ Γ₁₂₃' → zip Γ₂ Γ₃ Γ₂₃ →
-  Γ₁₂₃ = Γ₁₂₃'.
+Lemma zip_distrib : forall Γ₁ Γ₂ Γ₃ Γ₂₃ Γ₁₂₃,
+  zip Γ₁ Γ₂₃ Γ₁₂₃ → zip Γ₂ Γ₃ Γ₂₃ → pure Γ₁ →
+  exists Γ₁₂, exists Γ₁', exists Γ₁₃,
+    zip Γ₁ Γ₂ Γ₁₂ ∧ zip Γ₁' Γ₃ Γ₁₃ ∧ zip Γ₁₂ Γ₁₃ Γ₁₂₃ ∧ weakenU Γ₁' Γ₁.
 Proof.
-intros Γ₁ Γ₂ Γ₃ Γ₁₂ Γ₂₃ Γ₁₂₃ Γ₁₂₃' H H0 H1 H2.
-generalize dependent Γ₃. generalize dependent Γ₂₃.
-generalize dependent Γ₁₂₃. generalize dependent Γ₁₂₃'.
-induction H; intros.
-Case "nil".
-inversion H0; subst; auto. inversion H1; subst.
+intros Γ₁ Γ₂ Γ₃ Γ₂₃ Γ₁₂₃ H H0 H1.
+generalize dependent Γ₁₂₃. generalize dependent Γ₁.
+induction H0; intros.
+Case "nil". inversion H; subst; eauto 9.
+Case "T". inversion H4; subst.
+edestruct IHzip with (Γ₁ := G0) as [? [? [? [? [? [? ?]]]]]]; eauto; clear IHzip.
+intros a Ha; eapply (H3 a); auto.
+exists (x ~ T t ++ x0). exists (x ~ T t ++ x1). exists (x ~ T t ++ x2).
+split. auto. split.
+constructor; auto. assert (dom x1 [<=] dom x2) by eauto with fzip.
+  assert (dom x2 [=] dom G4) by eauto with fzip.
+  assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+split. constructor; auto.
+  assert (dom x0 [<=] dom G4) by eauto with fzip.
+    assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+  assert (dom x2 [=] dom G4) by eauto with fzip.
+    assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+constructor; auto. assert (dom x1 [<=] dom x2) by eauto with fzip.
+  assert (dom x2 [=] dom G4) by eauto with fzip.
+  assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+Case "U". inversion H3; subst.
+edestruct IHzip with (Γ₁ := G0) as [? [? [? [? [? [? ?]]]]]]; eauto; clear IHzip.
+intros b Hb; eapply (H2 b); auto.
+exists (a ~ U ++ x). exists (a ~ U ++ x0). exists (a ~ U ++ x1).
+split; auto. split.
+constructor; auto. assert (dom x0 [<=] dom x1) by eauto with fzip.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+  assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+split. constructor; auto.
+  assert (dom x [<=] dom G4) by eauto with fzip.
+    assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+    assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+constructor; auto. assert (dom x0 [<=] dom x1) by eauto with fzip.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+  assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+elimtype False. eapply (H2 a); auto.
+Case "EU". inversion H3; subst.
+edestruct IHzip as [? [? [? [? [? [? ?]]]]]]; eauto; clear IHzip.
+exists (a ~ E ++ x). exists (a ~ U ++ x0). exists (a ~ U ++ x1).
+split. auto.
+split. constructor; auto. assert (dom x0 [<=] dom x1) by eauto with fzip.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+  assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+split. constructor; auto.
+  assert (dom x [<=] dom G4) by eauto with fzip.
+    assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+    assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+constructor; auto. assert (dom x0 [<=] dom x1) by eauto with fzip.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+  assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+Case "E". inversion H3; subst.
+edestruct IHzip as [? [? [? [? [? [? ?]]]]]]; eauto; clear IHzip.
+exists x. exists x0. exists (a ~ E ++ x1).
+split. auto. split.
+constructor; auto. assert (dom x0 [<=] dom x1) by eauto with fzip.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+  assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+split. constructor; auto.
+  assert (dom x [<=] dom G4) by eauto with fzip.
+    assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+    assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
 auto.
-inversion H2.
-inversion H2; subst. inversion H1; subst.
-  replace G3 with G in * by eauto using zip_unique.
-  f_equal. auto using zip_nil.
-Case "TT".
-inversion H1; subst.
-  inversion H2; subst.
-    inversion H3; subst. f_equal. eauto.
-    inversion H3; subst.
-  clear H1. inversion H3; subst. clear H3. inversion H2; subst. clear H2. f_equal.
-    eapply IHzip; eauto.
-*)
+Case "Eq". inversion H4; subst.
+edestruct IHzip with (Γ₁ := G0) as [? [? [? [? [? [? ?]]]]]]; eauto; clear IHzip.
+intros b Hb; eapply (H3 b); auto.
+exists (a ~ Eq t ++ x). exists (a ~ Eq t ++ x0). exists (a ~ Eq t ++ x1).
+split. auto. split.
+constructor; auto. assert (dom x0 [<=] dom x1) by eauto with fzip.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+  assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+split. constructor; auto.
+  assert (dom x [<=] dom G4) by eauto with fzip.
+    assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+    assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+constructor; auto.  assert (dom x0 [<=] dom x1) by eauto with fzip.
+  assert (dom x1 [=] dom G4) by eauto with fzip.
+  assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
+Qed.

@@ -2,6 +2,7 @@ Add LoadPath "../metatheory".
 Require Import FzipCore_init.
 Require Import FzipCore_zip.
 Require Import FzipCore_pure.
+Require Import FzipCore_weakenU.
 
 Scheme wfenv_mut_ind_aux := Induction for wfenv Sort Prop
 with   wftyp_mut_ind_aux := Induction for wftyp Sort Prop.
@@ -150,6 +151,40 @@ destruct wfenv_wftyp_weakening as [H1 H2].
 intros. apply (H2 (Γ₁ ++ Γ₃)); auto.
 Qed.
 Hint Resolve wfenv_weakening wftyp_weakening: fzip.
+
+Lemma wfenv_wftyp_weakenU :
+(forall Γ, wfenv Γ → forall Γ', weakenU Γ' Γ → wfenv Γ')
+∧
+(forall Γ τ, wftyp Γ τ → forall Γ', weakenU Γ' Γ → wftyp Γ' τ).
+Proof.
+apply wfenv_wftyp_mut_ind; intros; auto.
+Case "nil". induction Γ'; auto; destruct a; destruct t; simpl_env in *;
+inversion H; subst; auto.
+Case "T". induction Γ'; auto; destruct a; destruct t0; simpl_env in *;
+inversion H0; subst; auto.
+Case "U". induction Γ'; auto; destruct a0; destruct t; simpl_env in *;
+inversion H0; subst; auto.
+Case "E". induction Γ'; auto; destruct a0; destruct t; simpl_env in *;
+inversion H0; subst; auto.
+Case "T". induction Γ'; auto; destruct a0; destruct t0; simpl_env in *;
+inversion H0; subst; auto.
+Case "var". constructor; auto. intuition eauto with fzip.
+destruct H2; eauto with fzip.
+Case "forall". pick fresh a and apply wftyp_forall. auto.
+Case "exists". pick fresh a and apply wftyp_exists. auto.
+Qed.
+
+Lemma wfenv_weakenU : forall Γ Γ',
+  wfenv Γ → weakenU Γ' Γ → wfenv Γ'.
+Proof.
+intros; edestruct wfenv_wftyp_weakenU; eauto.
+Qed.
+
+Lemma wftyp_weakenU : forall Γ Γ' τ,
+  wftyp Γ τ → weakenU Γ' Γ → wftyp Γ' τ.
+Proof.
+intros; edestruct wfenv_wftyp_weakenU; eauto.
+Qed.
 
 Lemma wfenv_wftyp_T2 :
 forall Γ x τ, wfenv Γ → binds x (T τ) Γ → wftyp Γ τ.

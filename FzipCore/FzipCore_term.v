@@ -4,6 +4,7 @@ Require Import FzipCore_zip.
 Require Import FzipCore_pure.
 Require Import FzipCore_env_typ.
 Require Import FzipCore_typeq.
+Require Import FzipCore_weakenU.
 
 
 (** Lemmas about [wfterm] *)
@@ -1223,6 +1224,12 @@ simpl_env. solve_uniq.
 Case "coerce". apply wfterm_coerce with (t' := t').
 auto using wftypeq_weakening. eauto.
 Qed.
+
+Lemma wfterm_weakenU : forall Γ Γ' e τ,
+  wfterm Γ e τ → weakenU Γ' Γ → wfterm Γ' e τ.
+Proof.
+intros Γ Γ' e τ H H0. generalize dependent Γ'. induction H; intros; auto.
+Case "var". ICI
 
 Lemma wfterm_subst : forall Γ₁ Γ₂ x τ₁ τ₂ e₁ e₂,
   wfterm (Γ₁ ++ x ~ T τ₂ ++ Γ₂) e₁ τ₁ →

@@ -49,6 +49,7 @@ LNGEN_FILES = \
 
 FILES = \
 	FzipCore_init \
+	FzipCore_weakenU \
 	FzipCore_val \
 	FzipCore_red \
 	FzipCore_zip \

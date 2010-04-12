@@ -3,6 +3,7 @@ Require Import FzipCore_init.
 Require Import FzipCore_zip.
 Require Import FzipCore_pure.
 Require Import FzipCore_env_typ.
+Require Import FzipCore_weakenU.
 
 
 (** Lemmas about [wfeq] *)
@@ -297,6 +298,20 @@ rewrite_env ((a~U ++ Γ₁) ++ Γ₂ ++ Γ₃); eauto.
 Case "trans". eauto.
 Qed.
 Hint Resolve wftypeq_weakening: fzip.
+
+Lemma wftypeq_weakenU : forall Γ Γ' τ₁ τ₂,
+  wftypeq Γ τ₁ τ₂ → weakenU Γ' Γ → wftypeq Γ' τ₁ τ₂.
+Proof.
+intros Γ Γ' τ₁ τ₂ H H0. generalize dependent Γ'.
+induction H; intros; auto.
+Case "var". constructor.
+intuition eauto with fzip. destruct H; eauto with fzip.
+eauto using wfenv_weakenU.
+Case "eq". constructor. eauto with fzip. eauto using wfenv_weakenU.
+Case "forall". pick fresh a and apply wftypeq_forall; auto.
+Case "exists". pick fresh a and apply wftypeq_exists; auto.
+Case "trans". eauto.
+Qed.
 
 Lemma wftypeq_wftypeq :
   forall Γ₁ Γ₂ τ₁ τ₂ a τ τ', wftypeq (Γ₁ ++ a ~ Eq τ ++ Γ₂) τ₁ τ₂ →
