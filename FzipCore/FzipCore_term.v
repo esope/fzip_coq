@@ -1497,13 +1497,9 @@ Case "let".
   edestruct zip_distrib with (Γ₁ := Γ₁) as [? [? [? [_ [? [_ ?]]]]]]; eauto.
   rewrite_env (([(x1, T t1)] ++ x2) ++ G2).
   rewrite subst_term_open_term_wrt_term_var; eauto with lngen.
-
-  ICI
-
-  eapply H1 with (Γ₁ := x3); simpl_env;
+  eapply H1 with (Γ₁ := x4); simpl_env;
     eauto using wfterm_weakenU, pure_weakenU.
-    replace x4 with G2 in *; eauto using zip_pure_eq1, pure_weakenU.
-
+    replace x5 with G2 in *; eauto using zip_pure_eq1, pure_weakenU.
 Case "pair".
   destruct (zip_app_inv G1 G2 Γ₄ (x ~ T τ₁ ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; subst; auto.
   inversion H6; subst.
@@ -1637,6 +1633,7 @@ Case "abs".
   pick fresh z and apply wfterm_abs.
   apply pure_instantiate; eauto with lngen.
   rewrite_env ((z ~ T t1 ++ Γ₁) ++ a ~ Eq τ₂ ++ Γ₂). auto.
+Case "let". ICI
 Case "pair".
 destruct (zip_app_inv G1 G2 Γ₁ (a ~ U ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; auto; subst.
 inversion H7; subst.
