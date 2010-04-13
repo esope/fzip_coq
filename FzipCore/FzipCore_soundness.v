@@ -21,7 +21,7 @@ assert (pure Γ) by eauto using pure_zip.
 assert (G1 = Γ) by eauto using zip_pure_inv1.
 assert (G2 = Γ) by eauto using zip_pure_inv2.
 subst.
-rewrite_env (nil ++ Γ). eapply wfterm_subst; simpl_env; eauto.
+rewrite_env (nil ++ Γ). eapply wfterm_subst; eauto. simpl_env; auto.
 Case "proj fst".
 assert (pure Γ) by eauto using val_pure.
 inversion H3; subst.

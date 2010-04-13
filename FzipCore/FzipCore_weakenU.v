@@ -127,3 +127,58 @@ inversion H1; subst; auto.
 inversion H1; subst; auto.
 inversion H2; subst; auto.
 Qed.
+
+Lemma weakenU_app : forall Γ₁ Γ₂ Γ₁' Γ₂',
+  weakenU Γ₁' Γ₁ → weakenU Γ₂' Γ₂ →
+  disjoint Γ₁' Γ₂' → weakenU (Γ₁' ++ Γ₂') (Γ₁ ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ Γ₁' Γ₂' H H0 H1. induction H; simpl_env in *; auto;
+constructor; auto; try solve [solve_uniq | apply IHweakenU; solve_uniq].
+Qed.
+
+Lemma weakenU_app_invE1 : forall Γ₁ Γ₂ Γ₁' Γ₂' a,
+  weakenU (Γ₁' ++ a ~ E ++ Γ₂') (Γ₁ ++ a ~ E ++ Γ₂) →
+  weakenU Γ₁' Γ₁.
+Proof.
+intros Γ₁ Γ₂ Γ₁' Γ₂' a H. dependent induction H; auto.
+Case "nil". destruct Γ₁'; inversion H.
+Case "T". destruct Γ₁'; inversion H2; subst; simpl_env in *; auto.
+destruct Γ₁; inversion H3; subst; simpl_env in *; eauto.
+Case "U". destruct Γ₁'; inversion H1; subst; simpl_env in *; auto.
+destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
+Case "E". destruct Γ₁'; inversion H1; subst; simpl_env in *; auto.
+destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
+assert (a0 ∈ dom Γ₂').
+  assert (dom (Γ₁ ++ a0 ~ E ++ Γ₂) [<=] dom Γ₂') by eauto using dom_weakenU.
+  simpl_env in *. auto.
+contradiction.
+destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
+assert (a0 ≠ a0) by auto. congruence.
+Case "Eq". destruct Γ₁'; inversion H2; subst; simpl_env in *; auto.
+destruct Γ₁; inversion H3; subst; simpl_env in *; eauto.
+Case "weaken". destruct Γ₁'; inversion H1; subst; simpl_env in *; eauto.
+Qed.
+
+Lemma weakenU_app_invE2 : forall Γ₁ Γ₂ Γ₁' Γ₂' a,
+  weakenU (Γ₁' ++ a ~ E ++ Γ₂') (Γ₁ ++ a ~ E ++ Γ₂) →
+  weakenU Γ₂' Γ₂.
+Proof.
+intros Γ₁ Γ₂ Γ₁' Γ₂' a H. dependent induction H; auto.
+Case "nil". destruct Γ₁'; inversion H.
+Case "T". destruct Γ₁'; inversion H2; subst; simpl_env in *; auto.
+destruct Γ₁; inversion H3; subst; simpl_env in *; eauto.
+Case "U". destruct Γ₁'; inversion H1; subst; simpl_env in *; auto.
+destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
+Case "E". destruct Γ₁'; inversion H1; subst; simpl_env in *; auto.
+destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
+assert (a0 ∈ dom Γ₂').
+  assert (dom (Γ₁ ++ a0 ~ E ++ Γ₂) [<=] dom Γ₂') by eauto using dom_weakenU.
+  simpl_env in *. auto.
+contradiction.
+destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
+assert (a0 ≠ a0) by auto. congruence.
+Case "Eq". destruct Γ₁'; inversion H2; subst; simpl_env in *; auto.
+destruct Γ₁; inversion H3; subst; simpl_env in *; eauto.
+Case "weaken". destruct Γ₁'; inversion H1; subst; simpl_env in *; eauto.
+Qed.
+
