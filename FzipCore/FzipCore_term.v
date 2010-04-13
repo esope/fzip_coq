@@ -14,6 +14,7 @@ Proof.
 intros Γ e τ H.
 induction H; auto; try solve [eapply wfenv_zip; eauto].
 Case "lam". pick fresh x. eauto using wfenv_strip.
+Case "let". pick fresh x. eapply wfenv_zip; eauto. eauto using wfenv_strip.
 Case "gen". pick fresh a. eauto using wfenv_strip.
 Case "exists". pick fresh a. eauto using wfenv_strip.
 Case "open".
@@ -40,6 +41,11 @@ assert (wfenv ([(x, T t1)] ++ G)) by eauto 2 with fzip.
 inversion H3; subst.
 rewrite_env (nil ++ x ~ T t1 ++ G) in H2.
 apply wftyp_subst in H2; simpl_env in H2; auto.
+Case "let". pick fresh x.
+rewrite_env (nil ++ G).
+apply wftyp_subst with (x := x) (τ' := t1); simpl_env; auto.
+apply wftyp_zip23 with (Γ₁ := x ~ T t1 ++ G1) (Γ₂ := x ~ T t1 ++ G2); auto.
+eauto with lngen.
 Case "pair". constructor; eauto 3 with fzip.
 Case "inst". inversion IHwfterm; subst.
 pick fresh a. rewrite tsubst_typ_intro with (a1 := a); auto.
@@ -120,6 +126,11 @@ assert (x ∉ ftv_typ t1). eapply wftyp_T_not_ftv; eauto with fzip.
 assert (x ∉ ftv_term (e ^ y)) by eauto with fzip.
 assert (ftv_term e [<=] ftv_term (e ^ y)) by auto with lngen.
 auto.
+Case "let". pick fresh y.
+assert (x ∉ ftv_term e1) by eauto with fzip.
+assert (x ∉ ftv_term (e2 ^ y)) by eauto with fzip.
+assert (ftv_term e2 [<=] ftv_term (e2 ^ y)) by auto with lngen.
+auto.
 Case "pair". eauto 7 with fzip.
 Case "inst". assert (x ∉ ftv_typ t) by eauto with fzip. auto.
 Case "gen". pick fresh a.
@@ -181,6 +192,22 @@ assert (a ∉ fv_term (e ^ x)). apply H2; auto.
   destruct H0. destruct H0; eauto 6.
   auto.
 assert (fv_term e [<=] fv_term (e ^ x)) by auto with lngen.
+auto.
+Case "let". pick fresh x.
+assert (a ∉ fv_term e1). apply IHwfterm.
+  destruct H0. eauto with fzip.
+  destruct H0. edestruct zip_binds_E3_inv; eauto. destruct H4; eauto with fzip.
+  destruct H0. destruct H0; eauto 6 with fzip.
+  assert (dom G1 [<=] dom G) by eauto with fzip. clear Fr. fsetdec.
+assert (a ∉ fv_term (e2 ^ x)). apply H3. auto.
+  destruct H0. eauto with fzip.
+  destruct H0. edestruct zip_binds_E3_inv; eauto.
+    destruct H5; eauto with fzip.
+    destruct H5; auto.
+  destruct H0. destruct H0; eauto 7 with fzip.
+  assert (dom G2 [=] dom G) by eauto with fzip. assert (x ≠ a) by auto.
+    clear Fr. simpl_env. fsetdec.
+assert (fv_term e2 [<=] fv_term (e2 ^ x)) by auto with lngen.
 auto.
 Case "pair".
 assert (a ∉ fv_term e1).
@@ -249,6 +276,14 @@ Case "lam". pick fresh x.
 assert (fv_term (e ^ x) [<=] add x (dom G)) by auto.
 assert (fv_term e [<=] fv_term (e ^ x)) by auto with lngen.
 fsetdec.
+Case "let".
+assert (dom G1 [<=] dom G) by eauto with fzip.
+assert (dom G2 [=] dom G) by eauto with fzip.
+pick fresh x. 
+assert (fv_term (e2 ^ x) [<=] add x (dom G2)) by auto.
+assert (fv_term e2 [<=] fv_term (e2 ^ x)) by auto with lngen.
+assert (x ∉ fv_term e2) by auto.
+clear Fr. fsetdec.
 Case "pair".
 assert (dom G1 [<=] dom G) by eauto with fzip.
 assert (dom G2 [=] dom G) by eauto with fzip.
@@ -299,6 +334,18 @@ assert (ftv_term e [<=] dom G). clear H2.
     apply wfterm_T_not_ftv with (Γ:= x~ T t1 ++ G) (τ:= t2) (τ':= t1); auto.
   clear Fr. simpl in H2. fsetdec.
 clear Fr. fsetdec.
+Case "let".
+assert (dom G1 [<=] dom G) by eauto with fzip.
+assert (dom G2 [=] dom G) by eauto with fzip.
+assert (ftv_term e1 [<=] dom G1) by auto.
+assert (ftv_term e2 [<=] dom G2).
+  pick fresh x.
+  assert (ftv_term (e2 ^ x)[<=] add x (dom G2)) by auto.
+  assert (ftv_term e2 [<=] ftv_term (e2 ^ x)) by auto with lngen.
+  assert (x ∉ ftv_term (e2 ^ x)).
+    apply wfterm_T_not_ftv with (Γ:= x ~ T t1 ++ G2) (τ:= t2) (τ':= t1); auto.
+  clear Fr. fsetdec.
+fsetdec.
 Case "pair".
 assert (dom G1 [<=] dom G) by eauto with fzip.
 erewrite zip_dom2 in IHwfterm2; eauto.
@@ -342,7 +389,7 @@ Lemma wfterm_uniqueness_aux : forall Γ Γ' e τ τ',
 Proof.
 intros Γ Γ' e τ τ' H H0 H1.
 generalize dependent τ'. generalize dependent Γ'.
-induction H; intros Γ' Hbinds τ' H2; inversion H2; subst; auto.
+induction H; intros Γ' Hbinds τ' He; inversion He; subst; auto.
 Case "var".
 assert (T t = T τ'). eapply binds_unique with (E:=Γ'); eauto with lngen. congruence.
 Case "app".
@@ -350,8 +397,13 @@ assert (typ_arrow t2 t1 = typ_arrow t3 τ') by eauto with fzip; congruence.
 Case "abs". pick fresh x.
 assert (t2 = t3).
   apply H1 with (Γ' := x ~ T t1 ++ Γ') (x := x); intros; auto.
-  analyze_binds_uniq H3. eauto with lngen.
+  analyze_binds_uniq H2. eauto with lngen.
 congruence.
+Case "let".
+assert (t1 = t3) by eauto with fzip.
+pick fresh x.
+apply H2 with (Γ' := x ~ T t3 ++ G4) (x := x); intros; auto.
+analyze_binds H4. inversion BindsTacVal; subst; auto. eauto 6 with fzip.
 Case "pair".
 assert (t1 = t0) by eauto with fzip.
 assert (t2 = t3) by eauto 6 with fzip.
@@ -365,7 +417,7 @@ assert (typ_forall t' = typ_forall t'0) by eauto with fzip; congruence.
 Case "gen". pick fresh a.
 assert (open_typ_wrt_typ t (typ_var_f a) = open_typ_wrt_typ t0 (typ_var_f a)).
   apply H1 with (Γ' := a ~ U ++ Γ') (a := a); intros; auto.
-  analyze_binds_uniq H3. eauto with lngen.
+  analyze_binds_uniq H2. eauto with lngen.
 f_equal; eapply open_typ_wrt_typ_inj; eauto.
 Case "exists". pick fresh a.
 assert (open_typ_wrt_typ t (typ_var_f a) = open_typ_wrt_typ t0 (typ_var_f a)).
@@ -376,7 +428,7 @@ Case "open".
 assert (typ_exists t = typ_exists t0).
   apply IHwfterm with (Γ' := G3 ++ G0); intros; auto.
   assert (binds x (T τ₀) (G2 ++ b ~ E ++ G1)) by analyze_binds H1.
-  apply Hbinds in H3. analyze_binds_uniq H3. eauto with lngen.
+  apply Hbinds in H2. analyze_binds_uniq H2. eauto with lngen.
 congruence.
 Case "nu". pick fresh a.
 apply H0 with (Γ' := a ~ E ++ Γ') (a := a); intros; auto.
@@ -385,14 +437,14 @@ Case "sigma". pick fresh a.
 assert (tsubst_typ (typ_var_f a) b t = tsubst_typ (typ_var_f a) b τ').
   apply H1 with (Γ' := [(a, Eq t')] ++ G3 ++ G0) (a := a); intros; auto.
   assert (binds x (T τ₀) (G2 ++ b ~ E ++ G1)).
-    analyze_binds_uniq H3. eauto with lngen.
-  apply Hbinds in H4.
-  analyze_binds_uniq H4. eauto with lngen.
+    analyze_binds_uniq H2. eauto with lngen.
+  apply Hbinds in H3.
+  analyze_binds_uniq H3. eauto with lngen.
 assert (tsubst_typ (typ_var_f b) a (tsubst_typ (typ_var_f a) b t)
   = tsubst_typ (typ_var_f b) a (tsubst_typ (typ_var_f a) b τ'))
 by congruence.
-rewrite tsubst_typ_var_twice in H4; auto.
-rewrite tsubst_typ_var_twice in H4; eauto with lngen fzip.
+rewrite tsubst_typ_var_twice in H3; auto.
+rewrite tsubst_typ_var_twice in H3; eauto with lngen fzip.
 apply tsubst_typ_lc_typ_inv with (t1 := typ_var_f a) (a1 := b); auto.
 eauto with lngen.
 Qed.
@@ -438,6 +490,11 @@ apply zip_binds_E3_inv with (Γ₁ := G1) (Γ₂ := G2) in H4; eauto with lngen.
 destruct H4 as [[? ?] | [? ?]].
 eapply IHwfterm1; eauto with fzip.
 eapply IHwfterm2; eauto with fzip.
+Case "let". intro H5.
+apply zip_binds_E3_inv with (Γ₁ := G1) (Γ₂ := G2) in H5; eauto with lngen.
+destruct H5 as [[? ?] | [? ?]].
+eapply IHwfterm; eauto with fzip.
+pick fresh y. eapply (H2 y); eauto with fzip.
 Case "pair". intro H4.
 apply zip_binds_E3_inv with (Γ₁ := G1) (Γ₂ := G2) in H4; eauto with lngen.
 destruct H4 as [[? ?] | [? ?]].
@@ -480,6 +537,11 @@ apply zip_binds_E3_inv with (Γ₁ := G1) (Γ₂ := G2) in H4; eauto with lngen.
 destruct H4 as [[? ?] | [? ?]].
 eapply IHwfterm1; eauto with fzip.
 eapply IHwfterm2; eauto with fzip.
+Case "let". intro H5.
+apply zip_binds_E3_inv with (Γ₁ := G1) (Γ₂ := G2) in H5; eauto with lngen.
+destruct H5 as [[? ?] | [? ?]].
+eapply IHwfterm; eauto with fzip.
+pick fresh y. eapply (H2 y); eauto with fzip.
 Case "pair". intro H4.
 apply zip_binds_E3_inv with (Γ₁ := G1) (Γ₂ := G2) in H4; eauto with lngen.
 destruct H4 as [[? ?] | [? ?]].
@@ -531,6 +593,15 @@ Case "abs". pick fresh x and apply wfterm_abs.
 intros b Hb; eapply (H b); analyze_binds Hb.
 rewrite_env (([(x, T t1)] ++ Γ₁) ++ Γ₂ ++ [(a, U)] ++ Γ₃).
 apply H1; simpl_env; auto.
+Case "let".
+destruct (zip_app_U_inv G1 G2 Γ₁ a (Γ₂ ++ Γ₃)) as [? [? [? [? [? ?]]]]]; auto; subst.
+assert (zip x0 x2 (Γ₂ ++ Γ₃)) as H3 by eauto using zip_remove_U2, zip_U.
+apply zip_app_inv in H3. decompose record H3; clear H3; subst.
+apply wfterm_let with
+  (L := L)
+  (G1 := x ++ x3 ++ [(a, U)] ++ x4)
+  (G2 := x1 ++ x5 ++ [(a, U)] ++ x6) (t1 := t1); intros; auto using zip_upperU.
+rewrite_env (([(x0, T t1)] ++ x1) ++ x5 ++ [(a, U)] ++ x6). auto.
 Case "pair".
 destruct (zip_app_U_inv G1 G2 Γ₁ a (Γ₂ ++ Γ₃)) as [? [? [? [? [? ?]]]]]; auto; subst.
 assert (zip x0 x2 (Γ₂ ++ Γ₃)) as H2 by eauto using zip_remove_U2, zip_U.
@@ -619,6 +690,22 @@ apply wfterm_app with
   (G1 := x ++ x2 ++ x3)
   (G2 := x1 ++ x4 ++ [(a, E)] ++ x5) (t2 := t2); auto using zip_upperE.
 Case "abs". elimtype False. eapply (H a); auto.
+Case "let".
+destruct (zip_app_inv G1 G2 Γ₁ (a ~ E ++ Γ₂ ++ Γ₃)) as [? [? [? [? [? [? [? ?]]]]]]]; auto; subst.
+inversion H6; subst.
+SCase "EU".
+apply zip_app_inv in H11. decompose record H11; clear H11; subst.
+apply wfterm_let with (L := L)
+  (G1 := x ++ x0 ++ [(a, E)] ++ x2)
+  (G2 := x1 ++ x3 ++ [(a, U)] ++ x4) (t1 := t1); intros; auto using zip_upperEU, wfterm_upperU.
+rewrite_env (([(x5, T t1)] ++ x1) ++ x3 ++ [(a, U)] ++ x4).
+eapply wfterm_upperU; simpl_env; eauto.
+SCase "E".
+apply zip_app_inv in H11. decompose record H11; clear H11; subst.
+apply wfterm_let with (L := L)
+  (G1 := x ++ x2 ++ x3)
+  (G2 := x1 ++ x4 ++ [(a, E)] ++ x5) (t1 := t1); intros; auto using zip_upperE.
+rewrite_env (([(x0, T t1)] ++ x1) ++ x4 ++ [(a, E)] ++ x5). auto.
 Case "pair".
 destruct (zip_app_inv G1 G2 Γ₁ (a ~ E ++ Γ₂ ++ Γ₃)) as [? [? [? [? [? [? [? ?]]]]]]]; auto; subst.
 inversion H5; subst.
@@ -732,6 +819,20 @@ Case "abs". pick fresh x and apply wfterm_abs.
 intros b Hb; eapply (H b); analyze_binds Hb.
 rewrite_env (([(x, T t1)] ++ Γ₁) ++ [(a, U)] ++ Γ₂ ++ Γ₃).
 apply H1; simpl_env; auto.
+Case "let".
+destruct (zip_app_U_inv G1 G2 (Γ₁ ++ Γ₂) a Γ₃) as [? [? [? [? [? ?]]]]]; simpl_env; auto; subst.
+rewrite_env ((Γ₁ ++ Γ₂) ++ [(a, U)] ++ Γ₃) in H.
+assert (zip x x1 (Γ₁ ++ Γ₂)) as H3 by eauto using zip_remove_U1, zip_U.
+assert (zip x0 x2 Γ₃) as H4 by eauto using zip_remove_U2, zip_U.
+apply zip_app_inv in H3. decompose record H3; clear H3; subst.
+apply wfterm_let with (L := L)
+  (G1 := x3 ++ [(a, U)] ++ x4 ++ x0)
+  (G2 := x5 ++ [(a, U)] ++ x6 ++ x2) (t1 := t1).
+apply zip_lowerU; simpl_env in *; auto.
+apply IHwfterm; simpl_env; auto.
+erewrite zip_ftv_env1; eauto.
+intros. rewrite_env (([(x, T t1)] ++ x5) ++ [(a, U)] ++ x6 ++ x2).
+apply H2; simpl_env; auto. erewrite zip_ftv_env2; eauto.
 Case "pair".
 destruct (zip_app_U_inv G1 G2 (Γ₁ ++ Γ₂) a Γ₃) as [? [? [? [? [? ?]]]]]; simpl_env; auto; subst.
 rewrite_env ((Γ₁ ++ Γ₂) ++ [(a, U)] ++ Γ₃) in H.
@@ -841,6 +942,27 @@ apply zip_lowerE; simpl_env in H; auto.
 simpl_env in *; auto.
 apply IHwfterm2; simpl_env; auto. erewrite zip_ftv_env2; eauto.
 Case "abs". elimtype False. eapply (H a); auto.
+Case "let".
+destruct (zip_app_inv G1 G2 (Γ₁ ++ Γ₂) (a ~ E ++ Γ₃)) as [? [? [? [? [? [? [? ?]]]]]]]; simpl_env; auto; subst.
+inversion H6; subst.
+SCase "EU".
+apply zip_app_inv in H5. decompose record H5; clear H5; subst.
+apply wfterm_let with (L := L)
+  (G1 := x0 ++ [(a, E)] ++ x2 ++ G1)
+  (G2 := x3 ++ [(a, U)] ++ x4 ++ G2) (t1 := t1); intros.
+apply zip_lowerEU; simpl_env in H; auto.
+apply IHwfterm; simpl_env; auto. erewrite zip_ftv_env1; eauto.
+rewrite_env (([(x, T t1)] ++ x3) ++ [(a, U)] ++ x4 ++ G2).
+apply wfterm_lowerU; simpl_env in *; auto. erewrite zip_ftv_env2; eauto.
+SCase "E".
+apply zip_app_inv in H5. decompose record H5; clear H5; subst.
+apply wfterm_let with (L := L)
+  (G1 := x2 ++ x3 ++ x0)
+  (G2 := x4 ++ [(a, E)] ++ x5 ++ G2) (t1 := t1); intros.
+apply zip_lowerE; simpl_env in H; auto.
+simpl_env in *; auto.
+rewrite_env (([(x, T t1)] ++ x4) ++ [(a, E)] ++ x5 ++ G2).
+apply H2; simpl_env; auto. erewrite zip_ftv_env2; eauto.
 Case "pair".
 destruct (zip_app_inv G1 G2 (Γ₁ ++ Γ₂) (a ~ E ++ Γ₃)) as [? [? [? [? [? [? [? ?]]]]]]]; simpl_env; auto; subst.
 inversion H5; subst.
@@ -952,6 +1074,17 @@ Case "abs". pick fresh x and apply wfterm_abs.
 intros a Ha; eapply (H a); analyze_binds Ha.
 rewrite_env ((x ~ T t1 ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
   [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂). auto.
+Case "let".
+assert (zip G1 G2 (Γ₁ ++ [(a₁, Eq τ₁)] ++ [(a₂, Eq τ₂)] ++ Γ₂)) as Hinv by auto.
+apply zip_app_inv in Hinv. decompose record Hinv; clear Hinv; subst.
+inversion H7; subst. inversion H13; subst.
+apply zip_swap_Eq in H.
+apply wfterm_let with (L := L)
+  (G1 := x  ++ a₂ ~ Eq τ₂ ++ a₁ ~ Eq (tsubst_typ τ₂ a₂ τ₁) ++ G0)
+  (G2 := x1 ++ a₂ ~ Eq τ₂ ++ a₁ ~ Eq (tsubst_typ τ₂ a₂ τ₁) ++ G3)
+  (t1 := t1); intros; auto.
+rewrite_env (([(x0, T t1)] ++ x1) ++
+  [(a₂, Eq τ₂)] ++ [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ G3). auto.
 Case "pair".
 assert (zip G1 G2 (Γ₁ ++ [(a₁, Eq τ₁)] ++ [(a₂, Eq τ₂)] ++ Γ₂)) as Hinv by auto.
 apply zip_app_inv in Hinv. decompose record Hinv; clear Hinv; subst.
@@ -1095,6 +1228,47 @@ rewrite_env (([(x, T t1)] ++ Γ₁) ++ Γ₂ ++ Γ₃).
 apply H1; simpl_env; auto. apply lc_env_app; auto. apply lc_env_T.
   apply wfenv_regular_T with (Γ := [(x, T t1)] ++ Γ₁ ++ Γ₃) (x := x); auto.
   eapply wfterm_wfenv; eauto.
+Case "let".
+destruct (zip_app_inv G1 G2 Γ₁ Γ₃ H) as [G1' [G1'' [G2' [G2'' [? [? [? ?]]]]]]];
+subst.
+apply wfterm_let with (L := L ∪ dom Γ₂ ∪ dom G2' ∪ dom G2'')
+                      (G1 := G1' ++ Γ₂ ++ G1'')
+                      (G2 := G2' ++ Γ₂ ++ G2'') (t1 := t1); intros.
+apply zip_app_weakening; my_auto; eauto with lngen.
+apply IHwfterm; eauto using zip_uniq1, zip_lc1.
+  eapply wfenv_zip_inv1 with (Γ' := Γ₃); eauto.
+  assert (uniq G1'). assert (uniq (G1' ++ G1'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G1'). assert (dom G1' [<=] dom Γ₁) by eauto with fzip. solve_uniq. 
+  solve_uniq.
+  intros. intro. eapply (H9 a). rewrite ftv_env_app; auto. eauto with fzip.
+  intros. intro. eapply (H9 a). rewrite ftv_env_app in *.
+    rewrite (zip_ftv_env1 G1'') in H12; eauto.
+    analyze_binds H13; eauto with fzip.
+  assert (uniq G1''). assert (uniq (G1' ++ G1'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G1''). assert (dom G1'' [<=] dom Γ₃) by eauto with fzip. assert (uniq (Γ₂ ++ Γ₃)) by eauto with lngen. solve_uniq.
+  solve_uniq.
+  eauto with lngen.
+rewrite_env (([(x, T t1)] ++ G2') ++ Γ₂ ++ G2'').
+apply H2; eauto using zip_uniq2, zip_lc2.
+  assert (uniq (G2' ++ G2'')) by eauto with lngen. solve_uniq.
+  simpl_env. apply lc_env_app. apply lc_env_T; eauto with lngen.
+    eauto using zip_lc2.
+  eapply wfenv_zip_inv2 with (Γ' := Γ₃); eauto.
+  assert (uniq G2'). assert (uniq (G2' ++ G2'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G2'). assert (dom G2' [=] dom Γ₁) by eauto with fzip. solve_uniq. 
+  solve_uniq.
+  intros. intro. eapply (H9 a). rewrite ftv_env_app; auto. eauto with fzip.
+  intros. intro. eapply (H9 a). rewrite ftv_env_app in *.
+    rewrite (zip_ftv_env2 _ G2'') in H13 ; eauto.
+    analyze_binds H16; eauto with fzip.
+  assert (uniq G2''). assert (uniq (G2' ++ G2'')) by eauto with lngen. solve_uniq.
+  assert (uniq Γ₂) by solve_uniq. 
+  assert (disjoint Γ₂ G2''). assert (dom G2'' [=] dom Γ₃) by eauto with fzip. assert (uniq (Γ₂ ++ Γ₃)) by eauto with lngen. solve_uniq.
+  solve_uniq.
+  eauto with lngen.
 Case "pair".
 destruct (zip_app_inv G1 G2 Γ₁ Γ₃ H) as [G1' [G1'' [G2' [G2'' [? [? [? ?]]]]]]];
 subst.
@@ -1238,6 +1412,11 @@ eauto using pure_weakenU.
 assert (lc_typ t1). eapply wftyp_regular. eapply wfenv_wftyp_T3.
 eapply wfterm_wfenv. eauto.
 auto.
+Case "let". edestruct zip_weakenU_inv as [? [? [? [? ?]]]]; eauto.
+eapply wfterm_let with (L := L ∪ dom x0); intros; eauto.
+assert (lc_typ t1). eapply wftyp_regular. eapply wfenv_wftyp_T3.
+eapply wfterm_wfenv. eauto.
+apply H2; auto.
 Case "pair". edestruct zip_weakenU_inv as [? [? [? [? ?]]]]; eauto.
 Case "gen". pick fresh a and apply wfterm_gen; eauto using pure_weakenU.
 Case "gen". pick fresh a and apply wfterm_exists; auto.
@@ -1303,6 +1482,28 @@ Case "abs".
   rewrite_env ((z ~ T t1 ++ Γ₄) ++ Γ₂).
   rewrite subst_term_open_term_wrt_term_var; eauto with lngen.
   eapply H1; simpl_env; eauto.
+Case "let".
+  destruct (zip_app_inv G1 G2 Γ₄ (x ~ T τ₁ ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; subst; auto.
+  inversion H9; subst.
+  apply wfterm_let with (L := L ∪ {{x}})
+    (G1 := x0 ++ G1) (G2 := x2 ++ G2) (t1 := t1); intros.
+  apply zip_app; auto. 
+    assert (uniq (x0 ++ [(x, T τ₁)] ++ G1)) by eauto with lngen. solve_uniq.
+    assert (uniq (x2 ++ [(x, T τ₁)] ++ G2)) by eauto with lngen. solve_uniq.
+    assert (uniq (Γ₄ ++ [(x, T τ₁)] ++ Γ₂)) by eauto with lngen. solve_uniq.
+  eapply IHwfterm; eauto.
+    edestruct zip_distrib with (Γ₁ := Γ₁) as [? [_ [_ [? [_ [_ _]]]]]]; eauto.
+    replace x1 with G1 in * by eauto using zip_pure_eq1. auto.
+  edestruct zip_distrib with (Γ₁ := Γ₁) as [? [? [? [_ [? [_ ?]]]]]]; eauto.
+  rewrite_env (([(x1, T t1)] ++ x2) ++ G2).
+  rewrite subst_term_open_term_wrt_term_var; eauto with lngen.
+
+  ICI
+
+  eapply H1 with (Γ₁ := x3); simpl_env;
+    eauto using wfterm_weakenU, pure_weakenU.
+    replace x4 with G2 in *; eauto using zip_pure_eq1, pure_weakenU.
+
 Case "pair".
   destruct (zip_app_inv G1 G2 Γ₄ (x ~ T τ₁ ++ Γ₂)) as [? [? [? [? [? [? [? ?]]]]]]]; subst; auto.
   inversion H6; subst.

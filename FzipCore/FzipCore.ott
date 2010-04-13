@@ -28,6 +28,7 @@ term, e, f, g :: term_ ::=
   | x              ::   :: var
   | \ ( x : t ) e  ::   :: abs (+ bind x in e +)
   | e1 e2          ::   :: app
+  | let x = e1 in e2 ::   :: let (+ bind x in e2 +)
   | ( e1 , e2 )    ::   :: pair
   | fst e          ::   :: fst
   | snd e          ::   :: snd
@@ -288,6 +289,12 @@ G, x:t1 |- e : t2
 ---------------------- :: abs
 G |- \(x:t1)e : t1->t2
 
+      G1 zip G2 = G
+      G1 |- e1 : t1
+   G2, x:t1 |- e2 : t2
+-------------------------- :: let
+G |- let x = e1 in e2 : t2
+
     G1 zip G2 = G
     G1 |- e1 : t1
     G2 |- e2 : t2
@@ -344,9 +351,13 @@ defn
 e1 --> e2
 :: :: red0 :: red0_ by
 
-           e2 val
------------------------------ :: beta_v
-(\(x:t)e1) e2 --> {e2 / x} e1
+             e2 val
+---------------------------------- :: beta_v_red
+(\(x:t)e1) e2 --> let x = e2 in e1
+
+             e1 val
+-------------------------------- :: beta_v_let
+let x = e1 in e2 --> {e1 / x} e2
 
     (e1, e2) val
 ------------------- :: pi_fst
@@ -449,8 +460,12 @@ e1 ---> e2
 :: :: red1 :: red1_ by
 
 e --> e'
----------- :: empty
+--------- :: empty
 e ---> e'
+
+              e1 ---> e1'
+--------------------------------------- :: let
+let x = e1 in e2 ---> let x = e1' in e2
 
    e1 ---> e1'
 ----------------- :: appL

@@ -29,6 +29,7 @@ Inductive term : Set :=
  | term_var_f : termvar -> term
  | term_abs : typ -> term -> term
  | term_app : term -> term -> term
+ | term_let : term -> term -> term
  | term_pair : term -> term -> term
  | term_fst : term -> term
  | term_snd : term -> term
@@ -71,6 +72,7 @@ Fixpoint open_term_wrt_term_rec (k:nat) (e_5:term) (e__6:term) {struct e__6}: te
   | (term_var_f x) => term_var_f x
   | (term_abs t e) => term_abs t (open_term_wrt_term_rec (S k) e_5 e)
   | (term_app e1 e2) => term_app (open_term_wrt_term_rec k e_5 e1) (open_term_wrt_term_rec k e_5 e2)
+  | (term_let e1 e2) => term_let (open_term_wrt_term_rec k e_5 e1) (open_term_wrt_term_rec (S k) e_5 e2)
   | (term_pair e1 e2) => term_pair (open_term_wrt_term_rec k e_5 e1) (open_term_wrt_term_rec k e_5 e2)
   | (term_fst e) => term_fst (open_term_wrt_term_rec k e_5 e)
   | (term_snd e) => term_snd (open_term_wrt_term_rec k e_5 e)
@@ -89,6 +91,7 @@ Fixpoint open_term_wrt_typ_rec (k:nat) (t_5:typ) (e_5:term) {struct e_5}: term :
   | (term_var_f x) => term_var_f x
   | (term_abs t e) => term_abs (open_typ_wrt_typ_rec k t_5 t) (open_term_wrt_typ_rec k t_5 e)
   | (term_app e1 e2) => term_app (open_term_wrt_typ_rec k t_5 e1) (open_term_wrt_typ_rec k t_5 e2)
+  | (term_let e1 e2) => term_let (open_term_wrt_typ_rec k t_5 e1) (open_term_wrt_typ_rec k t_5 e2)
   | (term_pair e1 e2) => term_pair (open_term_wrt_typ_rec k t_5 e1) (open_term_wrt_typ_rec k t_5 e2)
   | (term_fst e) => term_fst (open_term_wrt_typ_rec k t_5 e)
   | (term_snd e) => term_snd (open_term_wrt_typ_rec k t_5 e)
@@ -142,6 +145,10 @@ Inductive lc_term : term -> Prop :=    (* defn lc_term *)
      (lc_term e1) ->
      (lc_term e2) ->
      (lc_term (term_app e1 e2))
+ | lc_term_let : forall (e1 e2:term),
+     (lc_term e1) ->
+      ( forall x , lc_term  ( open_term_wrt_term e2 (term_var_f x) )  )  ->
+     (lc_term (term_let e1 e2))
  | lc_term_pair : forall (e1 e2:term),
      (lc_term e1) ->
      (lc_term e2) ->
@@ -196,6 +203,7 @@ Fixpoint fv_term (e_5:term) : vars :=
   | (term_var_f x) => {{x}}
   | (term_abs t e) => (fv_term e)
   | (term_app e1 e2) => (fv_term e1) \u (fv_term e2)
+  | (term_let e1 e2) => (fv_term e1) \u (fv_term e2)
   | (term_pair e1 e2) => (fv_term e1) \u (fv_term e2)
   | (term_fst e) => (fv_term e)
   | (term_snd e) => (fv_term e)
@@ -214,6 +222,7 @@ Fixpoint ftv_term (e_5:term) : vars :=
   | (term_var_f x) => {}
   | (term_abs t e) => (ftv_typ t) \u (ftv_term e)
   | (term_app e1 e2) => (ftv_term e1) \u (ftv_term e2)
+  | (term_let e1 e2) => (ftv_term e1) \u (ftv_term e2)
   | (term_pair e1 e2) => (ftv_term e1) \u (ftv_term e2)
   | (term_fst e) => (ftv_term e)
   | (term_snd e) => (ftv_term e)
@@ -244,6 +253,7 @@ Fixpoint subst_term (e_5:term) (x5:termvar) (e__6:term) {struct e__6} : term :=
   | (term_var_f x) => (if eq_var x x5 then e_5 else (term_var_f x))
   | (term_abs t e) => term_abs t (subst_term e_5 x5 e)
   | (term_app e1 e2) => term_app (subst_term e_5 x5 e1) (subst_term e_5 x5 e2)
+  | (term_let e1 e2) => term_let (subst_term e_5 x5 e1) (subst_term e_5 x5 e2)
   | (term_pair e1 e2) => term_pair (subst_term e_5 x5 e1) (subst_term e_5 x5 e2)
   | (term_fst e) => term_fst (subst_term e_5 x5 e)
   | (term_snd e) => term_snd (subst_term e_5 x5 e)
@@ -262,6 +272,7 @@ Fixpoint tsubst_term (t_5:typ) (a5:typvar) (e_5:term) {struct e_5} : term :=
   | (term_var_f x) => term_var_f x
   | (term_abs t e) => term_abs (tsubst_typ t_5 a5 t) (tsubst_term t_5 a5 e)
   | (term_app e1 e2) => term_app (tsubst_term t_5 a5 e1) (tsubst_term t_5 a5 e2)
+  | (term_let e1 e2) => term_let (tsubst_term t_5 a5 e1) (tsubst_term t_5 a5 e2)
   | (term_pair e1 e2) => term_pair (tsubst_term t_5 a5 e1) (tsubst_term t_5 a5 e2)
   | (term_fst e) => term_fst (tsubst_term t_5 a5 e)
   | (term_snd e) => term_snd (tsubst_term t_5 a5 e)
@@ -435,6 +446,11 @@ Inductive wfterm : typing_env -> term -> typ -> Prop :=    (* defn wfterm *)
       (pure ( G ))  ->
       ( forall x , x \notin  L  -> wfterm  ( x ~(T  t1 ) ++  G )   ( open_term_wrt_term e (term_var_f x) )  t2 )  ->
      wfterm G (term_abs t1 e) (typ_arrow t1 t2)
+ | wfterm_let : forall (L:vars) (G:typing_env) (e1 e2:term) (t2:typ) (G1 G2:typing_env) (t1:typ),
+     zip G1 G2 G ->
+     wfterm G1 e1 t1 ->
+      ( forall x , x \notin  L  -> wfterm  ( x ~(T  t1 ) ++  G2 )   ( open_term_wrt_term e2 (term_var_f x) )  t2 )  ->
+     wfterm G (term_let e1 e2) t2
  | wfterm_pair : forall (G:typing_env) (e1 e2:term) (t1 t2:typ) (G1 G2:typing_env),
      zip G1 G2 G ->
      wfterm G1 e1 t1 ->
@@ -475,11 +491,15 @@ Inductive wfterm : typing_env -> term -> typ -> Prop :=    (* defn wfterm *)
 
 (* defns Jred0 *)
 Inductive red0 : term -> term -> Prop :=    (* defn red0 *)
- | red0_beta_v : forall (t:typ) (e1 e2:term),
+ | red0_beta_v_red : forall (t:typ) (e1 e2:term),
      lc_typ t ->
      lc_term (term_abs t e1) ->
      val e2 ->
-     red0 (term_app  ( (term_abs t e1) )  e2)  (open_term_wrt_term  e1   e2 ) 
+     red0 (term_app  ( (term_abs t e1) )  e2) (term_let e2 e1)
+ | red0_beta_v_let : forall (e1 e2:term),
+     lc_term (term_let e1 e2) ->
+     val e1 ->
+     red0 (term_let e1 e2)  (open_term_wrt_term  e2   e1 ) 
  | red0_pi_fst : forall (e1 e2:term),
      val (term_pair e1 e2) ->
      red0 (term_fst (term_pair e1 e2)) e1
@@ -590,6 +610,10 @@ Inductive red1 : term -> term -> Prop :=    (* defn red1 *)
  | red1_empty : forall (e e':term),
      red0 e e' ->
      red1 e e'
+ | red1_let : forall (e1 e2 e1':term),
+     lc_term (term_let e1 e2) ->
+     red1 e1 e1' ->
+     red1 (term_let e1 e2) (term_let e1' e2)
  | red1_appL : forall (e1 e2 e1':term),
      lc_term e2 ->
      red1 e1 e1' ->

@@ -20,7 +20,10 @@ Proof.
 intros e e' H; destruct H;
 try solve [apply val_regular in H; inversion H; subst; auto];
 auto with lngen.
-Case "beta_v". eauto with lngen.
+Case "beta_v_red". inversion H0; subst.
+  pick fresh x. apply (lc_term_let_exists x); auto.
+  apply val_regular; auto.
+Case "beta_v_let". eauto with lngen.
 Case "beta_t".
   pick fresh a.
   assert (lc_term (open_term_wrt_typ e (typ_var_f a))) by auto with lngen.
@@ -183,8 +186,10 @@ Lemma red0_trenaming : forall a b e e',
   red0 (tsubst_term (typ_var_f b) a e) (tsubst_term (typ_var_f b) a e').
 Proof with auto using val_trenaming, result_trenaming with lngen.
 intros a b e e' Hb H. inversion H; subst; simpl in *.
-Case "beta_v". rewrite tsubst_term_open_term_wrt_term; auto.
+Case "beta_v_red". 
 constructor... unsimpl (tsubst_term (typ_var_f b) a (term_abs t e1))...
+Case "beta_v_let". rewrite tsubst_term_open_term_wrt_term; auto.
+constructor... unsimpl (tsubst_term (typ_var_f b) a (term_let e1 e2))...
 Case "projL". inversion H0; subst; try congruence...
 Case "projR". inversion H0; subst; try congruence...
 Case "beta_t". rewrite tsubst_term_open_term_wrt_typ; auto.
@@ -469,6 +474,8 @@ Proof.
 intros a b e e' Hb H.
 induction H; subst; simpl in *; auto with lngen.
 Case "empty". auto using red0_trenaming.
+Case "let". apply red1_let; auto.
+unsimpl (tsubst_term (typ_var_f b) a (term_let e1 e2)). auto with lngen.
 Case "exists".
 apply red1_exists with (L := L ∪ {{a}} ∪ {{b}} ∪ ftv_term e); intros c Hc.
 replace (typ_var_f c) with (tsubst_typ (typ_var_f b) a (typ_var_f c)) by auto with lngen.

@@ -31,14 +31,14 @@ Definition typ_mutrec :=
 Scheme term_ind' := Induction for term Sort Prop.
 
 Definition term_mutind :=
-  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 =>
-  term_ind' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15.
+  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 =>
+  term_ind' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16.
 
 Scheme term_rec' := Induction for term Sort Set.
 
 Definition term_mutrec :=
-  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 =>
-  term_rec' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15.
+  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 =>
+  term_rec' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16.
 
 
 (* *********************************************************************** *)
@@ -62,6 +62,7 @@ Fixpoint close_term_wrt_term_rec (n1 : nat) (x1 : termvar) (e1 : term) {struct e
     | term_var_b n2 => if (lt_ge_dec n2 n1) then (term_var_b n2) else (term_var_b (S n2))
     | term_abs t1 e2 => term_abs t1 (close_term_wrt_term_rec (S n1) x1 e2)
     | term_app e2 e3 => term_app (close_term_wrt_term_rec n1 x1 e2) (close_term_wrt_term_rec n1 x1 e3)
+    | term_let e2 e3 => term_let (close_term_wrt_term_rec n1 x1 e2) (close_term_wrt_term_rec (S n1) x1 e3)
     | term_pair e2 e3 => term_pair (close_term_wrt_term_rec n1 x1 e2) (close_term_wrt_term_rec n1 x1 e3)
     | term_fst e2 => term_fst (close_term_wrt_term_rec n1 x1 e2)
     | term_snd e2 => term_snd (close_term_wrt_term_rec n1 x1 e2)
@@ -80,6 +81,7 @@ Fixpoint close_term_wrt_typ_rec (n1 : nat) (a1 : typvar) (e1 : term) {struct e1}
     | term_var_b n2 => term_var_b n2
     | term_abs t1 e2 => term_abs (close_typ_wrt_typ_rec n1 a1 t1) (close_term_wrt_typ_rec n1 a1 e2)
     | term_app e2 e3 => term_app (close_term_wrt_typ_rec n1 a1 e2) (close_term_wrt_typ_rec n1 a1 e3)
+    | term_let e2 e3 => term_let (close_term_wrt_typ_rec n1 a1 e2) (close_term_wrt_typ_rec n1 a1 e3)
     | term_pair e2 e3 => term_pair (close_term_wrt_typ_rec n1 a1 e2) (close_term_wrt_typ_rec n1 a1 e3)
     | term_fst e2 => term_fst (close_term_wrt_typ_rec n1 a1 e2)
     | term_snd e2 => term_snd (close_term_wrt_typ_rec n1 a1 e2)
@@ -116,6 +118,7 @@ Fixpoint size_term (e1 : term) {struct e1} : nat :=
     | term_var_b n1 => 1
     | term_abs t1 e2 => 1 + (size_typ t1) + (size_term e2)
     | term_app e2 e3 => 1 + (size_term e2) + (size_term e3)
+    | term_let e2 e3 => 1 + (size_term e2) + (size_term e3)
     | term_pair e2 e3 => 1 + (size_term e2) + (size_term e3)
     | term_fst e2 => 1 + (size_term e2)
     | term_snd e2 => 1 + (size_term e2)
@@ -176,6 +179,10 @@ Inductive degree_term_wrt_term : nat -> term -> Prop :=
     degree_term_wrt_term n1 e1 ->
     degree_term_wrt_term n1 e2 ->
     degree_term_wrt_term n1 (term_app e1 e2)
+  | degree_wrt_term_term_let : forall n1 e1 e2,
+    degree_term_wrt_term n1 e1 ->
+    degree_term_wrt_term (S n1) e2 ->
+    degree_term_wrt_term n1 (term_let e1 e2)
   | degree_wrt_term_term_pair : forall n1 e1 e2,
     degree_term_wrt_term n1 e1 ->
     degree_term_wrt_term n1 e2 ->
@@ -221,6 +228,10 @@ Inductive degree_term_wrt_typ : nat -> term -> Prop :=
     degree_term_wrt_typ n1 e1 ->
     degree_term_wrt_typ n1 e2 ->
     degree_term_wrt_typ n1 (term_app e1 e2)
+  | degree_wrt_typ_term_let : forall n1 e1 e2,
+    degree_term_wrt_typ n1 e1 ->
+    degree_term_wrt_typ n1 e2 ->
+    degree_term_wrt_typ n1 (term_let e1 e2)
   | degree_wrt_typ_term_pair : forall n1 e1 e2,
     degree_term_wrt_typ n1 e1 ->
     degree_term_wrt_typ n1 e2 ->
@@ -261,14 +272,14 @@ Inductive degree_term_wrt_typ : nat -> term -> Prop :=
 Scheme degree_term_wrt_term_ind' := Induction for degree_term_wrt_term Sort Prop.
 
 Definition degree_term_wrt_term_mutind :=
-  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 =>
-  degree_term_wrt_term_ind' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15.
+  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 =>
+  degree_term_wrt_term_ind' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16.
 
 Scheme degree_term_wrt_typ_ind' := Induction for degree_term_wrt_typ Sort Prop.
 
 Definition degree_term_wrt_typ_mutind :=
-  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 =>
-  degree_term_wrt_typ_ind' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15.
+  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 =>
+  degree_term_wrt_typ_ind' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16.
 
 Hint Constructors degree_term_wrt_term : core lngen.
 
@@ -329,6 +340,10 @@ Inductive lc_set_term : term -> Set :=
     lc_set_term e1 ->
     lc_set_term e2 ->
     lc_set_term (term_app e1 e2)
+  | lc_set_term_let : forall e1 e2,
+    lc_set_term e1 ->
+    (forall x1 : termvar, lc_set_term (open_term_wrt_term e2 (term_var_f x1))) ->
+    lc_set_term (term_let e1 e2)
   | lc_set_term_pair : forall e1 e2,
     lc_set_term e1 ->
     lc_set_term e2 ->
@@ -369,20 +384,20 @@ Inductive lc_set_term : term -> Set :=
 Scheme lc_term_ind' := Induction for lc_term Sort Prop.
 
 Definition lc_term_mutind :=
-  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 =>
-  lc_term_ind' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14.
+  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 =>
+  lc_term_ind' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15.
 
 Scheme lc_set_term_ind' := Induction for lc_set_term Sort Prop.
 
 Definition lc_set_term_mutind :=
-  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 =>
-  lc_set_term_ind' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14.
+  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 =>
+  lc_set_term_ind' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15.
 
 Scheme lc_set_term_rec' := Induction for lc_set_term Sort Set.
 
 Definition lc_set_term_mutrec :=
-  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 =>
-  lc_set_term_rec' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14.
+  fun H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 =>
+  lc_set_term_rec' H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15.
 
 Hint Constructors lc_term : core lngen.
 
@@ -1931,6 +1946,13 @@ forall x1 t1 e1,
   lc_term (term_abs t1 e1).
 Proof. Admitted.
 
+Lemma lc_term_let_exists :
+forall x1 e1 e2,
+  lc_term e1 ->
+  lc_term (open_term_wrt_term e2 (term_var_f x1)) ->
+  lc_term (term_let e1 e2).
+Proof. Admitted.
+
 Lemma lc_term_gen_exists :
 forall a1 e1,
   lc_term (open_term_wrt_typ e1 (typ_var_f a1)) ->
@@ -1971,6 +1993,11 @@ Hint Extern 1 (lc_term (term_abs _ _)) =>
   let x1 := fresh in
   pick_fresh x1;
   apply (lc_term_abs_exists x1).
+
+Hint Extern 1 (lc_term (term_let _ _)) =>
+  let x1 := fresh in
+  pick_fresh x1;
+  apply (lc_term_let_exists x1).
 
 Hint Extern 1 (lc_term (term_gen _)) =>
   let a1 := fresh in
@@ -2042,6 +2069,14 @@ forall t1 e1,
 Proof. Admitted.
 
 Hint Resolve lc_body_term_abs_2 : lngen.
+
+Lemma lc_body_term_let_2 :
+forall e1 e2,
+  lc_term (term_let e1 e2) ->
+  body_term_wrt_term e2.
+Proof. Admitted.
+
+Hint Resolve lc_body_term_let_2 : lngen.
 
 Lemma lc_body_term_gen_1 :
 forall e1,
@@ -4161,6 +4196,15 @@ Proof. Admitted.
 
 Hint Resolve subst_term_term_abs : lngen.
 
+Lemma subst_term_term_let :
+forall x2 e2 e3 e1 x1,
+  lc_term e1 ->
+  x2 `notin` fv_term e1 `union` fv_term e3 `union` singleton x1 ->
+  subst_term e1 x1 (term_let e2 e3) = term_let (subst_term e1 x1 e2) (close_term_wrt_term x2 (subst_term e1 x1 (open_term_wrt_term e3 (term_var_f x2)))).
+Proof. Admitted.
+
+Hint Resolve subst_term_term_let : lngen.
+
 Lemma subst_term_term_gen :
 forall a1 e2 e1 x1,
   lc_term e1 ->
@@ -4205,6 +4249,15 @@ forall x1 t2 e1 t1 a1,
 Proof. Admitted.
 
 Hint Resolve tsubst_term_term_abs : lngen.
+
+Lemma tsubst_term_term_let :
+forall x1 e1 e2 t1 a1,
+  lc_typ t1 ->
+  x1 `notin` fv_term e2 ->
+  tsubst_term t1 a1 (term_let e1 e2) = term_let (tsubst_term t1 a1 e1) (close_term_wrt_term x1 (tsubst_term t1 a1 (open_term_wrt_term e2 (term_var_f x1)))).
+Proof. Admitted.
+
+Hint Resolve tsubst_term_term_let : lngen.
 
 Lemma tsubst_term_term_gen :
 forall a2 e1 t1 a1,
