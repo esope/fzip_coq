@@ -570,7 +570,12 @@ Inductive red0 : term -> term -> Prop :=    (* defn red0 *)
      result (term_sigma (typ_var_f b) t e2) ->
      (forall a , a \notin  L  -> open_term_wrt_typ e1' (typ_var_f a) = tsubst_term (typ_var_f a) b e1) ->
       red0 (term_app e1 (term_sigma (typ_var_f b) t e2)) (term_sigma (typ_var_f b) t (term_app e1' e2))
-
+ | red0_sigma_letL : forall (L:vars) (b:typvar) (t:typ) (e1 e2 e2':term),
+     lc_term (term_let  ( (term_sigma (typ_var_f b) t e1) )  e2) ->
+     result (term_sigma (typ_var_f b) t e1) ->
+     (forall a , a \notin  L ->
+       open_term_wrt_typ e2' (typ_var_f a) = tsubst_term (typ_var_f a) b e2) ->
+     red0 (term_let (term_sigma (typ_var_f b) t e1) e2) (term_sigma (typ_var_f b) t  (term_let e1  e2'))
  | red0_sigma_pairL : forall (L:vars) (b:typvar) (t:typ) (e1 e2 e2':term),
      result (term_sigma (typ_var_f b) t e1) ->
      result e2 ->

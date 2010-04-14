@@ -413,6 +413,10 @@ open <b> (ex a. e : exists a. t) --> (open <b> ex a. e : {b/a}t)
 ---------------------------------------------------------- :: sigma_appR
 e1 (sig <b> (a = t) e2) --> sig <b> (a = t) (({a/b}e1) e2)
 
+                  sig <b> (a = t) e1 result
+----------------------------------------------------------------------------- :: sigma_letL
+let x = (sig <b> (a = t) e1) in e2 --> sig <b> (a = t) let x = e1 in {a/b}e2
+
                sig <b> (a = t) e1 result
                        e2 result
 ---------------------------------------------------------- :: sigma_pairL

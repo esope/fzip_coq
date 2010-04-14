@@ -61,6 +61,18 @@ Case "sigma_appR".
   constructor.
     rewrite (H1 a); auto with lngen.
     apply result_regular in H0; inversion H0; subst. apply H7.
+Case "sigma_letL".
+  pick fresh a.
+  apply (lc_term_sigma_exists a); auto.
+  apply result_regular in H0; inversion H0; subst; auto.
+  replace (open_term_wrt_typ (term_let e1 e2') (typ_var_f a)) with
+    (term_let (open_term_wrt_typ e1 (typ_var_f a)) (open_term_wrt_typ e2' (typ_var_f a)))
+    by reflexivity.
+  constructor.
+    apply result_regular in H0; inversion H0; subst; auto.
+    intros. rewrite (H1 a); auto with lngen.
+    rewrite tsubst_term_open_term_wrt_term_var.
+    inversion H; subst; auto with lngen.
 Case "sigma_pairL".
   pick fresh a.
   apply (lc_term_sigma_exists a); auto.
@@ -276,6 +288,36 @@ SCase "b0 ≠ a". pick fresh c and apply red0_sigma_appR...
 replace (term_sigma (typ_var_f b0) (tsubst_typ (typ_var_f b) a t)
         (tsubst_term (typ_var_f b) a e2))
  with (tsubst_term (typ_var_f b) a (term_sigma (typ_var_f b0) t e2))...
+simpl. destruct (b0 == a); try congruence.
+rewrite tsubst_term_tsubst_term...
+simpl. unfold typvar; destruct (b == b0); subst.
+elimtype False. auto.
+rewrite tsubst_term_open_term_wrt_typ_var... rewrite H2...
+Case "sigma letL". destruct (b0 == a); subst.
+SCase "b0 = a". pick fresh c and apply red0_sigma_letL...
+replace (term_let (term_sigma (typ_var_f b) (tsubst_typ (typ_var_f b) a t)
+        (tsubst_term (typ_var_f b) a e1))
+        (tsubst_term (typ_var_f b) a e2))
+ with (tsubst_term (typ_var_f b) a (term_let (term_sigma (typ_var_f a) t e1) e2))...
+simpl. destruct (a == a); try congruence.
+replace (term_sigma (typ_var_f b) (tsubst_typ (typ_var_f b) a t)
+        (tsubst_term (typ_var_f b) a e1))
+with (tsubst_term (typ_var_f b) a (term_sigma (typ_var_f a) t e1))...
+simpl. destruct (a == a); try congruence.
+rewrite tsubst_term_tsubst_term...
+simpl. unfold typvar; destruct (b == b); try congruence.
+rewrite tsubst_term_open_term_wrt_typ_var... rewrite H2...
+rewrite tsubst_term_fresh_eq with (t1 := typ_var_f b)...
+rewrite tsubst_term_fresh_eq with (a1 := b)...
+SCase "b0 ≠ a". pick fresh c and apply red0_sigma_letL...
+replace (term_let (term_sigma (typ_var_f b0) (tsubst_typ (typ_var_f b) a t)
+        (tsubst_term (typ_var_f b) a e1))
+        (tsubst_term (typ_var_f b) a e2))
+ with (tsubst_term (typ_var_f b) a (term_let (term_sigma (typ_var_f b0) t e1) e2))...
+simpl. destruct (b0 == a); try congruence.
+replace (term_sigma (typ_var_f b0) (tsubst_typ (typ_var_f b) a t)
+        (tsubst_term (typ_var_f b) a e1))
+with (tsubst_term (typ_var_f b) a (term_sigma (typ_var_f b0) t e1))...
 simpl. destruct (b0 == a); try congruence.
 rewrite tsubst_term_tsubst_term...
 simpl. unfold typvar; destruct (b == b0); subst.

@@ -58,15 +58,22 @@
 >      red0 (term_app (term_sigma (typ_var_f b) t e1) e2) (term_sigma (typ_var_f b) t  (term_app e1  e2'))
 >  | red0_sigma_appR : forall (L:vars) (e1 e1':term) (b:typvar) (t:typ) (e2:term),
 >      val e1 ->
-551,552c571,574
+551,552c571,573
 <       ( forall a , a \notin  L  -> red0 (term_app  ( open_term_wrt_typ e1 (typ_var_f a) )   ( (term_sigma (typ_var_f b) t e2) ) ) (term_sigma (typ_var_f b) t  ( (term_app  (  (open_term_wrt_typ   e1    (typ_var_f a) )  )  e2) ) ) ) 
-<  | red0_sigma_pairL : forall (L:vars) (b:typvar) (t:typ) (e1 e2:term),
+<  | red0_sigma_letL : forall (L:vars) (b:typvar) (t:typ) (e1 e2:term),
 ---
 >      (forall a , a \notin  L  -> open_term_wrt_typ e1' (typ_var_f a) = tsubst_term (typ_var_f a) b e1) ->
 >       red0 (term_app e1 (term_sigma (typ_var_f b) t e2)) (term_sigma (typ_var_f b) t (term_app e1' e2))
-> 
+>  | red0_sigma_letL : forall (L:vars) (b:typvar) (t:typ) (e1 e2 e2':term),
+555,556c576,579
+<       ( forall a , a \notin  L  -> red0 (term_let  ( (term_sigma (typ_var_f b) t e1) )   ( open_term_wrt_typ e2 (typ_var_f a) ) ) (term_sigma (typ_var_f b) t (term_let e1  (open_term_wrt_typ   e2    (typ_var_f a) ) )) ) 
+<  | red0_sigma_pairL : forall (L:vars) (b:typvar) (t:typ) (e1 e2:term),
+---
+>      (forall a , a \notin  L ->
+>        open_term_wrt_typ e2' (typ_var_f a) = tsubst_term (typ_var_f a) b e2) ->
+>      red0 (term_let (term_sigma (typ_var_f b) t e1) e2) (term_sigma (typ_var_f b) t  (term_let e1  e2'))
 >  | red0_sigma_pairL : forall (L:vars) (b:typvar) (t:typ) (e1 e2 e2':term),
-554,557c576,580
+558,561c581,585
 <       ( forall a , a \notin  L  -> result  ( open_term_wrt_typ e2 (typ_var_f a) )  )  ->
 <       ( forall a , a \notin  L  -> red0 (term_pair (term_sigma (typ_var_f b) t e1)  ( open_term_wrt_typ e2 (typ_var_f a) ) ) (term_sigma (typ_var_f b) t (term_pair e1  (open_term_wrt_typ   e2    (typ_var_f a) ) )) ) 
 <  | red0_sigma_pairR : forall (L:vars) (e1:term) (b:typvar) (t:typ) (e2:term),
@@ -77,24 +84,24 @@
 >      red0 (term_pair (term_sigma (typ_var_f b) t e1) e2) (term_sigma (typ_var_f b) t  (term_pair e1  e2'))
 >  | red0_sigma_pairR : forall (L:vars) (e1 e1':term) (b:typvar) (t:typ) (e2:term),
 >      val e1 ->
-559c582,583
+563c587,588
 <       ( forall a , a \notin  L  -> red0 (term_pair  ( open_term_wrt_typ e1 (typ_var_f a) )  (term_sigma (typ_var_f b) t e2)) (term_sigma (typ_var_f b) t (term_pair  (open_term_wrt_typ   e1    (typ_var_f a) )  e2)) ) 
 ---
 >      (forall a , a \notin  L  -> open_term_wrt_typ e1' (typ_var_f a) = tsubst_term (typ_var_f a) b e1) ->
 >       red0 (term_pair e1 (term_sigma (typ_var_f b) t e2)) (term_sigma (typ_var_f b) t (term_pair e1' e2))
-566,567c590,591
+570,571c595,596
 <  | red0_sigma_inst : forall (L:vars) (b:typvar) (t:typ) (e:term) (t':typ) (a:typvar),
 <      lc_typ (term_sigma (typ_var_f b) t  ( (term_inst e  (open_typ_wrt_typ  t'   (typ_var_f b) ) ) ) ) ->
 ---
 >  | red0_sigma_inst : forall (L:vars) (b:typvar) (t:typ) (e:term) (t' t'':typ),
 >      lc_typ t' ->
-569c593,595
+573c598,600
 <       ( forall a , a \notin  L  -> red0 (term_inst  ( (term_sigma (typ_var_f b) t e) )   ( open_typ_wrt_typ t' (typ_var_f a) ) ) (term_sigma (typ_var_f b) t  ( (term_inst e  (open_typ_wrt_typ  t'   (typ_var_f b) ) ) ) ) ) 
 ---
 >      (forall a , a \notin  L  -> open_typ_wrt_typ t'' (typ_var_f a) = tsubst_typ (typ_var_f a) b t') ->
 >      red0 (term_inst (term_sigma (typ_var_f b) t e) t')
 >      (term_sigma (typ_var_f b) t  (term_inst e t''))
-573,577c599,606
+577,581c604,611
 <  | red0_sigma_sigma : forall (L:vars) (b1:typvar) (t1:typ) (b2:typvar) (t2:typ) (e:term) (a1:typvar),
 <      lc_typ (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) ->
 <      lc_typ (term_sigma (typ_var_f b2)  (open_typ_wrt_typ  t2   t1 )  (term_sigma (typ_var_f b1) t1 e)) ->
