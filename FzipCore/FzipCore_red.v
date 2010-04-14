@@ -515,3 +515,71 @@ assert (ftv_term (open_term_wrt_typ e (typ_var_f c))
   [<=] ftv_typ (typ_var_f c) ∪ ftv_term e) by auto with lngen.
 simpl in *; fsetdec.
 Qed.
+
+Lemma red0_ftv : forall A e e', red0 e A e' →
+  ftv_term e' [<=] ftv_term e.
+Proof.
+intros A e e' H. destruct H; simpl in *; try solve [fsetdec].
+Case "let". auto with lngen.
+Case "gen". assert (ftv_term (open_term_wrt_typ e t) [<=]
+ftv_typ t∪ftv_term e) by auto with lngen. fsetdec.
+Case "open". assert (ftv_term (open_term_wrt_typ e (typ_var_f b))
+ [<=] ftv_typ (typ_var_f b)∪ftv_term e) by auto with lngen.
+simpl in *. fsetdec.
+Case "sigma inst". pick fresh b. pick fresh a.
+erewrite (H3 b a)
+with (e1 := open_term_wrt_typ_rec 1 (typ_var_f b) e); auto.
+clear H3.
+rewrite tsubst_term_open_term_wrt_typ; auto.
+rewrite tsubst_term_open_term_wrt_typ_rec; auto.
+simpl. unfold typvar; destruct (a == a); try congruence.
+unfold typvar; destruct (b == a); subst.
+  assert (a ≠ a) by auto; contradiction.
+
+assert (ftv_term (open_term_wrt_typ (open_term_wrt_typ_rec 1
+        (typ_var_f b) (tsubst_term (open_typ_wrt_typ t (typ_var_f b))
+        a e)) (open_typ_wrt_typ t (typ_var_f b))) [<=] ftv_typ
+        (open_typ_wrt_typ t (typ_var_f b)) ∪ ftv_term
+        (open_term_wrt_typ_rec 1 (typ_var_f b) (tsubst_term
+        (open_typ_wrt_typ t (typ_var_f b)) a e))) by auto with lngen.
+assert (ftv_typ (open_typ_wrt_typ t (typ_var_f b)) [<=] ftv_typ t).
+  assert (ftv_typ (open_typ_wrt_typ t (typ_var_f b)) [<=] ftv_typ
+  (typ_var_f b) ∪ ftv_typ t) by auto with lngen.
+  assert (b ∉ ftv_typ (open_typ_wrt_typ t (typ_var_f b))) by auto.
+  simpl in *. clear Fr Fr0. fsetdec.
+assert (ftv_term (open_term_wrt_typ_rec 1 (typ_var_f b) (tsubst_term
+         (open_typ_wrt_typ t (typ_var_f b)) a e)) [<=] ftv_typ
+         (typ_var_f b) ∪ ftv_term (tsubst_term (open_typ_wrt_typ t
+         (typ_var_f b)) a e)) by auto with lngen.
+
+ICI
+
+clear Fr Fr. simpl in *. fsetdec.
+
+
+
+Admitted.
+
+Lemma red1_ftv : forall A e e', e ⇝[A] e' →
+  ftv_term e' [<=] ftv_term e.
+Proof.
+Admitted.
+
+Lemma redn_ftv : forall A e e', e ⇝⋆[A] e' →
+  ftv_term e' [<=] ftv_term e.
+Proof.
+Admitted.
+
+Lemma redn_trenaming : forall A a b e e',
+  b ∉ ftv_term e →
+  e ⇝⋆[A] e' →
+  (tsubst_term (typ_var_f b) a e) ⇝⋆[A] (tsubst_term (typ_var_f b) a e').
+Proof.
+Admitted.
+
+Lemma redn_context_sigma : forall A e e' b a τ,
+  lc_typ τ → e ⇝⋆[A] e' →
+  (term_sigma (typ_var_f b) τ (close_term_wrt_typ a e))
+  ⇝⋆[A] (term_sigma (typ_var_f b) τ (close_term_wrt_typ a e')).
+Proof.
+Admitted.

@@ -560,12 +560,67 @@ Case "nu". pick fresh a and apply wfterm_nu; eauto.
 Case "sigma". pick fresh a and apply wfterm_sigma; eauto.
 Qed.
 
+ICI
+
 Lemma result_red1_eps : forall Γ₁ Γ₂ b e τ,
   result e → wfterm (Γ₁ ++ b ~ E ++ Γ₂) e τ →
   exists τ', exists e',
     e ⇝⋆[Eps] (term_sigma (typ_var_f b) τ' e').
 Proof.
-intros Γ₁ Γ₂ b e τ H H0. induction H. ICI
+intros Γ₁ Γ₂ b e τ H H0. generalize dependent τ.
+generalize dependent Γ₂. generalize dependent Γ₁.
+induction H; intros.
+Case "val". elimtype False.
+assert (pure (Γ₁ ++ [(b, E)] ++ Γ₂)) by eauto using val_pure.
+eapply (H1 b); auto.
+Case "sigma". destruct (b0 == b); subst.
+SCase "b0 = b". eauto using rt_refl.
+SCase "b0 ≠ b". inversion H2; subst.
+assert (binds b E (G2 ++ (b0, E) :: G1)). rewrite H3. auto.
+analyze_binds H4.
+SSCase "b binds in G2".
+apply binds_decomp in BindsTac. destruct BindsTac as [? [? ?]]; subst.
+simpl_env in H3. apply uniq_app_inv in H3. destruct H3; subst.
+simpl_env in *.
+pick fresh a. edestruct H1 with (a := a)
+ (Γ₁ := [(a, Eq t)] ++ Γ₁) (Γ₂ := x0 ++ G1) as [τ' [e' ?]];
+ simpl_env; auto.
+exists (open_typ_wrt_typ (close_typ_wrt_typ a τ') t).
+pick fresh a0. eexists.
+apply rt_trans with
+ (y := (term_sigma (typ_var_f b0) t
+   (close_term_wrt_typ a (term_sigma (typ_var_f b) τ' e')))).
+admit.
+unfold close_term_wrt_typ; simpl.
+unfold typvar; destruct (a == b).
+  assert (a ≠ b) by auto. contradiction.
+apply rt_step. apply red1_empty.
+apply red0_sigma_sigma with (L := L); intros.
+admit.
+admit.
+rewrite <- tsubst_typ_spec. rewrite tsubst_typ_fresh_eq; auto.
+replace (close_term_wrt_typ_rec 1 a e') with
+(close_term_wrt_typ_rec 1 a1 (tsubst_term (typ_var_f a1) a e')).
+rewrite open_term_wrt_typ_rec_close_term_wrt_typ_rec.
+replace (typ_var_f a2) with (tsubst_typ (typ_var_f a1) a (typ_var_f a2)).
+rewrite <- tsubst_term_open_term_wrt_typ_rec; auto.
+
+
+
+Focus 2.
+replace (open_term_wrt_typ_rec 0 (typ_var_f a2)
+     (open_term_wrt_typ_rec 1 (typ_var_f a1) (close_term_wrt_typ_rec 1 a e')))
+with (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) (close_term_wrt_typ_rec 1 a e')) (typ_var_f a2))
+by reflexivity.
+
+
+
+exists (open_typ_wrt_typ τ' t).
+exists (close_term_wrt_typ a ).
+
+SSCase "b binds in G1".
+
+
 Admitted.
 
 Theorem progress : forall Γ e τ,
