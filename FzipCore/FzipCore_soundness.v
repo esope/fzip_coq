@@ -13,14 +13,16 @@ Lemma sr0 :  forall Γ e e' τ,
   wfterm Γ e τ → red0 e e' → wfterm Γ e' τ.
 Proof.
 intros Γ e e' τ H H0. destruct H0; inversion H; subst.
-Case "beta_v".
-inversion H7; subst.
-pick fresh x. rewrite subst_term_intro with (x1 := x); auto.
+Case "beta_v_red".
 assert (pure G2) by eauto using val_pure.
+inversion H7; subst.
 assert (pure Γ) by eauto using pure_zip.
 assert (G1 = Γ) by eauto using zip_pure_inv1.
 assert (G2 = Γ) by eauto using zip_pure_inv2.
-subst.
+subst. eauto.
+Case "beta_v_let".
+pick fresh x. rewrite subst_term_intro with (x1 := x); auto.
+assert (pure G1) by eauto using val_pure.
 rewrite_env (nil ++ Γ). eapply wfterm_subst; eauto. simpl_env; auto.
 Case "proj fst".
 assert (pure Γ) by eauto using val_pure.
@@ -213,6 +215,61 @@ eapply wfterm_T_not_E; eauto.
 eapply wfterm_Eq_not_E; eauto.
 eapply wfterm_wfenv; eauto.
 intros. eapply val_pure; eauto.
+Case "sigma_letL". inversion H7; subst.
+assert (binds b U G2) by eauto with fzip.
+assert (binds b E Γ) by eauto with fzip.
+apply binds_decomp in H3. destruct H3 as [? [? ?]]; subst.
+apply binds_decomp in H4. destruct H4 as [? [? ?]]; subst.
+pick fresh a and apply wfterm_sigma.
+assert (uniq (x1 ++ [(b, E)] ++ x2)) by eauto with lngen. solve_uniq.
+assert (lc_typ t).
+  assert (lc_term (term_sigma (typ_var_f b) t e1))
+    by eauto with lngen. inversion H3; subst; auto.
+replace (open_term_wrt_typ (term_let e1 e2') (typ_var_f a)) with
+  (term_let (open_term_wrt_typ e1 (typ_var_f a)) (open_term_wrt_typ e2' (typ_var_f a))) by reflexivity.
+rewrite H2; auto.
+apply wfterm_let with (L := L ∪ L0 ∪ {{a}})
+  (G1 := a ~ Eq t ++ G3 ++ G0)
+  (G2 := a ~ Eq t ++ x ++ x0) (t1 := tsubst_typ (typ_var_f a) b t1); intros.
+constructor; eauto using zip_remove_EU.
+apply H12; auto.
+apply wfterm_instantiate.
+rewrite_env (env_map (tsubst_typ (typ_var_f a) b) (x3 ~ T t1) ++ a ~ U ++ x ++ x0).
+rewrite tsubst_term_open_term_wrt_term_var.
+apply wfterm_renameU; auto.
+apply wfterm_lowerU; auto.
+intro H6. apply ftv_env_binds in H6. destruct H6 as [? [? [? [? | ?]]]].
+  assert (binds x4 (T x5) (x ++ b ~ U ++ x0)) by auto.
+    eapply zip_binds_T23 in H10; eauto. eapply zip_binds_T31 in H10; eauto.
+    assert (ftv_typ x5 [<=] dom (G3 ++ G0)). apply wftyp_ftv.
+    apply wfenv_wftyp_T2 with (x := x4); auto.
+    apply wfenv_strip with (Γ' := a ~ Eq t). eapply wfterm_wfenv. eauto with fzip.
+    analyze_binds H10.
+    clear Fr. assert (b ∉ ftv_typ x5) by fsetdec. contradiction.
+  assert (binds x4 (Eq x5) (x ++ b ~ U ++ x0)) by auto.
+    eapply zip_binds_Eq23 in H10; eauto. eapply zip_binds_Eq31 in H10; eauto.
+    assert (ftv_typ x5 [<=] dom (G3 ++ G0)). apply wftyp_ftv.
+    apply wfenv_wftyp_Eq2 with (x := x4); auto.
+    apply wfenv_strip with (Γ' := a ~ Eq t). eapply wfterm_wfenv; eauto.
+    analyze_binds H10.
+    clear Fr. assert (b ∉ ftv_typ x5) by fsetdec. contradiction.
+apply zip_remove_EU in H5. eapply wftyp_zip12; eauto. apply wfenv_wftyp_Eq3 with (x := a).
+eapply wfterm_wfenv; eauto.
+eapply wfenv_zip12; eauto. apply wfenv_strip with (Γ' := a ~ Eq t).
+eapply wfterm_wfenv; eauto.
+apply zip_remove_EU in H5.
+intros.
+assert (a0 ∈ dom (G3 ++ G0)).
+assert (ftv_typ t [<=] dom (G3 ++ G0)). apply wftyp_ftv. apply wfenv_wftyp_Eq3 with (x := a). eapply wfterm_wfenv; eauto. auto.
+apply binds_In_inv in H8. destruct H8. destruct x4.
+eapply zip_binds_T12 in H8; eauto. intro.
+  assert (E = T t0). eapply binds_unique; eauto with lngen. congruence.
+eapply zip_binds_U12 in H8; eauto. intro.
+  assert (@E typ = U). eapply binds_unique; eauto with lngen. congruence.
+eapply zip_binds_E12 in H8; eauto. intro.
+  assert (@E typ = U). eapply binds_unique; eauto with lngen. congruence.
+eapply zip_binds_Eq12 in H8; eauto. intro.
+  assert (@E typ = Eq t0). eapply binds_unique; eauto with lngen. congruence.
 Case "sigma_pairL". inversion H7; subst.
 assert (binds b U G2) by eauto with fzip.
 assert (binds b E Γ) by eauto with fzip.
@@ -535,6 +592,17 @@ Case "abs". pick fresh x.
 assert (lc_typ t1). eapply wftyp_regular. eapply wfenv_wftyp_T3.
   eapply wfterm_wfenv. eauto.
 eauto 6 with lngen.
+Case "let". pick fresh x.
+assert (lc_term (term_let e1 e2)). constructor; intros; eauto with lngen.
+destruct IHwfterm as [[? ?] | ?]... intuition eauto with fzip.
+destruct H4; eauto.
+SCase "e result". pick fresh a. left.
+exists (term_sigma (typ_var_f b) t (term_let e
+  (close_term_wrt_typ a (tsubst_term (typ_var_f a) b e2)))).
+constructor. apply red0_sigma_letL with (L := L ∪ {{b}}); intros...
+rewrite <- tsubst_term_spec. rewrite tsubst_term_tsubst_term; auto.
+simpl. unfold typvar; destruct (a == a); try congruence.
+rewrite tsubst_term_fresh_eq with (a1 := a)...
 Case "pair".
 destruct IHwfterm1 as [[? ?] | ?]... intuition eauto with fzip.
 destruct IHwfterm2 as [[? ?] | ?]... intuition eauto with fzip.
