@@ -43,6 +43,10 @@ Inductive term : Set :=
 
 Definition typing_env : Set := list (atom * @tag typ).
 
+Inductive red_tag : Set := 
+ | NoEps : red_tag
+ | Eps : red_tag.
+
 (* EXPERIMENTAL *)
 
 (** opening up abstractions *)
@@ -490,29 +494,29 @@ Inductive wfterm : typing_env -> term -> typ -> Prop :=    (* defn wfterm *)
      wfterm G (term_coerce e t) t.
 
 (* defns Jred0 *)
-Inductive red0 : term -> term -> Prop :=    (* defn red0 *)
+Inductive red0 : term -> red_tag -> term -> Prop :=    (* defn red0 *)
  | red0_beta_v_red : forall (t:typ) (e1 e2:term),
      lc_typ t ->
      lc_term (term_abs t e1) ->
      val e2 ->
-     red0 (term_app  ( (term_abs t e1) )  e2) (term_let e2 e1)
+     red0 (term_app  ( (term_abs t e1) )  e2) NoEps (term_let e2 e1)
  | red0_beta_v_let : forall (e1 e2:term),
      lc_term (term_let e1 e2) ->
      val e1 ->
-     red0 (term_let e1 e2)  (open_term_wrt_term  e2   e1 ) 
+     red0 (term_let e1 e2) NoEps  (open_term_wrt_term  e2   e1 ) 
  | red0_pi_fst : forall (e1 e2:term),
      val (term_pair e1 e2) ->
-     red0 (term_fst (term_pair e1 e2)) e1
+     red0 (term_fst (term_pair e1 e2)) NoEps e1
  | red0_pi_snd : forall (e1 e2:term),
      val (term_pair e1 e2) ->
-     red0 (term_snd (term_pair e1 e2)) e2
+     red0 (term_snd (term_pair e1 e2)) NoEps e2
  | red0_beta_t : forall (e:term) (t:typ),
      lc_term (term_gen e) ->
      lc_typ t ->
-     red0 (term_inst  ( (term_gen e) )  t)  (open_term_wrt_typ   e    t ) 
+     red0 (term_inst  ( (term_gen e) )  t) NoEps  (open_term_wrt_typ   e    t ) 
  | red0_open_exists : forall (L:vars) (b:typvar) (e:term),
       ( forall a , a \notin  L  -> result  ( open_term_wrt_typ e (typ_var_f a) )  )  ->
-     red0 (term_open (typ_var_f b) (term_exists e))  (open_term_wrt_typ   e    (typ_var_f b) ) 
+     red0 (term_open (typ_var_f b) (term_exists e))  NoEps   (open_term_wrt_typ   e    (typ_var_f b) ) 
  | red0_nu_sigma : forall (L:vars) (t:typ) (e e':term),
    ( forall b , b \notin  L  ->  lc_typ (  ( open_typ_wrt_typ t (typ_var_f b) )  )  )  ->
    ( forall b , b \notin  L  ->  b  `notin` ftv_typ (  ( open_typ_wrt_typ t (typ_var_f b) )  )  )  ->
@@ -529,78 +533,78 @@ Inductive red0 : term -> term -> Prop :=    (* defn red0 *)
        = term_sigma (typ_var_f b) (open_typ_wrt_typ t (typ_var_f b)) e1 ->
        open_term_wrt_typ e1 (typ_var_f a) = e2 ->
        e' = tsubst_term (open_typ_wrt_typ t (typ_var_f b)) a e2) ->
-   red0 (term_nu (term_sigma (typ_var_b 0) t e)) e'
+   red0 (term_nu (term_sigma (typ_var_b 0) t e)) NoEps e'
  | red0_coerce_app : forall (t2':typ) (e1:term) (t2 t1:typ) (e2:term),
      lc_typ t2 ->
      lc_term (term_abs t2' e1) ->
      lc_typ t2' ->
      lc_typ t1 ->
      val e2 ->
-     red0 (term_app (term_coerce (term_abs t2' e1) (typ_arrow t2 t1)) e2) (term_coerce (term_app  ( (term_abs t2' e1) )  (term_coerce e2 t2')) t1)
+     red0 (term_app (term_coerce (term_abs t2' e1) (typ_arrow t2 t1)) e2) NoEps (term_coerce (term_app  ( (term_abs t2' e1) )  (term_coerce e2 t2')) t1)
  | red0_coerce_fst : forall (e1 e2:term) (t1 t2:typ),
      lc_typ t2 ->
      lc_typ t1 ->
      val (term_pair e1 e2) ->
-     red0 (term_fst (term_coerce (term_pair e1 e2) (typ_prod t1 t2))) (term_coerce (term_fst (term_pair e1 e2)) t1)
+     red0 (term_fst (term_coerce (term_pair e1 e2) (typ_prod t1 t2))) NoEps (term_coerce (term_fst (term_pair e1 e2)) t1)
  | red0_coerce_snd : forall (e1 e2:term) (t1 t2:typ),
      lc_typ t1 ->
      lc_typ t2 ->
      val (term_pair e1 e2) ->
-     red0 (term_snd (term_coerce (term_pair e1 e2) (typ_prod t1 t2))) (term_coerce (term_snd (term_pair e1 e2)) t2)
+     red0 (term_snd (term_coerce (term_pair e1 e2) (typ_prod t1 t2))) NoEps (term_coerce (term_snd (term_pair e1 e2)) t2)
  | red0_coerce_inst : forall (e:term) (t1 t2:typ),
      lc_typ (typ_forall t1) ->
      lc_term (term_gen e) ->
      lc_typ t2 ->
-     red0 (term_inst (term_coerce (term_gen e) (typ_forall t1)) t2) (term_coerce (term_inst  ( (term_gen e) )  t2)  (open_typ_wrt_typ  t1   t2 ) )
+     red0 (term_inst (term_coerce (term_gen e) (typ_forall t1)) t2) NoEps (term_coerce (term_inst  ( (term_gen e) )  t2)  (open_typ_wrt_typ  t1   t2 ) )
  | red0_coerce_open : forall (b:typvar) (e:term) (t:typ),
      lc_typ (typ_exists t) ->
      val (term_exists e) ->
-     red0 (term_open (typ_var_f b) (term_coerce (term_exists e) (typ_exists t))) (term_coerce (term_open (typ_var_f b) (term_exists e))  (open_typ_wrt_typ  t   (typ_var_f b) ) )
+     red0 (term_open (typ_var_f b) (term_coerce (term_exists e) (typ_exists t))) NoEps (term_coerce (term_open (typ_var_f b) (term_exists e))  (open_typ_wrt_typ  t   (typ_var_f b) ) )
  | red0_coerce_coerce : forall (e:term) (t1 t2:typ),
      lc_typ t2 ->
      val (term_coerce e t1) ->
-     red0 (term_coerce (term_coerce e t1) t2) (term_coerce e t2)
+     red0 (term_coerce (term_coerce e t1) t2) NoEps (term_coerce e t2)
  | red0_sigma_appL : forall (L:vars) (b:typvar) (t:typ) (e1 e2 e2':term),
      result (term_sigma (typ_var_f b) t e1) ->
      result e2 ->
      (forall a , a \notin  L -> open_term_wrt_typ e2' (typ_var_f a) = tsubst_term (typ_var_f a) b e2) ->
-     red0 (term_app (term_sigma (typ_var_f b) t e1) e2) (term_sigma (typ_var_f b) t  (term_app e1  e2'))
+     red0 (term_app (term_sigma (typ_var_f b) t e1) e2) NoEps (term_sigma (typ_var_f b) t  (term_app e1  e2'))
  | red0_sigma_appR : forall (L:vars) (e1 e1':term) (b:typvar) (t:typ) (e2:term),
      val e1 ->
      result (term_sigma (typ_var_f b) t e2) ->
      (forall a , a \notin  L  -> open_term_wrt_typ e1' (typ_var_f a) = tsubst_term (typ_var_f a) b e1) ->
-      red0 (term_app e1 (term_sigma (typ_var_f b) t e2)) (term_sigma (typ_var_f b) t (term_app e1' e2))
+      red0 (term_app e1 (term_sigma (typ_var_f b) t e2)) NoEps (term_sigma (typ_var_f b) t (term_app e1' e2))
  | red0_sigma_letL : forall (L:vars) (b:typvar) (t:typ) (e1 e2 e2':term),
      lc_term (term_let  ( (term_sigma (typ_var_f b) t e1) )  e2) ->
      result (term_sigma (typ_var_f b) t e1) ->
      (forall a , a \notin  L ->
        open_term_wrt_typ e2' (typ_var_f a) = tsubst_term (typ_var_f a) b e2) ->
-     red0 (term_let (term_sigma (typ_var_f b) t e1) e2) (term_sigma (typ_var_f b) t  (term_let e1  e2'))
+     red0 (term_let (term_sigma (typ_var_f b) t e1) e2) NoEps (term_sigma (typ_var_f b) t  (term_let e1  e2'))
  | red0_sigma_pairL : forall (L:vars) (b:typvar) (t:typ) (e1 e2 e2':term),
      result (term_sigma (typ_var_f b) t e1) ->
      result e2 ->
      (forall a , a \notin  L -> open_term_wrt_typ e2' (typ_var_f a) = tsubst_term (typ_var_f a) b e2) ->
-     red0 (term_pair (term_sigma (typ_var_f b) t e1) e2) (term_sigma (typ_var_f b) t  (term_pair e1  e2'))
+     red0 (term_pair (term_sigma (typ_var_f b) t e1) e2) NoEps (term_sigma (typ_var_f b) t  (term_pair e1  e2'))
  | red0_sigma_pairR : forall (L:vars) (e1 e1':term) (b:typvar) (t:typ) (e2:term),
      val e1 ->
      result (term_sigma (typ_var_f b) t e2) ->
      (forall a , a \notin  L  -> open_term_wrt_typ e1' (typ_var_f a) = tsubst_term (typ_var_f a) b e1) ->
-      red0 (term_pair e1 (term_sigma (typ_var_f b) t e2)) (term_sigma (typ_var_f b) t (term_pair e1' e2))
+      red0 (term_pair e1 (term_sigma (typ_var_f b) t e2)) NoEps (term_sigma (typ_var_f b) t (term_pair e1' e2))
  | red0_sigma_fst : forall (b:typvar) (t:typ) (e:term),
      result (term_sigma (typ_var_f b) t e) ->
-     red0 (term_fst (term_sigma (typ_var_f b) t e)) (term_sigma (typ_var_f b) t (term_fst e))
+     red0 (term_fst (term_sigma (typ_var_f b) t e)) NoEps (term_sigma (typ_var_f b) t (term_fst e))
  | red0_sigma_snd : forall (b:typvar) (t:typ) (e:term),
      result (term_sigma (typ_var_f b) t e) ->
-     red0 (term_snd (term_sigma (typ_var_f b) t e)) (term_sigma (typ_var_f b) t (term_snd e))
+     red0 (term_snd (term_sigma (typ_var_f b) t e)) NoEps (term_sigma (typ_var_f b) t (term_snd e))
  | red0_sigma_inst : forall (L:vars) (b:typvar) (t:typ) (e:term) (t' t'':typ),
      lc_typ t' ->
      result (term_sigma (typ_var_f b) t e) ->
      (forall a , a \notin  L  -> open_typ_wrt_typ t'' (typ_var_f a) = tsubst_typ (typ_var_f a) b t') ->
-     red0 (term_inst (term_sigma (typ_var_f b) t e) t')
+     red0 (term_inst (term_sigma (typ_var_f b) t e) t') NoEps
      (term_sigma (typ_var_f b) t  (term_inst e t''))
  | red0_sigma_open : forall (c b:typvar) (t:typ) (e:term),
      result (term_sigma (typ_var_f b) t e) ->
-     red0 (term_open (typ_var_f c) (term_sigma (typ_var_f b) t e)) (term_sigma (typ_var_f b) t (term_open (typ_var_f c) e))
+     red0 (term_open (typ_var_f c) (term_sigma (typ_var_f b) t e)) NoEps (term_sigma (typ_var_f b) t (term_open (typ_var_f c) e))
  | red0_sigma_sigma : forall (L:vars) (b1:typvar) (t1 t1':typ) (b2:typvar) (t2:typ) (e e':term),
      lc_term (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) ->
       ( forall a1 , a1 \notin  L  ->  ( forall a2 , a2 \notin   L  \u {{ a1 }}  -> result  (open_term_wrt_typ_rec 0 (typ_var_f a1) (open_term_wrt_typ_rec 1 (typ_var_f a2) e) )  )  )  ->
@@ -608,60 +612,60 @@ Inductive red0 : term -> term -> Prop :=    (* defn red0 *)
       ( forall a1 a2, a1 \notin L -> a2 \notin L \u {{ a1 }} ->
         open_term_wrt_typ_rec 0 (typ_var_f a2) (open_term_wrt_typ_rec 1 (typ_var_f a1) e)
         = open_term_wrt_typ_rec 0 (typ_var_f a1) (open_term_wrt_typ_rec 1 (typ_var_f a2) e') ) ->
-      red0 (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) (term_sigma (typ_var_f b2) (open_typ_wrt_typ t2 t1) (term_sigma (typ_var_f b1) t1' e')) .
+      red0 (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) Eps (term_sigma (typ_var_f b2) (open_typ_wrt_typ t2 t1) (term_sigma (typ_var_f b1) t1' e')) .
 
 (* defns Jred1 *)
-Inductive red1 : term -> term -> Prop :=    (* defn red1 *)
- | red1_empty : forall (e e':term),
-     red0 e e' ->
-     red1 e e'
- | red1_let : forall (e1 e2 e1':term),
+Inductive red1 : term -> red_tag -> term -> Prop :=    (* defn red1 *)
+ | red1_empty : forall (e:term) (A:red_tag) (e':term),
+     red0 e A e' ->
+     red1 e A e'
+ | red1_let : forall (e1 e2:term) (A:red_tag) (e1':term),
      lc_term (term_let e1 e2) ->
-     red1 e1 e1' ->
-     red1 (term_let e1 e2) (term_let e1' e2)
- | red1_appL : forall (e1 e2 e1':term),
+     red1 e1 A e1' ->
+     red1 (term_let e1 e2) A (term_let e1' e2)
+ | red1_appL : forall (e1 e2:term) (A:red_tag) (e1':term),
      lc_term e2 ->
-     red1 e1 e1' ->
-     red1 (term_app e1 e2) (term_app e1' e2)
- | red1_appR : forall (e1 e2 e2':term),
+     red1 e1 A e1' ->
+     red1 (term_app e1 e2) A (term_app e1' e2)
+ | red1_appR : forall (e1 e2:term) (A:red_tag) (e2':term),
      lc_term e1 ->
-     red1 e2 e2' ->
-     red1 (term_app e1 e2) (term_app e1 e2')
- | red1_pairL : forall (e1 e2 e1':term),
+     red1 e2 A e2' ->
+     red1 (term_app e1 e2) A (term_app e1 e2')
+ | red1_pairL : forall (e1 e2:term) (A:red_tag) (e1':term),
      lc_term e2 ->
-     red1 e1 e1' ->
-     red1 (term_pair e1 e2) (term_pair e1' e2)
- | red1_pairR : forall (e1 e2 e2':term),
+     red1 e1 A e1' ->
+     red1 (term_pair e1 e2) A (term_pair e1' e2)
+ | red1_pairR : forall (e1 e2:term) (A:red_tag) (e2':term),
      lc_term e1 ->
-     red1 e2 e2' ->
-     red1 (term_pair e1 e2) (term_pair e1 e2')
- | red1_fst : forall (e e':term),
-     red1 e e' ->
-     red1 (term_fst e) (term_fst e')
- | red1_snd : forall (e e':term),
-     red1 e e' ->
-     red1 (term_snd e) (term_snd e')
- | red1_inst : forall (e:term) (t:typ) (e':term),
+     red1 e2 A e2' ->
+     red1 (term_pair e1 e2) A (term_pair e1 e2')
+ | red1_fst : forall (e:term) (A:red_tag) (e':term),
+     red1 e A e' ->
+     red1 (term_fst e) A (term_fst e')
+ | red1_snd : forall (e:term) (A:red_tag) (e':term),
+     red1 e A e' ->
+     red1 (term_snd e) A (term_snd e')
+ | red1_inst : forall (e:term) (t:typ) (A:red_tag) (e':term),
      lc_typ t ->
-     red1 e e' ->
-     red1 (term_inst e t) (term_inst e' t)
- | red1_exists : forall (L:vars) (e e':term),
-      ( forall a , a \notin  L  -> red1  ( open_term_wrt_typ e (typ_var_f a) )   ( open_term_wrt_typ e' (typ_var_f a) )  )  ->
-     red1 (term_exists e) (term_exists e')
- | red1_open : forall (b:typvar) (e e':term),
-     red1 e e' ->
-     red1 (term_open (typ_var_f b) e) (term_open (typ_var_f b) e')
- | red1_nu : forall (L:vars) (e e':term),
-      ( forall a , a \notin  L  -> red1  ( open_term_wrt_typ e (typ_var_f a) )   ( open_term_wrt_typ e' (typ_var_f a) )  )  ->
-     red1 (term_nu e) (term_nu e')
- | red1_sigma : forall (L:vars) (b:typvar) (t:typ) (e e':term),
+     red1 e A e' ->
+     red1 (term_inst e t) A (term_inst e' t)
+ | red1_exists : forall (L:vars) (e:term) (A:red_tag) (e':term),
+      ( forall a , a \notin  L  -> red1  ( open_term_wrt_typ e (typ_var_f a) )  A  ( open_term_wrt_typ e' (typ_var_f a) )  )  ->
+     red1 (term_exists e) A (term_exists e')
+ | red1_open : forall (b:typvar) (e:term) (A:red_tag) (e':term),
+     red1 e A e' ->
+     red1 (term_open (typ_var_f b) e) A (term_open (typ_var_f b) e')
+ | red1_nu : forall (L:vars) (e:term) (A:red_tag) (e':term),
+      ( forall a , a \notin  L  -> red1  ( open_term_wrt_typ e (typ_var_f a) )  A  ( open_term_wrt_typ e' (typ_var_f a) )  )  ->
+     red1 (term_nu e) A (term_nu e')
+ | red1_sigma : forall (L:vars) (b:typvar) (t:typ) (e:term) (A:red_tag) (e':term),
      lc_typ t ->
-      ( forall a , a \notin  L  -> red1  ( open_term_wrt_typ e (typ_var_f a) )   ( open_term_wrt_typ e' (typ_var_f a) )  )  ->
-     red1 (term_sigma (typ_var_f b) t e) (term_sigma (typ_var_f b) t e')
- | red1_coerce : forall (e:term) (t:typ) (e':term),
+      ( forall a , a \notin  L  -> red1  ( open_term_wrt_typ e (typ_var_f a) )  A  ( open_term_wrt_typ e' (typ_var_f a) )  )  ->
+     red1 (term_sigma (typ_var_f b) t e) A (term_sigma (typ_var_f b) t e')
+ | red1_coerce : forall (e:term) (t:typ) (A:red_tag) (e':term),
      lc_typ t ->
-     red1 e e' ->
-     red1 (term_coerce e t) (term_coerce e' t).
+     red1 e A e' ->
+     red1 (term_coerce e t) A (term_coerce e' t).
 
 (** infrastructure *)
 

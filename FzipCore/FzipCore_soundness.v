@@ -9,10 +9,10 @@ Require Import FzipCore_typeq.
 Require Import FzipCore_term.
 
 (** Soundness *)
-Lemma sr0 :  forall Γ e e' τ,
-  wfterm Γ e τ → red0 e e' → wfterm Γ e' τ.
+Lemma sr0 :  forall A Γ e e' τ,
+  wfterm Γ e τ → red0 e A e' → wfterm Γ e' τ.
 Proof.
-intros Γ e e' τ H H0. destruct H0; inversion H; subst.
+intros A Γ e e' τ H H0. destruct H0; inversion H; subst.
 Case "beta_v_red".
 assert (pure G2) by eauto using val_pure.
 inversion H7; subst.
@@ -549,16 +549,24 @@ apply wfterm_swap_Eq. simpl_env in H6. apply H6.
 simpl_env. solve_uniq.
 Qed.
 
-Theorem subject_reduction : forall Γ e e' τ,
-  wfterm Γ e τ → e ⇝ e' → wfterm Γ e' τ.
+Theorem subject_reduction : forall A Γ e e' τ,
+  wfterm Γ e τ → e ⇝[A] e' → wfterm Γ e' τ.
 Proof.
-intros Γ e e' τ H. generalize dependent e'.
+intros A Γ e e' τ H. generalize dependent e'.
 induction H; intros e' Hred; inversion Hred; subst; eauto;
 try solve [ inversion H2 | eapply sr0; eauto ].
 Case "exists". pick fresh a and apply wfterm_exists; eauto.
 Case "nu". pick fresh a and apply wfterm_nu; eauto.
 Case "sigma". pick fresh a and apply wfterm_sigma; eauto.
 Qed.
+
+Lemma result_red1_eps : forall Γ₁ Γ₂ b e τ,
+  result e → wfterm (Γ₁ ++ b ~ E ++ Γ₂) e τ →
+  exists τ', exists e',
+    e ⇝⋆[Eps] (term_sigma (typ_var_f b) τ' e').
+Proof.
+intros Γ₁ Γ₂ b e τ H H0. induction H. ICI
+Admitted.
 
 Theorem progress : forall Γ e τ,
   (forall x τ, not (binds x (T τ) Γ)) →

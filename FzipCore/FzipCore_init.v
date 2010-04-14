@@ -11,8 +11,9 @@ Notation "[ y → x ] e" := (subst_term (term_var_f y) x e) (at level 67).
 *)
 Notation "e1 ^^ e2" := (open_term_wrt_term e1 e2) (at level 67).
 Notation "e ^ x" := (e ^^ (term_var_f x)).
-Notation "e1 '⇝' e2" := (red1 e1 e2) (at level 68).
-Notation "e1 '⇝⋆' e2" := (clos_refl_trans _ red1 e1 e2) (at level 68).
+Notation "e1 '⇝[' A ']' e2" := (red1 e1 A e2) (at level 68).
+Notation "e1 '⇝⋆[' A ']' e2" :=
+  (clos_refl_trans _ (fun x y => red1 x A y) e1 e2) (at level 68).
 Notation "G '⊢' t 'ok'" := (wftyp G t) (at level 67).
 Notation "G '⊢' 'ok'" := (wfenv G) (at level 67).
 Notation "G '⊢' e ':' t" := (wfterm G e t) (at level 67).

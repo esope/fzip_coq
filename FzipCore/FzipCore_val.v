@@ -31,27 +31,53 @@ intros; destruct val_result_regular as [_ H2]; auto.
 Qed.
 Hint Resolve val_regular result_regular: lngen.
 
-(*
 (** Lemmas about values *)
-Lemma value_is_normal_aux :
-  (forall v, pval v → ~ exists e, v ⇝ e) ∧
-  (forall v, val v → ~ exists e, v ⇝ e).
+Lemma val_result_is_normal_aux :
+  (forall v, val v → forall A, ~ exists e, v ⇝[A] e) ∧
+  (forall r, result r → ~ exists e, r ⇝[NoEps] e).
 Proof.
-apply pval_val_mut_ind; intros; intros [e0 Hred]; inversion Hred; subst; eauto.
-inversion H.
-inversion H1; subst. inversion p.
-inversion H0; subst. inversion p.
-inversion H0.
-pick fresh x. eapply H; eauto.
-inversion H0.
-pick fresh a. eapply H; eauto.
+apply val_result_mut_ind; intros; intros [e3 He3]; subst.
+Case "abs". inversion He3; subst. inversion H.
+Case "gen". inversion He3; subst. inversion H.
+Case "pair". inversion He3; subst; try solve [intuition eauto].
+SCase "empty context". inversion H1; subst.
+SSCase "sigma pairL". inversion v; subst; congruence.
+SSCase "sigma pairR". inversion v0; subst; congruence.
+Case "coerce". inversion He3; subst; try solve [intuition eauto].
+SCase "empty context". inversion H0; subst. intuition eauto.
+Case "exists". inversion He3; subst.
+SCase "empty context". inversion H0.
+SCase "exists sigma context".
+  pick fresh b.
+  assert (open_term_wrt_typ (term_sigma (typ_var_b 0) t' e') (typ_var_f b)
+         ⇝[ A]open_term_wrt_typ e'0 (typ_var_f b)) by auto. clear H1.
+  unfold open_term_wrt_typ in H0; simpl in H0.
+  inversion H0; subst.
+  SSCase "sigma sigma in exists context". inversion H1; subst.
+  pick fresh a.
+  assert (val (open_term_wrt_typ_rec 0 (typ_var_f a)
+    (open_term_wrt_typ_rec 1 (typ_var_f b) e'))) as H2.
+    eapply (v b a); auto.
+    unfold open_term_wrt_typ; simpl; reflexivity. reflexivity.
+  rewrite <- H4 in H2. simpl in H2. inversion H2; congruence.
+  SSCase "reduction in exists sigma context".
+  pick fresh a. eapply (H b a); auto.
+  unfold open_term_wrt_typ; simpl; reflexivity. eauto.
+Case "result val". intuition eauto.
+Case "result sigma". inversion He3; subst.
+SCase "sigma sigma in empty context". inversion H0; subst.
+SCase "reduction in sigma context". pick fresh a. eapply (H a); eauto.
 Qed.
 
-Lemma value_is_normal : forall v, val v → ~ exists e, v ⇝ e.
+Lemma val_is_normal : forall v, val v → forall A, ~ exists e, v ⇝[A] e.
 Proof.
-destruct value_is_normal_aux as [_ Th]. intuition auto.
+destruct val_result_is_normal_aux. intuition auto.
 Qed.
-*)
+
+Lemma result_is_normal : forall r, result r → ~ exists e, r ⇝[NoEps] e.
+Proof.
+destruct val_result_is_normal_aux. intuition auto.
+Qed.
 
 (** Renaming lemmas *)
 Lemma val_result_trenaming : forall a b,

@@ -2,9 +2,9 @@ Add LoadPath "../metatheory".
 Require Import FzipCore_init.
 Require Import FzipCore_val.
 
-Lemma red0_regular1 : forall e e', red0 e e' → lc_term e.
+Lemma red0_regular1 : forall e A e', red0 e A e' → lc_term e.
 Proof.
-intros e e' H. destruct H; auto with lngen.
+intros e A e' H. destruct H; auto with lngen.
 Case "nu_sigma".
   pick fresh b; pick fresh a.
   apply (lc_term_nu_exists b).
@@ -15,9 +15,9 @@ Case "nu_sigma".
   eapply (H2 b a); auto; reflexivity.
 Qed.
 
-Lemma red0_regular2 : forall e e', red0 e e' → lc_term e'.
+Lemma red0_regular2 : forall e A e', red0 e A e' → lc_term e'.
 Proof.
-intros e e' H; destruct H;
+intros e A e' H; destruct H;
 try solve [apply val_regular in H; inversion H; subst; auto];
 auto with lngen.
 Case "beta_v_red". inversion H0; subst.
@@ -141,63 +141,23 @@ Case "sigma_sigma".
 Qed.
 Hint Resolve red0_regular1 red0_regular2: lngen.
 
-Lemma red1_regular1 : forall e e', e ⇝ e' → lc_term e.
+Lemma red1_regular1 : forall e A e', e ⇝[A] e' → lc_term e.
 Proof.
-intros e e' H. induction H; eauto with lngen.
+intros e A e' H. induction H; eauto with lngen.
 Qed.
 
-Lemma red1_regular2 : forall e e', e ⇝ e' → lc_term e'.
+Lemma red1_regular2 : forall e A e', e ⇝[A] e' → lc_term e'.
 Proof.
-intros e e' H; induction H; eauto with lngen.
+intros e A e' H; induction H; eauto with lngen.
 Qed.
 Hint Resolve red1_regular1 red1_regular2: lngen.
 
-(*
-(** Lemmas about red0, red1 *)
-Lemma red0_subst : forall x e'' e e', lc_term e'' → red0 e e' →
-  red0 (subst_term e'' x e) (subst_term e'' x e').
-Proof.
-intros x e'' e e' Hlc H.
-inversion H; subst; simpl.
-rewrite subst_term_open_term_wrt_term; auto. apply red0_beta; auto with lngen.
-assert (lc_term (subst_term e'' x (term_abs t e1))) by auto with lngen; auto.
-rewrite subst_term_open_term_wrt_typ; auto. apply red0_beta_t; auto with lngen.
-assert (lc_term (subst_term e'' x (term_gen e0))) by auto with lngen; auto.
-Qed.
-Hint Resolve red0_subst.
-
-Lemma red1_subst : forall x e'' e e', lc_term e'' → e ⇝ e' →
-  (subst_term e'' x e) ⇝ (subst_term e'' x e').
-Proof.
-intros x e'' e e' Hlc H.
-induction H; subst; simpl; auto with lngen.
-apply red1_abs with (L := L `union` {{x}}); auto; intros z Hz.
-replace (term_var_f z) with (subst_term e'' x (term_var_f z)) by auto with lngen.
-repeat rewrite <- subst_term_open_term_wrt_term; eauto.
-apply red1_gen with (L := L `union` {{x}}); intros a Ha.
-repeat rewrite <- subst_term_open_term_wrt_typ; eauto.
-Qed.
-Hint Resolve red1_subst.
-
-Lemma red1_open : forall L e'' e e',
-  lc_term e'' →
-  (forall x, x ∉ L → e ^ x ⇝ e' ^ x) →
-  e ^^ e'' ⇝ e' ^^ e''.
-Proof.
-intros L e'' e e' Hlc H.
-pick fresh x.
-rewrite subst_term_intro with (x1 := x) (e1 := e); auto.
-rewrite subst_term_intro with (x1 := x) (e1 := e'); auto.
-Qed.
-Hint Resolve red1_open.
-*)
-
-Lemma red0_trenaming : forall a b e e',
+Lemma red0_trenaming : forall A a b e e',
   b ∉ ftv_term e →
-  red0 e e' →
-  red0 (tsubst_term (typ_var_f b) a e) (tsubst_term (typ_var_f b) a e').
+  red0 e A e' →
+  red0 (tsubst_term (typ_var_f b) a e) A (tsubst_term (typ_var_f b) a e').
 Proof with auto using val_trenaming, result_trenaming with lngen.
-intros a b e e' Hb H. inversion H; subst; simpl in *.
+intros A a b e e' Hb H. inversion H; subst; simpl in *.
 Case "beta_v_red". 
 constructor... unsimpl (tsubst_term (typ_var_f b) a (term_abs t e1))...
 Case "beta_v_let". rewrite tsubst_term_open_term_wrt_term; auto.
@@ -508,12 +468,12 @@ autorewrite with lngen...
 autorewrite with lngen...
 Qed.
 
-Lemma red1_trenaming : forall a b e e',
+Lemma red1_trenaming : forall A a b e e',
   b ∉ ftv_term e →
-  e ⇝ e' →
-  (tsubst_term (typ_var_f b) a e) ⇝ (tsubst_term (typ_var_f b) a e').
+  e ⇝[A] e' →
+  (tsubst_term (typ_var_f b) a e) ⇝[A] (tsubst_term (typ_var_f b) a e').
 Proof.
-intros a b e e' Hb H.
+intros A a b e e' Hb H.
 induction H; subst; simpl in *; auto with lngen.
 Case "empty". auto using red0_trenaming.
 Case "let". apply red1_let; auto.
@@ -555,17 +515,3 @@ assert (ftv_term (open_term_wrt_typ e (typ_var_f c))
   [<=] ftv_typ (typ_var_f c) ∪ ftv_term e) by auto with lngen.
 simpl in *; fsetdec.
 Qed.
-
-(*
-Lemma red1_topen : forall L τ e e',
-  lc_typ τ →
-  (forall a, a ∉ L → open_term_wrt_typ e (typ_var_f a) ⇝ open_term_wrt_typ e' (typ_var_f a)) →
-  open_term_wrt_typ e τ ⇝ open_term_wrt_typ e' τ.
-Proof.
-intros L τ e e' Hlc H.
-pick fresh a.
-rewrite tsubst_term_intro with (a1 := a) (e1 := e); auto.
-rewrite tsubst_term_intro with (a1 := a) (e1 := e'); auto.
-Qed.
-Hint Resolve red1_topen.
-*)
