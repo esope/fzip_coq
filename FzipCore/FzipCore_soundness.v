@@ -560,7 +560,7 @@ Case "nu". pick fresh a and apply wfterm_nu; eauto.
 Case "sigma". pick fresh a and apply wfterm_sigma; eauto.
 Qed.
 
-Lemma result_red1_eps : forall Γ₁ Γ₂ b e τ,
+Lemma result_redn_Eps : forall Γ₁ Γ₂ b e τ,
   result e → wfterm (Γ₁ ++ b ~ E ++ Γ₂) e τ →
   exists τ', exists e',
     e ⇝⋆[Eps] (term_sigma (typ_var_f b) τ' e').
@@ -582,7 +582,7 @@ simpl_env in H3. apply uniq_app_inv in H3. destruct H3; subst.
 simpl_env in *.
 pick fresh a. edestruct H1 with (a := a)
  (Γ₁ := [(a, Eq t)] ++ Γ₁) (Γ₂ := x0 ++ G1) as [τ' [e' ?]];
- simpl_env; auto.
+ simpl_env; auto. clear H1.
 exists (open_typ_wrt_typ (close_typ_wrt_typ a τ') t).
 pick fresh a0. eexists.
 apply rt_trans with
@@ -601,43 +601,65 @@ apply result_redn_Eps_result with (e := term_sigma (typ_var_f b0) t
   (close_term_wrt_typ a (open_term_wrt_typ e (typ_var_f a)))).
 apply result_sigma with (L := L); intros; auto.
 rewrite <- tsubst_term_spec. apply result_trenaming. auto.
+replace (term_sigma (typ_var_f b) (close_typ_wrt_typ a τ')
+        (close_term_wrt_typ_rec 1 a e'))
+  with (close_term_wrt_typ a (term_sigma (typ_var_f b) τ' e')).    
 apply redn_context_sigma; auto.
-
-ICI
-
-inversion H4; subst.
-constructor; intros; auto. unfold open_term_wrt_typ; simpl.
-  constructor; intros; auto.
-  replace (open_typ_wrt_typ_rec 0 (typ_var_f a1) (close_typ_wrt_typ a τ')) with
-    (open_typ_wrt_typ (close_typ_wrt_typ a τ') (typ_var_f a1)) by reflexivity.
-  rewrite <- tsubst_typ_spec. auto with lngen.
-  apply lc_body_term_wrt_typ; auto.
-  apply lc_body_term_sigma_3 with (t1 := typ_var_f b)
-    (t2 := open_typ_wrt_typ (close_typ_wrt_typ a τ') (typ_var_f a1)).
-  replace (term_sigma (typ_var_f b)
-        (open_typ_wrt_typ (close_typ_wrt_typ a τ') (typ_var_f a1))
-        (open_term_wrt_typ_rec 1 (typ_var_f a1)
-           (close_term_wrt_typ_rec 1 a e')))
-  with (open_term_wrt_typ (close_term_wrt_typ a
-    (term_sigma (typ_var_f b) τ' e')) (typ_var_f a1)).
-  apply lc_body_term_wrt_typ; auto.
-  intro. rewrite <- tsubst_term_spec. auto with lngen.
-  unfold open_term_wrt_typ; unfold close_term_wrt_typ; simpl.
-    unfold typvar; destruct (a == b); try congruence. reflexivity.
-SSSCase "result proof". admit.
-SSSCase "equality proof (typ)".
-rewrite open_typ_wrt_typ_lc_typ. reflexivity. auto.
-SSSCase "equality proof (term)".
+unfold close_term_wrt_typ; simpl.
+unfold typvar; destruct (a == b). congruence. reflexivity.
+SSSCase "result proof".
+assert (term_sigma (typ_var_f b0) t (close_term_wrt_typ a
+(open_term_wrt_typ e (typ_var_f a))) ⇝⋆[Eps] term_sigma (typ_var_f b0) t
+(close_term_wrt_typ a (term_sigma (typ_var_f b) τ' e'))).
+  apply redn_context_sigma; auto.
+apply result_redn_Eps_result in H5.
+unfold close_term_wrt_typ in H5; subst.
+inversion H5; subst. inversion H6; congruence.
+unfold typvar in H12; destruct (a == b); try congruence.
+unfold open_term_wrt_typ in H12; simpl in H12.
+pick fresh c.
+assert (result (term_sigma (typ_var_f b) (open_typ_wrt_typ_rec 0
+            (typ_var_f c) (close_typ_wrt_typ_rec 0 a τ'))
+            (open_term_wrt_typ_rec 1 (typ_var_f c)
+            (close_term_wrt_typ_rec 1 a e')))) by auto.
+inversion H6; subst. inversion H7; congruence.
+pick fresh d.
+assert (result (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f
+               c) (close_term_wrt_typ_rec 1 a e')) (typ_var_f d))) by
+               auto.
+unfold open_term_wrt_typ in H7.
+apply result_trenaming with (a := d) (b := a1) in H7.
+rewrite tsubst_term_open_term_wrt_typ_rec in H7; auto.
+rewrite tsubst_term_open_term_wrt_typ_rec in H7; auto.
+rewrite tsubst_term_close_term_wrt_typ_rec in H7; auto.
+simpl in H7.
+unfold typvar in H7; destruct (d == d); try congruence.
+unfold typvar in H7; destruct (c == d).
+  assert (c ≠ d) by auto. contradiction.
+rewrite tsubst_term_fresh_eq in H7; auto.
+apply result_trenaming with (a := c) (b := a2) in H7.
+rewrite tsubst_term_open_term_wrt_typ_rec in H7; auto.
+rewrite tsubst_term_open_term_wrt_typ_rec in H7; auto.
+rewrite tsubst_term_close_term_wrt_typ_rec in H7; auto.
+simpl in H7.
+unfold typvar in H7; destruct (c == c); try congruence.
+unfold typvar in H7; destruct (a1 == c).
+  assert (a1 ≠ c) by auto. contradiction.
+rewrite tsubst_term_fresh_eq in H7; auto.
+apply result_sigma with (L := L); intros; auto.
+rewrite <- tsubst_term_spec. auto using result_trenaming.
+rewrite open_typ_wrt_typ_lc_typ; auto.
 apply open_term_wrt_typ_close_term_wrt_typ_twice.
 rewrite H3. eauto with lngen.
 SSCase "b binds in G1".
 apply binds_decomp in BindsTac0. destruct BindsTac0 as [? [? ?]]; subst.
-simpl_env in H3. rewrite_env ((G2 ++ [(b0, E)] ++ x) ++ [(b, E)] ++ x0) in H3.
+simpl_env in H3.
+rewrite_env ((G2 ++ [(b0, E)] ++ x) ++ [(b, E)] ++ x0) in H3.
 apply uniq_app_inv in H3. destruct H3; subst.
 simpl_env in *.
 pick fresh a. edestruct H1 with (a := a)
  (Γ₁ := [(a, Eq t)] ++ G2 ++ x) (Γ₂ := Γ₂) as [τ' [e' ?]];
-   simpl_env; auto.
+ simpl_env; auto. clear H1.
 exists (open_typ_wrt_typ (close_typ_wrt_typ a τ') t).
 pick fresh a0. eexists.
 apply rt_trans with
@@ -651,30 +673,59 @@ unfold typvar; destruct (a == b).
 apply rt_step. apply red1_empty.
 apply red0_sigma_sigma with (L := L ∪ {{a}} ∪ {{a0}} ∪ ftv_term e'); intros.
 SSSCase "lc proof".
-assert (lc_term (term_sigma (typ_var_f b) τ' e')) by admit.
-inversion H4; subst.
-constructor; intros; auto. unfold open_term_wrt_typ; simpl.
-  constructor; intros; auto.
-  replace (open_typ_wrt_typ_rec 0 (typ_var_f a1) (close_typ_wrt_typ a τ')) with
-    (open_typ_wrt_typ (close_typ_wrt_typ a τ') (typ_var_f a1)) by reflexivity.
-  rewrite <- tsubst_typ_spec. auto with lngen.
-  apply lc_body_term_wrt_typ; auto.
-  apply lc_body_term_sigma_3 with (t1 := typ_var_f b)
-    (t2 := open_typ_wrt_typ (close_typ_wrt_typ a τ') (typ_var_f a1)).
-  replace (term_sigma (typ_var_f b)
-        (open_typ_wrt_typ (close_typ_wrt_typ a τ') (typ_var_f a1))
-        (open_term_wrt_typ_rec 1 (typ_var_f a1)
-           (close_term_wrt_typ_rec 1 a e')))
-  with (open_term_wrt_typ (close_term_wrt_typ a
-    (term_sigma (typ_var_f b) τ' e')) (typ_var_f a1)).
-  apply lc_body_term_wrt_typ; auto.
-  intro. rewrite <- tsubst_term_spec. auto with lngen.
-  unfold open_term_wrt_typ; unfold close_term_wrt_typ; simpl.
-    unfold typvar; destruct (a == b); try congruence. reflexivity.
-SSSCase "result proof". admit.
-SSSCase "equality proof (typ)".
-rewrite open_typ_wrt_typ_lc_typ. reflexivity. auto.
-SSSCase "equality proof (term)".
+apply result_regular.
+apply result_redn_Eps_result with (e := term_sigma (typ_var_f b0) t
+  (close_term_wrt_typ a (open_term_wrt_typ e (typ_var_f a)))).
+apply result_sigma with (L := L); intros; auto.
+rewrite <- tsubst_term_spec. apply result_trenaming. auto.
+replace (term_sigma (typ_var_f b) (close_typ_wrt_typ a τ')
+        (close_term_wrt_typ_rec 1 a e'))
+  with (close_term_wrt_typ a (term_sigma (typ_var_f b) τ' e')).    
+apply redn_context_sigma; auto.
+unfold close_term_wrt_typ; simpl.
+unfold typvar; destruct (a == b). congruence. reflexivity.
+SSSCase "result proof".
+assert (term_sigma (typ_var_f b0) t (close_term_wrt_typ a
+(open_term_wrt_typ e (typ_var_f a))) ⇝⋆[Eps] term_sigma (typ_var_f b0) t
+(close_term_wrt_typ a (term_sigma (typ_var_f b) τ' e'))).
+  apply redn_context_sigma; auto.
+apply result_redn_Eps_result in H5.
+unfold close_term_wrt_typ in H5; subst.
+inversion H5; subst. inversion H6; congruence.
+unfold typvar in H12; destruct (a == b); try congruence.
+unfold open_term_wrt_typ in H12; simpl in H12.
+pick fresh c.
+assert (result (term_sigma (typ_var_f b) (open_typ_wrt_typ_rec 0
+            (typ_var_f c) (close_typ_wrt_typ_rec 0 a τ'))
+            (open_term_wrt_typ_rec 1 (typ_var_f c)
+            (close_term_wrt_typ_rec 1 a e')))) by auto.
+inversion H6; subst. inversion H7; congruence.
+pick fresh d.
+assert (result (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f
+               c) (close_term_wrt_typ_rec 1 a e')) (typ_var_f d))) by
+               auto.
+unfold open_term_wrt_typ in H7.
+apply result_trenaming with (a := d) (b := a1) in H7.
+rewrite tsubst_term_open_term_wrt_typ_rec in H7; auto.
+rewrite tsubst_term_open_term_wrt_typ_rec in H7; auto.
+rewrite tsubst_term_close_term_wrt_typ_rec in H7; auto.
+simpl in H7.
+unfold typvar in H7; destruct (d == d); try congruence.
+unfold typvar in H7; destruct (c == d).
+  assert (c ≠ d) by auto. contradiction.
+rewrite tsubst_term_fresh_eq in H7; auto.
+apply result_trenaming with (a := c) (b := a2) in H7.
+rewrite tsubst_term_open_term_wrt_typ_rec in H7; auto.
+rewrite tsubst_term_open_term_wrt_typ_rec in H7; auto.
+rewrite tsubst_term_close_term_wrt_typ_rec in H7; auto.
+simpl in H7.
+unfold typvar in H7; destruct (c == c); try congruence.
+unfold typvar in H7; destruct (a1 == c).
+  assert (a1 ≠ c) by auto. contradiction.
+rewrite tsubst_term_fresh_eq in H7; auto.
+apply result_sigma with (L := L); intros; auto.
+rewrite <- tsubst_term_spec. auto using result_trenaming.
+rewrite open_typ_wrt_typ_lc_typ; auto.
 apply open_term_wrt_typ_close_term_wrt_typ_twice.
 rewrite H3. eauto with lngen.
 Qed.
@@ -689,8 +740,8 @@ Proof with eauto with lngen.
 intros Γ e τ Henv H. induction H; simpl.
 Case "var". elimtype False. intuition eauto.
 Case "app".
-destruct IHwfterm1 as [[? ?] | ?]... intuition eauto with fzip.
-destruct IHwfterm2 as [[? ?] | ?]... intuition eauto with fzip.
+destruct IHwfterm1 as [[? [? [? ?]]] | ?]... intuition eauto with fzip.
+destruct IHwfterm2 as [[? [? [? ?]]] | ?]... intuition eauto with fzip.
 destruct H2.
   SCase "e val". destruct H3; subst.
     SSCase "e0 val". destruct H2; subst; eauto; try solve [inversion H0].
