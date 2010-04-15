@@ -152,6 +152,167 @@ intros e A e' H; induction H; eauto with lngen.
 Qed.
 Hint Resolve red1_regular1 red1_regular2: lngen.
 
+Lemma red0_ftv : forall A e e', red0 e A e' →
+  ftv_term e' [<=] ftv_term e.
+Proof.
+intros A e e' H. destruct H; simpl in *; try solve [fsetdec].
+Case "let". auto with lngen.
+Case "gen". assert (ftv_term (open_term_wrt_typ e t) [<=]
+ftv_typ t∪ftv_term e) by auto with lngen. fsetdec.
+Case "open". assert (ftv_term (open_term_wrt_typ e (typ_var_f b))
+ [<=] ftv_typ (typ_var_f b)∪ftv_term e) by auto with lngen.
+simpl in *. fsetdec.
+Case "nu_sigma". pick fresh b. pick fresh a.
+erewrite (H3 b a)
+with (e1 := open_term_wrt_typ_rec 1 (typ_var_f b) e); auto.
+clear H3.
+assert (ftv_term (tsubst_term (open_typ_wrt_typ t (typ_var_f b)) a
+     (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f b) e)
+     (typ_var_f a)))[<=] ftv_typ (open_typ_wrt_typ t (typ_var_f b)) ∪
+     remove a (ftv_term (open_term_wrt_typ (open_term_wrt_typ_rec 1
+     (typ_var_f b) e) (typ_var_f a)))) by auto with lngen.
+assert (ftv_typ (open_typ_wrt_typ t (typ_var_f b)) [<=] ftv_typ t).
+  assert (ftv_typ (open_typ_wrt_typ t (typ_var_f b)) [<=] ftv_typ
+  (typ_var_f b) ∪ ftv_typ t) by auto with lngen.
+  assert (b ∉ ftv_typ (open_typ_wrt_typ t (typ_var_f b))) by auto.
+  simpl in *. clear Fr Fr0. fsetdec.
+assert (ftv_term (open_term_wrt_typ (open_term_wrt_typ_rec 1
+               (typ_var_f b) e) (typ_var_f a)) [<=] ftv_typ (typ_var_f
+               a) ∪ ftv_term e).
+assert (b ∉ ftv_term (open_term_wrt_typ_rec 1 (typ_var_f b) e)).
+  assert (b ∉ ftv_term (open_term_wrt_typ_rec 0 (typ_var_f a)
+                 (open_term_wrt_typ_rec 1 (typ_var_f b) e))) by auto.
+    assert (ftv_term (open_term_wrt_typ_rec 1 (typ_var_f b) e) [<=]
+    ftv_term (open_term_wrt_typ_rec 0 (typ_var_f a) (open_term_wrt_typ_rec
+    1 (typ_var_f b) e))) by auto with lngen.
+    clear Fr Fr0. fsetdec.
+  assert (ftv_term (open_term_wrt_typ_rec 1 (typ_var_f b) e) [<=] ftv_term e).
+    assert (ftv_term (open_term_wrt_typ_rec 1 (typ_var_f b) e) [<=]
+    ftv_typ (typ_var_f b) ∪ ftv_term e) by auto with lngen.
+    clear Fr Fr0. simpl in *. fsetdec.
+  assert (ftv_term (open_term_wrt_typ (open_term_wrt_typ_rec 1
+     (typ_var_f b) e) (typ_var_f a)) [<=] ftv_typ (typ_var_f a) ∪
+     ftv_term (open_term_wrt_typ_rec 1 (typ_var_f
+     b) e)) by auto with lngen.
+  simpl in *. clear Fr Fr0. fsetdec.
+clear Fr Fr0. simpl in *. fsetdec.
+Case "coerce_inst".
+assert (ftv_typ (open_typ_wrt_typ t1 t2) [<=] ftv_typ t2 ∪ ftv_typ t1)
+  by auto with lngen. fsetdec.
+Case "coerce_open".
+assert (ftv_typ (open_typ_wrt_typ t (typ_var_f b)) [<=]
+  ftv_typ (typ_var_f b) ∪ ftv_typ t) by auto with lngen. simpl in *. fsetdec.
+Case "sigma_appL". assert (ftv_term e2' [<=] ftv_term e2).
+pick fresh a.
+assert (ftv_term e2'[<=] ftv_typ (typ_var_f a) ∪ ftv_term e2).
+  transitivity (ftv_term (open_term_wrt_typ e2' (typ_var_f a)));
+    auto with lngen.
+  rewrite H1; auto.
+  transitivity (ftv_typ (typ_var_f a) ∪ remove b (ftv_term e2));
+    auto with lngen. clear Fr. fsetdec.
+simpl in *. assert (a ∉ ftv_term e2') by auto. clear Fr. fsetdec.
+fsetdec.
+Case "sigma_appR". assert (ftv_term e1' [<=] ftv_term e1).
+pick fresh a.
+assert (ftv_term e1'[<=] ftv_typ (typ_var_f a) ∪ ftv_term e1).
+  transitivity (ftv_term (open_term_wrt_typ e1' (typ_var_f a)));
+    auto with lngen.
+  rewrite H1; auto.
+  transitivity (ftv_typ (typ_var_f a) ∪ remove b (ftv_term e1));
+    auto with lngen. clear Fr. fsetdec.
+simpl in *. assert (a ∉ ftv_term e1') by auto. clear Fr. fsetdec.
+fsetdec.
+Case "sigma_letL". assert (ftv_term e2' [<=] ftv_term e2).
+pick fresh a.
+assert (ftv_term e2'[<=] ftv_typ (typ_var_f a) ∪ ftv_term e2).
+  transitivity (ftv_term (open_term_wrt_typ e2' (typ_var_f a)));
+    auto with lngen.
+  rewrite H1; auto.
+  transitivity (ftv_typ (typ_var_f a) ∪ remove b (ftv_term e2));
+    auto with lngen. clear Fr. fsetdec.
+simpl in *. assert (a ∉ ftv_term e2') by auto. clear Fr. fsetdec.
+fsetdec.
+Case "sigma_pairL". assert (ftv_term e2' [<=] ftv_term e2).
+pick fresh a.
+assert (ftv_term e2'[<=] ftv_typ (typ_var_f a) ∪ ftv_term e2).
+  transitivity (ftv_term (open_term_wrt_typ e2' (typ_var_f a)));
+    auto with lngen.
+  rewrite H1; auto.
+  transitivity (ftv_typ (typ_var_f a) ∪ remove b (ftv_term e2));
+    auto with lngen. clear Fr. fsetdec.
+simpl in *. assert (a ∉ ftv_term e2') by auto. clear Fr. fsetdec.
+fsetdec.
+Case "sigma_pairR". assert (ftv_term e1' [<=] ftv_term e1).
+pick fresh a.
+assert (ftv_term e1'[<=] ftv_typ (typ_var_f a) ∪ ftv_term e1).
+  transitivity (ftv_term (open_term_wrt_typ e1' (typ_var_f a)));
+    auto with lngen.
+  rewrite H1; auto.
+  transitivity (ftv_typ (typ_var_f a) ∪ remove b (ftv_term e1));
+    auto with lngen. clear Fr. fsetdec.
+simpl in *. assert (a ∉ ftv_term e1') by auto. clear Fr. fsetdec.
+fsetdec.
+Case "sigma_inst". assert (ftv_typ t'' [<=] ftv_typ t').
+pick fresh a.
+assert (ftv_typ t''[<=] ftv_typ (typ_var_f a) ∪ ftv_typ t').
+  transitivity (ftv_typ (open_typ_wrt_typ t'' (typ_var_f a)));
+    auto with lngen.
+  rewrite H1; auto.
+  transitivity (ftv_typ (typ_var_f a) ∪ remove b (ftv_typ t'));
+    auto with lngen. clear Fr. fsetdec.
+simpl in *. assert (a ∉ ftv_typ t'') by auto. clear Fr. fsetdec.
+fsetdec.
+Case "sigma_sigma".
+assert (ftv_typ (open_typ_wrt_typ t2 t1) [<=] ftv_typ t1 ∪ ftv_typ t2)
+  by auto with lngen.
+assert (ftv_typ t1' [<=] ftv_typ t1).
+  pick fresh a2. rewrite (H1 a2); auto with lngen.
+assert (ftv_term e' [<=] ftv_term e).
+  pick fresh a2. pick fresh a1.
+  assert (ftv_term e' [<=]
+    ftv_typ (typ_var_f a2) ∪ ftv_typ (typ_var_f a1) ∪ ftv_term e).
+    transitivity (ftv_term (open_term_wrt_typ_rec 1 (typ_var_f a2) e'));
+      auto with lngen.
+    transitivity (ftv_term (open_term_wrt_typ_rec 0 (typ_var_f a1)
+      (open_term_wrt_typ_rec 1 (typ_var_f a2) e'))); auto with lngen.
+    rewrite <- H2; auto.
+    transitivity (ftv_typ (typ_var_f a2) ∪
+      ftv_term (open_term_wrt_typ_rec 1 (typ_var_f a1) e)); auto with lngen.
+  assert (a1 ∉ ftv_term e') by auto. assert (a2 ∉ ftv_term e') by auto.
+  clear Fr Fr0. simpl in *. fsetdec.
+fsetdec.
+Qed.
+
+Lemma red1_ftv : forall A e e', e ⇝[A] e' →
+  ftv_term e' [<=] ftv_term e.
+Proof.
+intros A e e' H. induction H; simpl; try solve [fsetdec].
+Case "empty". eauto using red0_ftv.
+Case "exists". pick fresh a.
+assert (ftv_term e' [<=] ftv_typ (typ_var_f a) ∪ ftv_term e).
+  transitivity (ftv_term (open_term_wrt_typ e' (typ_var_f a))); auto with lngen.
+  transitivity (ftv_term (open_term_wrt_typ e (typ_var_f a))); auto with lngen.
+simpl in *. fsetdec.
+Case "nu". pick fresh a.
+assert (ftv_term e' [<=] ftv_typ (typ_var_f a) ∪ ftv_term e).
+  transitivity (ftv_term (open_term_wrt_typ e' (typ_var_f a))); auto with lngen.
+  transitivity (ftv_term (open_term_wrt_typ e (typ_var_f a))); auto with lngen.
+simpl in *. fsetdec.
+Case "sigma". assert (ftv_term e' [<=] ftv_term e).
+pick fresh a.
+assert (ftv_term e' [<=] ftv_typ (typ_var_f a) ∪ ftv_term e).
+  transitivity (ftv_term (open_term_wrt_typ e' (typ_var_f a))); auto with lngen.
+  transitivity (ftv_term (open_term_wrt_typ e (typ_var_f a))); auto with lngen.
+simpl in *. fsetdec.
+fsetdec.
+Qed.
+
+Lemma redn_ftv : forall A e e', e ⇝⋆[A] e' →
+  ftv_term e' [<=] ftv_term e.
+Proof.
+intros A e e' H. induction H; try fsetdec. eauto using red1_ftv.
+Qed.
+
 Lemma red0_trenaming : forall A a b e e',
   b ∉ ftv_term e →
   red0 e A e' →
@@ -178,7 +339,12 @@ rewrite tsubst_term_open_term_wrt_typ_var...
 Case "nu sigma".  pick fresh c and apply red0_nu_sigma; intros; subst.
 rewrite tsubst_typ_open_typ_wrt_typ_var...
 rewrite tsubst_typ_open_typ_wrt_typ_var...
-rewrite tsubst_term_open_term_wrt_typ_var...
+replace (typ_var_f b0) with (tsubst_typ (typ_var_f b) a (typ_var_f b0))
+  by auto with lngen.
+rewrite <- tsubst_term_open_term_wrt_typ_rec...
+replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0))
+  by auto with lngen.
+rewrite <- tsubst_term_open_term_wrt_typ_rec...
 inversion H7; subst; clear H7.
 replace (typ_var_f b0) with (tsubst_typ (typ_var_f b) a (typ_var_f b0))
   by auto with lngen.
@@ -516,70 +682,24 @@ assert (ftv_term (open_term_wrt_typ e (typ_var_f c))
 simpl in *; fsetdec.
 Qed.
 
-Lemma red0_ftv : forall A e e', red0 e A e' →
-  ftv_term e' [<=] ftv_term e.
-Proof.
-intros A e e' H. destruct H; simpl in *; try solve [fsetdec].
-Case "let". auto with lngen.
-Case "gen". assert (ftv_term (open_term_wrt_typ e t) [<=]
-ftv_typ t∪ftv_term e) by auto with lngen. fsetdec.
-Case "open". assert (ftv_term (open_term_wrt_typ e (typ_var_f b))
- [<=] ftv_typ (typ_var_f b)∪ftv_term e) by auto with lngen.
-simpl in *. fsetdec.
-Case "sigma inst". pick fresh b. pick fresh a.
-erewrite (H3 b a)
-with (e1 := open_term_wrt_typ_rec 1 (typ_var_f b) e); auto.
-clear H3.
-rewrite tsubst_term_open_term_wrt_typ; auto.
-rewrite tsubst_term_open_term_wrt_typ_rec; auto.
-simpl. unfold typvar; destruct (a == a); try congruence.
-unfold typvar; destruct (b == a); subst.
-  assert (a ≠ a) by auto; contradiction.
-
-assert (ftv_term (open_term_wrt_typ (open_term_wrt_typ_rec 1
-        (typ_var_f b) (tsubst_term (open_typ_wrt_typ t (typ_var_f b))
-        a e)) (open_typ_wrt_typ t (typ_var_f b))) [<=] ftv_typ
-        (open_typ_wrt_typ t (typ_var_f b)) ∪ ftv_term
-        (open_term_wrt_typ_rec 1 (typ_var_f b) (tsubst_term
-        (open_typ_wrt_typ t (typ_var_f b)) a e))) by auto with lngen.
-assert (ftv_typ (open_typ_wrt_typ t (typ_var_f b)) [<=] ftv_typ t).
-  assert (ftv_typ (open_typ_wrt_typ t (typ_var_f b)) [<=] ftv_typ
-  (typ_var_f b) ∪ ftv_typ t) by auto with lngen.
-  assert (b ∉ ftv_typ (open_typ_wrt_typ t (typ_var_f b))) by auto.
-  simpl in *. clear Fr Fr0. fsetdec.
-assert (ftv_term (open_term_wrt_typ_rec 1 (typ_var_f b) (tsubst_term
-         (open_typ_wrt_typ t (typ_var_f b)) a e)) [<=] ftv_typ
-         (typ_var_f b) ∪ ftv_term (tsubst_term (open_typ_wrt_typ t
-         (typ_var_f b)) a e)) by auto with lngen.
-
-ICI
-
-clear Fr Fr. simpl in *. fsetdec.
-
-
-
-Admitted.
-
-Lemma red1_ftv : forall A e e', e ⇝[A] e' →
-  ftv_term e' [<=] ftv_term e.
-Proof.
-Admitted.
-
-Lemma redn_ftv : forall A e e', e ⇝⋆[A] e' →
-  ftv_term e' [<=] ftv_term e.
-Proof.
-Admitted.
-
 Lemma redn_trenaming : forall A a b e e',
   b ∉ ftv_term e →
   e ⇝⋆[A] e' →
   (tsubst_term (typ_var_f b) a e) ⇝⋆[A] (tsubst_term (typ_var_f b) a e').
 Proof.
-Admitted.
+intros A a b e e' H H0.
+induction H0; auto using rt_step, red1_trenaming, rt_refl.
+Case "trans".
+assert (ftv_term y [<=] ftv_term x) by eauto using redn_ftv.
+eauto 7 using rt_trans.
+Qed.
 
 Lemma redn_context_sigma : forall A e e' b a τ,
   lc_typ τ → e ⇝⋆[A] e' →
   (term_sigma (typ_var_f b) τ (close_term_wrt_typ a e))
   ⇝⋆[A] (term_sigma (typ_var_f b) τ (close_term_wrt_typ a e')).
 Proof.
-Admitted.
+intros A e e' b a τ H H0. induction H0; eauto using rt_refl, rt_trans.
+Case "step". apply rt_step. pick fresh c and apply red1_sigma; auto.
+repeat rewrite <- tsubst_term_spec. auto using red1_trenaming.
+Qed.

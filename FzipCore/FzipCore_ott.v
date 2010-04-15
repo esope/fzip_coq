@@ -520,7 +520,7 @@ Inductive red0 : term -> red_tag -> term -> Prop :=    (* defn red0 *)
  | red0_nu_sigma : forall (L:vars) (t:typ) (e e':term),
    ( forall b , b \notin  L  ->  lc_typ (  ( open_typ_wrt_typ t (typ_var_f b) )  )  )  ->
    ( forall b , b \notin  L  ->  b  `notin` ftv_typ (  ( open_typ_wrt_typ t (typ_var_f b) )  )  )  ->
-   ( forall b , b \notin  L  ->  b  `notin` ftv_term (  ( open_term_wrt_typ e (typ_var_f b) )  )  )  ->
+   ( forall b a, b \notin  L -> a \notin L \u {{b}} ->  b  `notin` ftv_term (  open_term_wrt_typ_rec 0 (typ_var_f a) ( open_term_wrt_typ_rec 1 (typ_var_f b) e )  )  )  ->
    ( forall b a, b \notin  L -> a \notin   L  \u {{ b }}  ->
      forall t1 e1 e2,
        open_term_wrt_typ (term_sigma (typ_var_b 0) t e) (typ_var_f b)
