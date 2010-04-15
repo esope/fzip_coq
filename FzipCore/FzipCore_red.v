@@ -694,6 +694,99 @@ assert (ftv_term y [<=] ftv_term x) by eauto using redn_ftv.
 eauto 7 using rt_trans.
 Qed.
 
+Lemma redn_context_letL : forall A e1 e1' e2 x,
+  lc_term (open_term_wrt_term e2 (term_var_f x)) →
+  e1 ⇝⋆[A] e1' →
+  term_let e1 e2 ⇝⋆[A] term_let e1' e2.
+Proof.
+intros A e1 e1' e2 x Hlc H.
+induction H; eauto using rt_refl, rt_trans.
+Case "step". apply rt_step. apply red1_let; auto.
+eauto using red1_regular1, lc_term_let_exists.
+Qed.
+
+Lemma redn_context_appL : forall A e1 e1' e2,
+  lc_term e2 → e1 ⇝⋆[A] e1' →
+  term_app e1 e2 ⇝⋆[A] term_app e1' e2.
+Proof.
+intros A e1 e1' e2 Hlc H.
+induction H; eauto using rt_refl, rt_step, rt_trans.
+Qed.
+
+Lemma redn_context_appR : forall A e1 e2 e2',
+  lc_term e1 → e2 ⇝⋆[A] e2' →
+  term_app e1 e2 ⇝⋆[A] term_app e1 e2'.
+Proof.
+intros A e1 e2 e2' Hlc H.
+induction H; eauto using rt_refl, rt_step, rt_trans.
+Qed.
+
+Lemma redn_context_pairL : forall A e1 e1' e2,
+  lc_term e2 → e1 ⇝⋆[A] e1' →
+  term_pair e1 e2 ⇝⋆[A] term_pair e1' e2.
+Proof.
+intros A e1 e1' e2 Hlc H.
+induction H; eauto using rt_refl, rt_step, rt_trans.
+Qed.
+
+Lemma redn_context_pairR : forall A e1 e2 e2',
+  lc_term e1 → e2 ⇝⋆[A] e2' →
+  term_pair e1 e2 ⇝⋆[A] term_pair e1 e2'.
+Proof.
+intros A e1 e2 e2' Hlc H.
+induction H; eauto using rt_refl, rt_step, rt_trans.
+Qed.
+
+Lemma redn_context_fst : forall A e e',
+  e ⇝⋆[A] e' → term_fst e ⇝⋆[A] term_fst e'.
+Proof.
+intros A e e' H.
+induction H; eauto using rt_refl, rt_step, rt_trans.
+Qed.
+
+Lemma redn_context_snd : forall A e e',
+  e ⇝⋆[A] e' → term_snd e ⇝⋆[A] term_snd e'.
+Proof.
+intros A e e' H.
+induction H; eauto using rt_refl, rt_step, rt_trans.
+Qed.
+
+Lemma redn_context_inst : forall A e e' τ,
+  lc_typ τ → e ⇝⋆[A] e' →
+  term_inst e τ ⇝⋆[A] term_inst e' τ.
+Proof.
+intros A e e' τ Hlc H.
+induction H; eauto using rt_refl, rt_step, rt_trans.
+Qed.
+
+Lemma redn_context_exists : forall A e e' a,
+  e ⇝⋆[A] e' →
+  term_exists (close_term_wrt_typ a e)
+  ⇝⋆[A] term_exists (close_term_wrt_typ a e').
+Proof.
+intros A e e' a H. induction H; eauto using rt_refl, rt_trans.
+Case "step". apply rt_step. pick fresh c and apply red1_exists; auto.
+repeat rewrite <- tsubst_term_spec. auto using red1_trenaming.
+Qed.
+
+Lemma redn_context_open : forall A e e' b,
+  e ⇝⋆[A] e' →
+  term_open (typ_var_f b) e ⇝⋆[A] term_open (typ_var_f b) e'.
+Proof.
+intros A e e' b H.
+induction H; eauto using rt_refl, rt_step, rt_trans.
+Qed.
+
+Lemma redn_context_nu : forall A e e' a,
+  e ⇝⋆[A] e' →
+  term_nu (close_term_wrt_typ a e)
+  ⇝⋆[A] term_nu (close_term_wrt_typ a e').
+Proof.
+intros A e e' a H. induction H; eauto using rt_refl, rt_trans.
+Case "step". apply rt_step. pick fresh c and apply red1_nu; auto.
+repeat rewrite <- tsubst_term_spec. auto using red1_trenaming.
+Qed.
+
 Lemma redn_context_sigma : forall A e e' b a τ,
   lc_typ τ → e ⇝⋆[A] e' →
   (term_sigma (typ_var_f b) τ (close_term_wrt_typ a e))
@@ -702,6 +795,14 @@ Proof.
 intros A e e' b a τ H H0. induction H0; eauto using rt_refl, rt_trans.
 Case "step". apply rt_step. pick fresh c and apply red1_sigma; auto.
 repeat rewrite <- tsubst_term_spec. auto using red1_trenaming.
+Qed.
+
+Lemma redn_context_coerce : forall A e e' τ,
+  lc_typ τ → e ⇝⋆[A] e' →
+  term_coerce e τ ⇝⋆[A] term_coerce e' τ.
+Proof.
+intros A e e' τ Hlc H.
+induction H; eauto using rt_refl, rt_step, rt_trans.
 Qed.
 
 Lemma result_red0_Eps_result : forall e e',
