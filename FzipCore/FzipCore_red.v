@@ -703,3 +703,55 @@ intros A e e' b a τ H H0. induction H0; eauto using rt_refl, rt_trans.
 Case "step". apply rt_step. pick fresh c and apply red1_sigma; auto.
 repeat rewrite <- tsubst_term_spec. auto using red1_trenaming.
 Qed.
+
+Lemma result_red0_Eps_result : forall e e',
+  result e → red0 e Eps e' → result e'.
+Proof.
+intros e e' H H0. generalize dependent e'.
+induction H; intros e' He'; inversion He'; subst.
+Case "val". inversion H; congruence.
+Case "sigma". inversion H5; subst.
+apply result_sigma with (L := L ∪ L0); intros.
+SCase "lc proof". pick fresh a.
+assert (lc_term (open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e0)
+          (typ_var_f a))) by auto.
+unfold open_term_wrt_typ in H2; simpl in H2. inversion H2; subst.
+rewrite tsubst_typ_intro with (a1 := a); auto with lngen.
+SCase "result proof". unfold open_term_wrt_typ; simpl.
+apply result_sigma with (L := L ∪ L0 ∪ {{a}}); intros.
+SSCase "lc_proof". rewrite (H7 a) in H10; auto.
+SSCase "result proof". unfold open_term_wrt_typ; rewrite <- H9; auto.
+Qed.
+
+Lemma result_red1_Eps_result : forall e e',
+  result e → e ⇝[Eps] e' → result e'.
+Proof.
+intros e e' H H0. dependent induction H0;
+try solve [inversion H; subst; inversion H2; congruence
+| inversion H; subst; inversion H1; congruence ].
+Case "empty". eauto using result_red0_Eps_result.
+Case "pairL". inversion H; subst. inversion H2; subst; try congruence.
+elimtype False. eapply val_is_normal with (v := e1); eauto.
+Case "pairR". inversion H; subst. inversion H2; subst; try congruence.
+elimtype False. eapply val_is_normal with (v := e2); eauto.
+Case "exists". inversion H; subst. inversion H2; subst. elimtype False.
+pick fresh a. pick fresh b.
+assert (open_term_wrt_typ e (typ_var_f a) ⇝[ Eps]
+         open_term_wrt_typ e' (typ_var_f a)) by auto; clear H0.
+assert (val (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a)
+e'0) (typ_var_f b))). eapply (H5 a b); eauto. reflexivity. clear H5.
+inversion H3; subst. clear H3. unfold open_term_wrt_typ in H6; simpl in H6.
+inversion H6; subst.
+SCase "empty context". inversion H3; subst. destruct e'; inversion H9; subst.
+rewrite <- H8 in H0.
+unfold open_term_wrt_typ in H0; simpl in H0; inversion H0; subst. congruence.
+SCase "sigma context". ICI admit.
+Case "sigma". admit.
+Case "coerce". inversion H; subst. inversion H2; subst; try congruence.
+elimtype False. eapply val_is_normal with (v := e); eauto.
+Qed.
+
+Lemma result_redn_Eps_result : forall e e',
+  result e → e ⇝⋆[Eps] e' → result e'.
+Proof.
+Admitted.
