@@ -738,15 +738,22 @@ Case "exists". inversion H; subst. inversion H2; subst. elimtype False.
 pick fresh a. pick fresh b.
 assert (open_term_wrt_typ e (typ_var_f a) ⇝[ Eps]
          open_term_wrt_typ e' (typ_var_f a)) by auto; clear H0.
-assert (val (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a)
-e'0) (typ_var_f b))). eapply (H5 a b); eauto. reflexivity. clear H5.
 inversion H3; subst. clear H3. unfold open_term_wrt_typ in H6; simpl in H6.
 inversion H6; subst.
-SCase "empty context". inversion H3; subst. destruct e'; inversion H9; subst.
-rewrite <- H8 in H0.
-unfold open_term_wrt_typ in H0; simpl in H0; inversion H0; subst. congruence.
-SCase "sigma context". ICI admit.
-Case "sigma". admit.
+SCase "empty context".
+assert (val (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a)
+e'0) (typ_var_f b))). eapply (H5 a b); eauto. reflexivity. clear H5.
+inversion H0; subst. destruct e'0; inversion H8; subst.
+rewrite <- H8 in H3.
+unfold open_term_wrt_typ in H3; simpl in H3; inversion H3; subst. congruence.
+SCase "sigma context".
+pick fresh c.
+assert (val (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a)
+e'0) (typ_var_f c))). eapply (H5 a c); eauto. reflexivity. clear H5.
+apply val_is_normal with (A := Eps) in H0. eapply H0. clear H0.
+eauto.
+Case "sigma". inversion H; subst. inversion H3; congruence.
+apply result_sigma with (L := L ∪ L0); intros; auto.
 Case "coerce". inversion H; subst. inversion H2; subst; try congruence.
 elimtype False. eapply val_is_normal with (v := e); eauto.
 Qed.
@@ -754,4 +761,5 @@ Qed.
 Lemma result_redn_Eps_result : forall e e',
   result e → e ⇝⋆[Eps] e' → result e'.
 Proof.
-Admitted.
+intros e e' H H0. induction H0; eauto using result_red1_Eps_result.
+Qed.
