@@ -439,3 +439,5 @@ Ltac gather_atoms ::=
   let D3 := gather_atoms_with (fun x => ftv_term x) in
   let D4 := gather_atoms_with (fun x => ftv_env x) in
   constr:(A \u B \u C \u D1 \u D2 \u D3 \u D4).
+
+Hint Resolve rt_refl rt_step rt_trans : clos_refl_trans.
