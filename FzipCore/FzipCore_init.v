@@ -310,22 +310,72 @@ apply env_map_id.
 intro. apply tsubst_typ_var_self.
 Qed.
 
+Lemma degree_typ_wrt_typ_trenaming: forall a1 t1 m t2,
+degree_typ_wrt_typ m (tsubst_typ t1 a1 t2) → degree_typ_wrt_typ m t2.
+Proof.
+intros a1 t1.
+assert (forall n m t2, size_typ t2 <= n →
+  degree_typ_wrt_typ m (tsubst_typ t1 a1 t2) →
+  degree_typ_wrt_typ m t2).
+  intro n; induction n; intros m t2 H H0;
+    destruct t2; simpl in *;
+      try solve [absurdity with omega |
+      inversion H0; subst; constructor; apply IHn; try omega; auto].
+  auto.
+intros. eauto.
+Qed.
+
+Lemma degree_term_wrt_typ_trenaming: forall a1 t1 m e1,
+degree_term_wrt_typ m (tsubst_term t1 a1 e1) → degree_term_wrt_typ m
+e1.
+Proof.
+intros a1 t1.
+assert (forall n m e1, size_term e1 <= n →
+  degree_term_wrt_typ m (tsubst_term t1 a1 e1) →
+  degree_term_wrt_typ m e1).
+  intro n; induction n; intros m e1 H H0;
+    destruct e1; simpl in *; try solve
+      [absurdity with omega
+      | inversion H0; subst; constructor; solve
+        [eauto using degree_typ_wrt_typ_trenaming
+        | apply IHn; simpl; try omega; auto]].
+intros. eauto.
+Qed.
+
+Lemma degree_term_wrt_term_trenaming: forall a1 t1 m e1,
+degree_term_wrt_term m (tsubst_term t1 a1 e1) → degree_term_wrt_term m
+e1.
+Proof.
+intros a1 t1.
+assert (forall n m e1, size_term e1 <= n →
+  degree_term_wrt_term m (tsubst_term t1 a1 e1) →
+  degree_term_wrt_term m e1).
+  intro n; induction n; intros m e1 H H0;
+    destruct e1; simpl in *; try solve
+      [absurdity with omega
+      | inversion H0; subst; constructor;
+        apply IHn; simpl; try omega; auto].
+  auto.
+intros. eauto.
+Qed.
+
 Lemma tsubst_typ_lc_typ_inv :
   forall t1 a1 t2,
     lc_typ t1 →
     lc_typ (tsubst_typ t1 a1 t2) →
     lc_typ t2.
 Proof.
-intros t1 a1.
-assert (forall n m t2, size_typ t2 <= n →
-  degree_typ_wrt_typ m (tsubst_typ t1 a1 t2) →
-  degree_typ_wrt_typ m t2) as H_strong.
-  intro n; induction n; intros m t2 H H0;
-    destruct t2; simpl in *;
-      try solve [absurdity with omega |
-      inversion H0; subst; constructor; apply IHn; try omega; auto].
-  auto.
-intros t2 H H0. eauto with lngen.
+eauto using degree_typ_wrt_typ_trenaming with lngen.
+Qed.
+
+Lemma tsubst_term_lc_term_inv :
+  forall t1 a1 e1,
+    lc_typ t1 →
+    lc_term (tsubst_term t1 a1 e1) →
+    lc_term e1.
+Proof.
+eauto 6 using degree_term_wrt_term_trenaming,
+ degree_term_wrt_typ_trenaming with lngen.
 Qed.
 
 Lemma binds_decomp : forall (Γ: typing_env) x b,
