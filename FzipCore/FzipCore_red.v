@@ -694,6 +694,128 @@ assert (ftv_term y [<=] ftv_term x) by eauto using redn_ftv.
 eauto 7 using rt_trans.
 Qed.
 
+Lemma red0_sigma_appL_defined: forall e1 e2 t b,
+  result (term_sigma (typ_var_f b) t e1) →
+  result e2 →
+  exists e',
+    red0 (term_app (term_sigma (typ_var_f b) t e1) e2) NoEps e'.
+Proof.
+intros e1 e2 t b H1 H2. inversion H1; subst.
+inversion H; try congruence.
+pick fresh a.
+exists (term_sigma (typ_var_f b) t
+  (term_app e1
+    (close_term_wrt_typ a (tsubst_term (typ_var_f a) b e2)))).
+pick fresh a0 and apply red0_sigma_appL; intros; auto.
+rewrite <- tsubst_term_spec.
+rewrite tsubst_term_tsubst_term; auto.
+autorewrite with lngen.
+rewrite tsubst_term_fresh_eq with (e1 := e2); auto.
+Qed.
+
+Lemma red0_sigma_appR_defined: forall e1 e2 t b,
+  result (term_sigma (typ_var_f b) t e2) →
+  val e1 →
+  exists e',
+    red0 (term_app e1 (term_sigma (typ_var_f b) t e2)) NoEps e'.
+Proof.
+intros e1 e2 t b H1 H2. inversion H1; subst.
+inversion H; try congruence.
+pick fresh a.
+exists (term_sigma (typ_var_f b) t
+  (term_app
+    (close_term_wrt_typ a (tsubst_term (typ_var_f a) b e1)) e2)).
+pick fresh a0 and apply red0_sigma_appR; intros; auto.
+rewrite <- tsubst_term_spec.
+rewrite tsubst_term_tsubst_term; auto.
+autorewrite with lngen.
+rewrite tsubst_term_fresh_eq with (e1 := e1); auto.
+Qed.
+
+Lemma red0_sigma_letL_defined: forall e1 e2 t b,
+  result (term_sigma (typ_var_f b) t e1) →
+  lc_term (term_let (term_sigma (typ_var_f b) t e1) e2) →
+  exists e',
+    red0 (term_let (term_sigma (typ_var_f b) t e1) e2) NoEps e'.
+Proof.
+intros e1 e2 t b H1 H2. inversion H1; subst.
+inversion H; try congruence.
+pick fresh a.
+exists (term_sigma (typ_var_f b) t
+  (term_let e1
+    (close_term_wrt_typ a (tsubst_term (typ_var_f a) b e2)))).
+pick fresh a0 and apply red0_sigma_letL; intros; auto.
+rewrite <- tsubst_term_spec.
+rewrite tsubst_term_tsubst_term; auto.
+autorewrite with lngen.
+rewrite tsubst_term_fresh_eq with (e1 := e2); auto.
+Qed.
+
+Lemma red0_sigma_inst_defined: forall e t' t b,
+  lc_typ t' ->
+  result (term_sigma (typ_var_f b) t e) ->
+  exists e',
+    red0 (term_inst (term_sigma (typ_var_f b) t e) t') NoEps e'.
+Proof.
+intros e t' t b Ht' He. inversion He; subst.
+inversion H; try congruence.
+pick fresh a.
+exists (term_sigma (typ_var_f b) t
+  (term_inst e
+    (close_typ_wrt_typ a (tsubst_typ (typ_var_f a) b t')))).
+pick fresh a0 and apply red0_sigma_inst; intros; auto.
+rewrite <- tsubst_typ_spec.
+rewrite tsubst_typ_tsubst_typ; auto.
+autorewrite with lngen.
+rewrite tsubst_typ_fresh_eq with (t2 := t'); auto.
+Qed.
+
+Lemma red0_sigma_sigma_defined: forall e b1 b2 t1 t2,
+  result
+  (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) ->
+  exists e',
+    red0
+    (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e))
+    Eps e'.
+Proof.
+intros e b1 b2 t1 t2 H. inversion H; subst.
+inversion H0; try congruence.
+pick fresh a1.
+assert (result (open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e)
+           (typ_var_f a1))) by auto.
+unfold open_term_wrt_typ in H0; inversion H0; subst.
+inversion H1; subst. inversion H3.
+pick fresh a2.
+exists (term_sigma (typ_var_f b2) (open_typ_wrt_typ t2 t1)
+  (term_sigma (typ_var_f b1)
+    (close_typ_wrt_typ a2 t1)
+    (close_term_wrt_typ_rec 1 a2
+      (close_term_wrt_typ_rec 0 a1
+        (open_term_wrt_typ_rec 0 (typ_var_f a1)
+          (open_term_wrt_typ_rec 0 (typ_var_f a2) e)))))).
+apply red0_sigma_sigma with (L := L ∪ L0 ∪ {{a1}}); intros.
+auto with lngen.
+replace (open_term_wrt_typ_rec 0 (typ_var_f a0) (open_term_wrt_typ_rec
+        1 (typ_var_f a3) e)) with (tsubst_term (typ_var_f a3) a1
+        (open_term_wrt_typ_rec 0 (typ_var_f a0) (open_term_wrt_typ_rec
+        1 (typ_var_f a1) e))).
+apply result_trenaming; apply H7; auto.
+rewrite tsubst_term_open_term_wrt_typ_rec; auto.
+rewrite tsubst_term_open_term_wrt_typ_rec; auto.
+f_equal.
+autorewrite with lngen; auto.
+autorewrite with lngen; auto.
+rewrite <- tsubst_typ_spec. autorewrite with lngen. auto.
+rewrite open_term_wrt_typ_close_term_wrt_typ_twice.
+f_equal. f_equal.
+rewrite close_term_wrt_typ_rec_open_term_wrt_typ_rec.
+rewrite close_term_wrt_typ_rec_open_term_wrt_typ_rec; auto.
+assert (ftv_term (open_term_wrt_typ_rec 0 (typ_var_f a2) e)
+[<=] ftv_typ (typ_var_f a2) ∪ ftv_term e) by auto with lngen.
+simpl in H6. clear H3. assert (a1 ≠ a2) by auto. clear Fr0.
+fsetdec.
+Qed.
+
 Lemma redn_context_letL : forall A e1 e1' e2 x,
   lc_term (open_term_wrt_term e2 (term_var_f x)) →
   e1 ⇝⋆[A] e1' →
