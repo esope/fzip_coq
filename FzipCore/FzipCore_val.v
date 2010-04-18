@@ -209,3 +209,26 @@ apply result_trenaming_inv with (a := c) (b := a).
 rewrite tsubst_term_open_term_wrt_typ; auto.
 autorewrite with lngen. auto.
 Qed.
+
+Lemma val_exists_exists : forall a b t e,
+  lc_typ (open_typ_wrt_typ t (typ_var_f b)) →
+  val (open_term_wrt_typ 
+    (open_term_wrt_typ_rec 1 (typ_var_f b) e) (typ_var_f a)) →
+  val (term_exists (term_sigma (typ_var_b 0) t e)).
+Proof.
+intros a b t e H H0.
+pick fresh c and apply val_exists; intros; subst.
+reflexivity.
+apply tsubst_typ_lc_typ_inv with (a1 := c) (t1 := typ_var_f b).
+auto. rewrite tsubst_typ_open_typ_wrt_typ; auto.
+autorewrite with lngen. auto.
+unfold open_term_wrt_typ in H3; inversion H3; subst.
+apply val_trenaming_inv with (a := b0) (b := b).
+rewrite tsubst_term_open_term_wrt_typ; auto.
+rewrite tsubst_term_open_term_wrt_typ_rec; auto.
+autorewrite with lngen.
+apply val_trenaming_inv with (a := a0) (b := a).
+rewrite tsubst_term_open_term_wrt_typ; auto.
+rewrite tsubst_term_open_term_wrt_typ_rec; auto.
+autorewrite with lngen. auto.
+Qed.
