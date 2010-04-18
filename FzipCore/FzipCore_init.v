@@ -404,43 +404,6 @@ simpl_env in *. solve_uniq.
 split; congruence.
 Qed.
 
-(*
-Lemma open_typ_wrt_typ_var_swap_rec : forall t a1 a2 n1 n2,
-  n1 < n2 →
-  open_typ_wrt_typ_rec n2 (typ_var_f a2)
-  (open_typ_wrt_typ_rec n1 (typ_var_f a1) t) =
-  open_typ_wrt_typ_rec n1 (typ_var_f a1)
-  (open_typ_wrt_typ_rec (S n2) (typ_var_f a2) t).
-Proof with try solve [auto | elimtype False; omega].
-intros t a1 a2. induction t; intros n1 n2 Hle; simpl; auto;
-try solve [f_equal; auto | f_equal; apply IHt; omega].
-Case "typ_var_b". destruct (lt_eq_lt_dec n n1). destruct s.
-SCase "n < n1". destruct (lt_eq_lt_dec n (S n2))... destruct s... simpl.
-destruct (lt_eq_lt_dec n n2)... destruct s...
-destruct (lt_eq_lt_dec n n1)... destruct s...
-SCase "n = n1". destruct (lt_eq_lt_dec n (S n2))... destruct s... simpl.
-destruct (lt_eq_lt_dec n n1)... destruct s...
-SCase "n > n1". destruct (lt_eq_lt_dec n (S n2))... destruct s...
-SSCase "n < S n2". simpl. destruct (lt_eq_lt_dec (n - 1) n2)... destruct s...
-destruct (lt_eq_lt_dec n n1)... destruct s...
-SSCase "n = S n2". simpl. destruct (lt_eq_lt_dec (n - 1) n2)... destruct s...
-SSCase "S n2 < n". simpl. destruct (lt_eq_lt_dec (n - 1) n2)... destruct s...
-destruct (lt_eq_lt_dec (n - 1) n1)... destruct s...
-Qed.
-
-Lemma open_term_wrt_term_var_swap_rec : forall e a1 a2 n1 n2,
-  n1 < n2 →
-  open_term_wrt_typ_rec n2 (typ_var_f a2)
-  (open_term_wrt_typ_rec n1 (typ_var_f a1) e) =
-  open_term_wrt_typ_rec n1 (typ_var_f a1)
-  (open_term_wrt_typ_rec (S n2) (typ_var_f a2) e).
-Proof with try solve [auto | elimtype False; omega].
-intros e a1 a2. induction e; intros n1 n2 Hle; simpl; auto;
-try solve [f_equal; auto using open_typ_wrt_typ_var_swap_rec
-  | f_equal; auto using open_typ_wrt_typ_var_swap_rec; apply IHe; omega].
-Qed.
-*)
-
 Lemma open_typ_wrt_typ_close_typ_wrt_typ_twice : forall a1 a2 a t n,
   open_typ_wrt_typ_rec n (typ_var_f a1)
   (open_typ_wrt_typ_rec (S n) (typ_var_f a2)
