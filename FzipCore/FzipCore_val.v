@@ -134,3 +134,78 @@ Lemma result_trenaming : forall a b r,
 Proof.
 intros. edestruct val_result_trenaming; eauto.
 Qed.
+
+Lemma val_result_trenaming_inv : forall a b,
+  (forall v, val v →
+    forall v', v = tsubst_term (typ_var_f b) a v' → val v') ∧
+  (forall r, result r →
+    forall r', r = tsubst_term (typ_var_f b) a r' → result r').
+Proof.
+intros a b.
+apply val_result_mut_ind; intros; subst; simpl; auto.
+Case "val abs". inversion l0; subst.
+  destruct v'; inversion H; subst. clear H.
+  constructor.
+  apply tsubst_typ_lc_typ_inv with (a1 := a) (t1 := typ_var_f b); auto.
+  constructor; intros.
+  apply tsubst_typ_lc_typ_inv with (a1 := a) (t1 := typ_var_f b); auto.
+  apply tsubst_term_lc_term_inv with (a1 := a) (t1 := typ_var_f b); auto.
+  rewrite <- tsubst_term_open_term_wrt_term_var. auto.
+Case "val gen". inversion l; subst.
+  destruct v'; inversion H; subst. clear H.
+  constructor.
+  apply tsubst_term_lc_term_inv with (a1 := a) (t1 := typ_var_f b); auto.
+Case "val pair". destruct v'; inversion H1; subst. auto.
+Case "val coerce". destruct v'; inversion H0; subst.
+  constructor; intros; auto.
+  apply tsubst_typ_lc_typ_inv with (a1 := a) (t1 := typ_var_f b); auto.
+  destruct v'; simpl in *; congruence.
+Case "val exists".
+  destruct v'; simpl in H0; inversion H0; subst. clear H0.
+  destruct v'; simpl in H2; inversion H2; subst. 
+  destruct t; simpl in H2; inversion H2; subst.
+  pick fresh b1 and apply val_exists; intros; subst.
+  reflexivity.
+  apply tsubst_typ_lc_typ_inv with (a1 := a) (t1 := typ_var_f b); auto.
+  rewrite tsubst_typ_open_typ_wrt_typ; auto.
+  rewrite tsubst_typ_fresh_eq with (t2 := typ_var_f b1); auto.
+  eapply (H b0); auto.
+  unfold open_term_wrt_typ; simpl. reflexivity.
+  unfold open_term_wrt_typ in H4; inversion H4; subst.
+  rewrite tsubst_term_open_term_wrt_typ; auto.
+  rewrite tsubst_term_open_term_wrt_typ_rec; auto.
+  rewrite tsubst_typ_fresh_eq with (t2 := typ_var_f a0); auto.
+  rewrite tsubst_typ_fresh_eq with (t2 := typ_var_f b0); auto.
+  unfold typvar in *; destruct (t == a); congruence.
+Case "result".
+destruct r'; simpl in H0; inversion H0; subst.
+destruct t0; simpl in H2; inversion H2; subst.
+pick fresh c and apply result_sigma.
+  apply tsubst_typ_lc_typ_inv with (a1 := a) (t1 := typ_var_f b); auto.
+  apply (H c); auto.
+  rewrite tsubst_term_open_term_wrt_typ; auto.
+  autorewrite with lngen. auto.
+Qed.
+
+Lemma val_trenaming_inv : forall a b v,
+  val (tsubst_term (typ_var_f b) a v) → val v.
+Proof.
+intros. edestruct val_result_trenaming_inv; eauto.
+Qed.
+
+Lemma result_trenaming_inv : forall a b r,
+  result (tsubst_term (typ_var_f b) a r) → result r.
+Proof.
+intros. edestruct val_result_trenaming_inv; eauto.
+Qed.
+
+Lemma result_sigma_exists : forall a b t e,
+  lc_typ t →
+  result (open_term_wrt_typ e (typ_var_f a)) →
+  result (term_sigma (typ_var_f b) t e).
+Proof.
+intros a b t e H H0. pick fresh c and apply result_sigma; auto.
+apply result_trenaming_inv with (a := c) (b := a).
+rewrite tsubst_term_open_term_wrt_typ; auto.
+autorewrite with lngen. auto.
+Qed.
