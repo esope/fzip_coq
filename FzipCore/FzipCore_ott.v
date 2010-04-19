@@ -605,6 +605,15 @@ Inductive red0 : term -> red_tag -> term -> Prop :=    (* defn red0 *)
  | red0_sigma_open : forall (c b:typvar) (t:typ) (e:term),
      result (term_sigma (typ_var_f b) t e) ->
      red0 (term_open (typ_var_f c) (term_sigma (typ_var_f b) t e)) NoEps (term_sigma (typ_var_f b) t (term_open (typ_var_f c) e))
+ | red0_sigma_exists : forall (L:vars) (b:typvar) (t t':typ) (e e':term),
+      ( forall c , c \notin  L  ->  lc_typ (  ( open_typ_wrt_typ t (typ_var_f c) )  )  )  ->
+      ( forall c , c \notin  L  ->  c  `notin` ftv_typ (  ( open_typ_wrt_typ t (typ_var_f c) )  )  )  ->
+      ( forall c a, c \notin  L  ->  ( a \notin   L  \u {{ c }}  -> result  ( open_term_wrt_typ  ( open_term_wrt_typ_rec 1 (typ_var_f c) e )  (typ_var_f a) )  )  )  ->
+      (forall c, c \notin L -> t' = open_typ_wrt_typ t (typ_var_f c)) ->
+      (forall c a, c \notin L -> a \notin L \u {{ c }} ->
+      open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f c) e) (typ_var_f a)
+    = open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a) e') (typ_var_f c)) ->
+      red0 (term_exists (term_sigma (typ_var_f b) t e)) NoEps (term_sigma (typ_var_f b) t' (term_exists e'))
  | red0_sigma_sigma : forall (L:vars) (b1:typvar) (t1 t1':typ) (b2:typvar) (t2:typ) (e e':term),
      lc_term (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) ->
       ( forall a1 , a1 \notin  L  ->  ( forall a2 , a2 \notin   L  \u {{ a1 }}  -> result  (open_term_wrt_typ_rec 0 (typ_var_f a1) (open_term_wrt_typ_rec 1 (typ_var_f a2) e) )  )  )  ->
