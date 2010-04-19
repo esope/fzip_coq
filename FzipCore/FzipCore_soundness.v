@@ -835,38 +835,122 @@ Case "exists". pick fresh a. destruct (H0 a) as [[? [? [? ?]]] | ?]; clear H0...
       unfold typvar; destruct (a == a); try congruence.
       assert (a ≠ b). simpl in Fr; auto.
       unfold typvar; destruct (a == b); try congruence.
-      pick fresh c; pick fresh d.
-      apply red0_sigma_exists_defined with (c := c) (a := d). auto.
-      simpl. simpl in Fr2. clear Fr Fr0 Fr1.
-        rewrite ftv_term_close_term_wrt_typ_rec.
-        rewrite ftv_typ_close_typ_wrt_typ_rec.
-        assert (d ∉ ftv_typ t1') by auto.
-        assert (d ∉ ftv_term e'0) by auto. clear Fr2. fsetdec.
-      simpl. simpl in Fr1. clear Fr Fr0 Fr2.
-        rewrite ftv_term_close_term_wrt_typ_rec.
-        rewrite ftv_typ_close_typ_wrt_typ_rec.
-        assert (c ∉ ftv_typ t1') by auto.
-        assert (c ∉ ftv_term e'0) by auto. clear Fr1. fsetdec.
+      apply red0_sigma_exists_defined with (c := a) (a := a0). auto.
+      (* freshness proof 1 *)
+      pick fresh d1.
+      rewrite <- close_typ_wrt_typ_open_typ_wrt_typ
+        with (a1 := d1) (t1 := t1'); auto.
+      rewrite <- H21; auto.
+      pick fresh d2.
+      rewrite <- close_term_wrt_typ_rec_open_term_wrt_typ_rec
+        with (n1 := 1) (a1 := d2) (e1 := e'0); auto.
+      rewrite <- close_term_wrt_typ_rec_open_term_wrt_typ_rec
+        with (n1 := 0) (a1 := d1)
+          (e1 := open_term_wrt_typ_rec 1 (typ_var_f d2) e'0).
+      rewrite <- H22; auto.
+      simpl.
+      repeat rewrite ftv_term_close_term_wrt_typ_rec.
+      unfold close_typ_wrt_typ.
+      repeat rewrite ftv_typ_close_typ_wrt_typ_rec.
+      admit.
+      assert (ftv_term (open_term_wrt_typ_rec 1 (typ_var_f d2) e'0)
+        [<=] ftv_typ (typ_var_f d2) ∪ ftv_term e'0) by auto with lngen.
+      clear Fr Fr0. assert (d1 ≠ d2) by auto. clear Fr2.
+      assert (d1 ∉ ftv_term e'0) by auto. clear Fr1.
+      simpl in H14. fsetdec.
+      (* freshness proof 2 *)
+      pick fresh d1.
+      rewrite <- close_typ_wrt_typ_open_typ_wrt_typ
+        with (a1 := d1) (t1 := t1'); auto.
+      rewrite <- H21; auto.
+      pick fresh d2.
+      rewrite <- close_term_wrt_typ_rec_open_term_wrt_typ_rec
+        with (n1 := 1) (a1 := d2) (e1 := e'0); auto.
+      rewrite <- close_term_wrt_typ_rec_open_term_wrt_typ_rec
+        with (n1 := 0) (a1 := d1)
+          (e1 := open_term_wrt_typ_rec 1 (typ_var_f d2) e'0).
+      rewrite <- H22; auto.
+      simpl.
+      repeat rewrite ftv_term_close_term_wrt_typ_rec.
+      unfold close_typ_wrt_typ.
+      repeat rewrite ftv_typ_close_typ_wrt_typ_rec.
+      admit.
+      assert (ftv_term (open_term_wrt_typ_rec 1 (typ_var_f d2) e'0)
+        [<=] ftv_typ (typ_var_f d2) ∪ ftv_term e'0) by auto with lngen.
+      clear Fr Fr0. assert (d1 ≠ d2) by auto. clear Fr2.
+      assert (d1 ∉ ftv_term e'0) by auto. clear Fr1.
+      simpl in H14. fsetdec.
+      (* lc_typ proof *)
       unfold open_typ_wrt_typ; rewrite <- tsubst_typ_spec_rec.
+      apply tsubst_typ_lc_typ; auto. pick fresh d.
+      replace (open_typ_wrt_typ_rec 0 (open_typ_wrt_typ_rec 0
+        (typ_var_f a) t2) (open_typ_wrt_typ_rec 1 (typ_var_f a) t3))
+        with (tsubst_typ (open_typ_wrt_typ_rec 0 (typ_var_f a) t2) d
+        (open_typ_wrt_typ_rec 0 (typ_var_f d) (open_typ_wrt_typ_rec 1
+        (typ_var_f a) t3))).
       apply tsubst_typ_lc_typ; auto.
-      replace (open_typ_wrt_typ_rec 0 (open_typ_wrt_typ_rec 0 (typ_var_f a) t2)
-        (open_typ_wrt_typ_rec 1 (typ_var_f a) t3)) with
-      (tsubst_typ (open_typ_wrt_typ_rec 0 (typ_var_f a) t2) a0
-        (open_typ_wrt_typ_rec 0 (typ_var_f a0)
-        (open_typ_wrt_typ_rec 1 (typ_var_f a) t3))).
-      auto with lngen.
+      apply tsubst_typ_lc_typ_inv with (a1 := d) (t1 := typ_var_f a0); auto.
       repeat rewrite tsubst_typ_open_typ_wrt_typ_rec; auto.
-      simpl in Fr0. autorewrite with lngen. auto.
-      assert (a ∉ ftv_typ (open_typ_wrt_typ_rec 0 (typ_var_f c)
-        (open_typ_wrt_typ_rec 1 (typ_var_f a) t3))).
+      rewrite tvar_tsubst.
+      repeat rewrite tsubst_typ_fresh_eq; auto.
+      repeat rewrite tsubst_typ_open_typ_wrt_typ_rec; auto.
+      rewrite tvar_tsubst. repeat rewrite tsubst_typ_fresh_eq; auto.
+      (* freshness proof 3 *)
+      unfold open_typ_wrt_typ.
+      rewrite open_typ_wrt_typ_rec_close_typ_wrt_typ_rec.
+      assert (a ∉ ftv_typ (open_typ_wrt_typ_rec 1 (typ_var_f a) t3)).
+        assert (wfterm ([(a0, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a)
+          t2))] ++ G2 ++ G1) (open_term_wrt_typ (open_term_wrt_typ_rec
+          1 (typ_var_f a) (term_sigma (typ_var_f b) t3 e)) (typ_var_f
+          a0)) (tsubst_typ (typ_var_f a0) a (open_typ_wrt_typ t
+          (typ_var_f a)))) by auto.
+        unfold open_term_wrt_typ in H14; simpl in H14.
+        apply wfterm_ftv in H14. simpl in H14.
+        assert (a ∉ ftv_typ (open_typ_wrt_typ_rec 0 (typ_var_f a0)
+               (open_typ_wrt_typ_rec 1 (typ_var_f a) t3))).
+          assert (a ≠ a0) by auto. clear Fr Fr0. fsetdec.
+        assert (ftv_typ (open_typ_wrt_typ_rec 1 (typ_var_f a) t3)
+          [<=] ftv_typ
+              (open_typ_wrt_typ_rec 0 (typ_var_f a0)
+                 (open_typ_wrt_typ_rec 1 (typ_var_f a) t3)))
+        by auto with lngen.
+        clear Fr Fr0. fsetdec.
+      assert (a ∉ ftv_typ (open_typ_wrt_typ_rec 0 (typ_var_f a) t2)).
+        assert (wfterm ([(a0, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a)
+          t2))] ++ G2 ++ G1) (open_term_wrt_typ (open_term_wrt_typ_rec
+          1 (typ_var_f a) (term_sigma (typ_var_f b) t3 e)) (typ_var_f
+          a0)) (tsubst_typ (typ_var_f a0) a (open_typ_wrt_typ t
+          (typ_var_f a)))) by auto.
+        unfold open_term_wrt_typ in H15; simpl in H15.
+        apply wfterm_wfenv in H15. simpl_env in H15.
+        apply wfenv_wftyp_Eq3 in H15.
+        apply wftyp_ftv in H15. clear Fr Fr0. fsetdec.
+        clear Fr Fr0.
+        assert (ftv_typ (open_typ_wrt_typ_rec 0 (open_typ_wrt_typ_rec
+       0 (typ_var_f a) t2) (open_typ_wrt_typ_rec 1 (typ_var_f a) t3))
+       [<=] ftv_typ (open_typ_wrt_typ_rec 0 (typ_var_f a) t2) ∪
+       ftv_typ (open_typ_wrt_typ_rec 1 (typ_var_f a) t3)) by auto with
+       lngen.
+        fsetdec.
+        (* result proof *)
+        pick fresh d1.
+        rewrite <- close_typ_wrt_typ_open_typ_wrt_typ with (a1 := d1)
+          (t1 := t1'); auto.
+        rewrite <- H21; auto.
+        pick fresh d2.
+        rewrite <- close_term_wrt_typ_rec_open_term_wrt_typ_rec with
+          (n1 := 1) (a1 := d1) (e1 := e'0); auto.
+        rewrite <- close_term_wrt_typ_rec_open_term_wrt_typ_rec with
+        (n1 := 0) (a1 := d2) (e1 := open_term_wrt_typ_rec 1 (typ_var_f d1) e'0).
+        rewrite <- H22; auto.
+        unfold open_term_wrt_typ; simpl.
+        repeat rewrite open_typ_wrt_typ_rec_close_typ_wrt_typ_rec.
+        repeat rewrite open_term_wrt_typ_rec_close_term_wrt_typ_rec.
+        unfold close_typ_wrt_typ. rewrite <- tsubst_typ_spec_rec.
+        rewrite <- tsubst_term_spec_rec.
+
 
 ICI
-
-      unfold open_typ_wrt_typ; rewrite <- tsubst_typ_spec_rec.
-      repeat rewrite tsubst_typ_open_typ_wrt_typ_rec; auto.
-      rewrite tvar_tsubst. repeat rewrite tsubst_typ_fresh_eq.
-      
-
 
 
       rewrite tsubst_typ_fresh_eq.
