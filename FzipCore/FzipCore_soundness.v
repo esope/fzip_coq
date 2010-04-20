@@ -1182,6 +1182,3 @@ Case "coerce". destruct IHwfterm as [[? [? [? ?]]] | ?].
 *)
   admit.
 Qed.
-
-Print Assumptions subject_reduction.
-Print Assumptions progress.
