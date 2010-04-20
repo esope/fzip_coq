@@ -1082,28 +1082,70 @@ Case "nu". pick fresh b. destruct (H0 b) as [[? [? [? ?]]] | ?]...
   assert (wfterm ([(b, E)] ++ G) (open_term_wrt_typ e (typ_var_f b)) t) by auto.
   clear H. inversion H1; subst.
   SSCase "e val". elimtype False. eapply val_pure; eauto.
-  SSCase "e result". unfold open_term_wrt_typ in H; inversion H; subst.
+  SSCase "e result". left. unfold open_term_wrt_typ in H; inversion H; subst.
   clear H H5.
-  assert (exists t', exists e', term_nu e ⇝⋆[Eps]
-    term_nu (term_sigma (typ_var_b 0) t' e')) as [t' [e' He']].
-    SSSCase "Eps reduction".
-    rewrite_env (nil ++ b ~ E ++ G) in H0.
-    eapply result_redn_Eps in H1; eauto. destruct H1 as [t' [e' Hred]].
-    exists (close_typ_wrt_typ b t').
-    exists (close_term_wrt_typ_rec 1 b e').
-    rewrite <- close_term_wrt_typ_open_term_wrt_typ with (e1 := e) (a1 := b);
+  rewrite_env (nil ++ b ~ E ++ G) in H0.
+  apply result_redn_Eps in H0; eauto. destruct H0 as [t'0 [e'0 [He'0 Ht'0]]].
+  exists (term_nu (close_term_wrt_typ b (term_sigma (typ_var_f b) t'0 e'0))).
+  assert (exists e'', red0 (term_nu (close_term_wrt_typ b (term_sigma (typ_var_f b) t'0 e'0)))
+ NoEps e'') as [e'' He''].
+    SSSCase "NoEps reduction". unfold close_term_wrt_typ; simpl.
+    unfold typvar; destruct (b == b); try congruence.
+    pick fresh a.
+    apply red0_nu_sigma_defined with (b := b) (a := a). auto.
+    rewrite ftv_term_close_term_wrt_typ_rec. auto.
+    unfold open_typ_wrt_typ.
+    rewrite <- tsubst_typ_spec_rec. rewrite tsubst_typ_var_self. auto.
+    admit. (* this false, due to an error in the definition of red0 *)
+    apply result_redn_Eps_result in He'0; auto. inversion He'0; subst.
+    inversion H; try congruence.
+    unfold open_term_wrt_typ; simpl. pick fresh c.
+    apply result_sigma_exists with (a := c).
+    unfold close_typ_wrt_typ. rewrite <- tsubst_typ_spec_rec.
+      auto with lngen.
+    rewrite <-  tsubst_term_spec_rec. rewrite tsubst_term_var_self.
       auto.
-    replace (term_sigma (typ_var_b 0) (close_typ_wrt_typ b t')
-        (close_term_wrt_typ_rec 1 b e')) with (close_term_wrt_typ b
-        (term_sigma (typ_var_f b) t' e'))...
-    unfold close_term_wrt_typ; simpl.
-    unfold typvar; destruct (b == b). reflexivity. congruence.
-  assert (exists e'', red0 (term_nu (term_sigma (typ_var_b 0) t' e'))
-    NoEps e'') as [e'' He''].
-    SSSCase "NoEps reduction". pick fresh a.
-    apply red0_nu_sigma_defined with (b := b) (a := a). auto. auto.
-    admit. (* needs subject reduction *)
-    
-ICI
+    exists e''. split; auto.
+    rewrite <- close_term_wrt_typ_open_term_wrt_typ with (e1 := e) (a1 := b)...
+Case "sigma". pick fresh a. destruct (H1 a) as [[? [? [? ?]]] | ?]; auto.
+  intros. intro. eapply (Henv x τ). analyze_binds H2.
+  SCase "e reduces.". left.
+  exists (term_sigma (typ_var_f b) t' (close_term_wrt_typ a x)).
+  exists (term_sigma (typ_var_f b) t' (close_term_wrt_typ a x0)).
+  assert (lc_typ t').
+    assert (wfterm ([(a, Eq t')] ++ G2 ++ G1) (open_term_wrt_typ e
+    (typ_var_f a)) (tsubst_typ (typ_var_f a) b t)) by auto.
+    apply wfterm_wfenv in H4. apply wfenv_wftyp_Eq3 in H4.
+    apply wftyp_regular in H4. auto.
+  split.
+  SSCase "Eps reduction".
+  rewrite <- close_term_wrt_typ_open_term_wrt_typ with (e1 := e) (a1 := a); auto.
+  apply redn_context_sigma; auto.
+  SSCase "NoEps reduction". pick fresh c and apply red1_sigma; auto.
+  repeat rewrite <- tsubst_term_spec. auto using red1_trenaming.
+  SCase "e result". right.
+  apply result_sigma with (L := L ∪ ftv_term e); intros.
+  assert (wfterm ([(a, Eq t')] ++ G2 ++ G1) (open_term_wrt_typ e
+    (typ_var_f a)) (tsubst_typ (typ_var_f a) b t)) by auto.
+    apply wfterm_wfenv in H3. apply wfenv_wftyp_Eq3 in H3.
+    apply wftyp_regular in H3. auto.
+  apply result_trenaming_inv with (a := a0) (b := a).
+    rewrite tsubst_term_open_term_wrt_typ; auto.
+    autorewrite with lngen; auto.
+Case "coerce". destruct IHwfterm as [[? [? [? ?]]] | ?].
+  intros. intro. eapply (Henv x τ). analyze_binds H2.
+  SCase "e reduces.". left.
+  assert (lc_typ t) by eauto with lngen. idtac...
+  SCase "e result". assert (lc_typ t) by eauto with lngen.
+  assert (lc_term e) by eauto with lngen.
+  inversion H1; subst.
+  SSCase "e val". inversion H4; subst;
+  try solve [right; constructor; constructor; auto; intros; congruence].
+  SSSCase "e coerce". left...
+  SSCase "e result". left.
+  destruct red0_sigma_coerce_defined. (* missing reduction rule *)
+
+  
+
 
 Qed.
