@@ -931,6 +931,44 @@ autorewrite with lngen.
 rewrite tsubst_typ_fresh_eq with (t2 := t'); auto.
 Qed.
 
+Lemma red0_sigma_pairL_defined: forall e1 e2 t b,
+  result (term_sigma (typ_var_f b) t e1) →
+  result e2 →
+  exists e',
+    red0 (term_pair (term_sigma (typ_var_f b) t e1) e2) NoEps e'.
+Proof.
+intros e1 e2 t b H1 H2. inversion H1; subst.
+inversion H; try congruence.
+pick fresh a.
+exists (term_sigma (typ_var_f b) t
+  (term_pair e1
+    (close_term_wrt_typ a (tsubst_term (typ_var_f a) b e2)))).
+pick fresh a0 and apply red0_sigma_pairL; intros; auto.
+rewrite <- tsubst_term_spec.
+rewrite tsubst_term_tsubst_term; auto.
+autorewrite with lngen.
+rewrite tsubst_term_fresh_eq with (e1 := e2); auto.
+Qed.
+
+Lemma red0_sigma_pairR_defined: forall e1 e2 t b,
+  result (term_sigma (typ_var_f b) t e2) →
+  val e1 →
+  exists e',
+    red0 (term_pair e1 (term_sigma (typ_var_f b) t e2)) NoEps e'.
+Proof.
+intros e1 e2 t b H1 H2. inversion H1; subst.
+inversion H; try congruence.
+pick fresh a.
+exists (term_sigma (typ_var_f b) t
+  (term_pair
+    (close_term_wrt_typ a (tsubst_term (typ_var_f a) b e1)) e2)).
+pick fresh a0 and apply red0_sigma_pairR; intros; auto.
+rewrite <- tsubst_term_spec.
+rewrite tsubst_term_tsubst_term; auto.
+autorewrite with lngen.
+rewrite tsubst_term_fresh_eq with (e1 := e1); auto.
+Qed.
+
 Lemma red0_sigma_exists_defined: forall b c a t e,
   a ≠ c → a ∉ ftv_term e → c ∉ ftv_term e →
   c  `notin` ftv_typ (open_typ_wrt_typ t (typ_var_f c)) →
