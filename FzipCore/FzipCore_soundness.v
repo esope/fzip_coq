@@ -607,7 +607,7 @@ Qed.
 Lemma result_redn_Eps : forall Γ₁ Γ₂ b e τ,
   result e → wfterm (Γ₁ ++ b ~ E ++ Γ₂) e τ →
   exists τ', exists e',
-    e ⇝⋆[Eps] (term_sigma (typ_var_f b) τ' e').
+    e ⇝⋆[Eps] (term_sigma (typ_var_f b) τ' e') ∧ b ∉ ftv_typ τ'.
 Proof.
 intros Γ₁ Γ₂ b e τ H H0. generalize dependent τ.
 generalize dependent Γ₂. generalize dependent Γ₁.
@@ -616,7 +616,17 @@ Case "val". elimtype False.
 assert (pure (Γ₁ ++ [(b, E)] ++ Γ₂)) by eauto using val_pure.
 eapply (H1 b); auto.
 Case "sigma". destruct (b0 == b); subst.
-SCase "b0 = b". eauto using rt_refl.
+SCase "b0 = b".
+exists t. exists e. split. auto with clos_refl_trans.
+intros. inversion H2; subst.
+symmetry in H3. simpl_env in H3. apply uniq_app_inv in H3.
+destruct H3; subst. pick fresh c.
+assert (wfterm ([(c, Eq t)] ++ G2 ++ G1)
+  (open_term_wrt_typ e (typ_var_f c))
+  (tsubst_typ (typ_var_f c) b τ)) by auto.
+apply wfterm_wfenv in H3. apply wfenv_wftyp_Eq3 in H3.
+apply wftyp_ftv in H3. clear Fr. fsetdec.
+eauto with lngen.
 SCase "b0 ≠ b". inversion H2; subst.
 assert (binds b E (G2 ++ (b0, E) :: G1)). rewrite H3. auto.
 analyze_binds H4.
@@ -625,7 +635,7 @@ apply binds_decomp in BindsTac. destruct BindsTac as [? [? ?]]; subst.
 simpl_env in H3. apply uniq_app_inv in H3. destruct H3; subst.
 simpl_env in *.
 pick fresh a. edestruct H1 with (a := a)
- (Γ₁ := [(a, Eq t)] ++ Γ₁) (Γ₂ := x0 ++ G1) as [τ' [e' ?]];
+ (Γ₁ := [(a, Eq t)] ++ Γ₁) (Γ₂ := x0 ++ G1) as [τ' [e' [? ?]]];
  simpl_env; auto. clear H1.
 apply redn_context_sigma with (b := b0) (a := a) (τ := t) in H3; auto.
 rewrite close_term_wrt_typ_open_term_wrt_typ in H3; auto.
@@ -634,17 +644,30 @@ assert (a ≠ b) by auto.
 unfold typvar in *; destruct (a == b); try congruence.
 assert (exists e'', red0 (term_sigma (typ_var_f b0) t (term_sigma
   (typ_var_f b) (close_typ_wrt_typ_rec 0 a τ') (close_term_wrt_typ_rec
-  1 a e'))) Eps e'') as [? ?].
+  1 a e'))) Eps e'') as [e'' He''].
   apply red0_sigma_sigma_defined.
   apply result_redn_Eps_result
     with (e := term_sigma (typ_var_f b0) t e); auto.
   pick fresh c and apply result_sigma; auto.
 assert ((term_sigma (typ_var_f b0) t (term_sigma (typ_var_f b)
          (close_typ_wrt_typ_rec 0 a τ') (close_term_wrt_typ_rec 1 a
-         e'))) ⇝⋆[ Eps] x). eauto with clos_refl_trans.
-inversion H4; subst.
+         e'))) ⇝⋆[ Eps] e''). eauto with clos_refl_trans.
+inversion He''; subst.
+exists (open_typ_wrt_typ (close_typ_wrt_typ_rec 0 a τ') t).
+exists (term_sigma (typ_var_f b0) t1' e'0). split.
 eauto with clos_refl_trans.
-rewrite H3; eauto with lngen.
+unfold open_typ_wrt_typ. rewrite <- tsubst_typ_spec_rec.
+assert (b ∉ ftv_typ t).
+  assert (wfterm ([(a, Eq t)] ++ Γ₁ ++ [(b, E)] ++ x0 ++ G1)
+(open_term_wrt_typ e (typ_var_f a)) (tsubst_typ (typ_var_f a) b0 τ))
+by auto.
+  intro.
+  apply wfterm_Eq_not_E with (a := a) (b := b) (τ₁ := t) in H6.
+  eapply H6. auto. auto. auto.
+assert (ftv_typ (tsubst_typ t a τ') [<=]
+  ftv_typ t ∪ remove a (ftv_typ τ')) by auto with lngen.
+clear Fr. fsetdec.
+rewrite H3. eauto with lngen.
 SSCase "b binds in G1".
 apply binds_decomp in BindsTac0. destruct BindsTac0 as [? [? ?]]; subst.
 simpl_env in H3.
@@ -652,7 +675,7 @@ rewrite_env ((G2 ++ [(b0, E)] ++ x) ++ [(b, E)] ++ x0) in H3.
 apply uniq_app_inv in H3. destruct H3; subst.
 simpl_env in *.
 pick fresh a. edestruct H1 with (a := a)
- (Γ₁ := [(a, Eq t)] ++ G2 ++ x) (Γ₂ := Γ₂) as [τ' [e' ?]];
+ (Γ₁ := [(a, Eq t)] ++ G2 ++ x) (Γ₂ := Γ₂) as [τ' [e' [? ?]]];
  simpl_env; auto. clear H1.
 apply redn_context_sigma with (b := b0) (a := a) (τ := t) in H3; auto.
 rewrite close_term_wrt_typ_open_term_wrt_typ in H3; auto.
@@ -661,16 +684,29 @@ assert (a ≠ b) by auto.
 unfold typvar in *; destruct (a == b); try congruence.
 assert (exists e'', red0 (term_sigma (typ_var_f b0) t (term_sigma
   (typ_var_f b) (close_typ_wrt_typ_rec 0 a τ') (close_term_wrt_typ_rec
-  1 a e'))) Eps e'') as [? ?].
+  1 a e'))) Eps e'') as [e'' He''].
   apply red0_sigma_sigma_defined.
   apply result_redn_Eps_result
     with (e := term_sigma (typ_var_f b0) t e); auto.
   pick fresh c and apply result_sigma; auto.
 assert ((term_sigma (typ_var_f b0) t (term_sigma (typ_var_f b)
          (close_typ_wrt_typ_rec 0 a τ') (close_term_wrt_typ_rec 1 a
-         e'))) ⇝⋆[ Eps] x0). eauto with clos_refl_trans.
-inversion H4; subst.
-eauto with clos_refl_trans.
+         e'))) ⇝⋆[ Eps] e''). eauto with clos_refl_trans.
+inversion He''; subst.
+exists (open_typ_wrt_typ (close_typ_wrt_typ_rec 0 a τ') t).
+exists (term_sigma (typ_var_f b0) t1' e'0).
+split. eauto with clos_refl_trans.
+unfold open_typ_wrt_typ. rewrite <- tsubst_typ_spec_rec.
+assert (b ∉ ftv_typ t).
+  assert (wfterm ([(a, Eq t)] ++ G2 ++ x ++ [(b, E)] ++ Γ₂)
+(open_term_wrt_typ e (typ_var_f a)) (tsubst_typ (typ_var_f a) b0 τ))
+by auto.
+  intro.
+  apply wfterm_Eq_not_E with (a := a) (b := b) (τ₁ := t) in H6.
+  eapply H6. auto 6. auto. auto.
+assert (ftv_typ (tsubst_typ t a τ') [<=]
+  ftv_typ t ∪ remove a (ftv_typ τ')) by auto with lngen.
+clear Fr. fsetdec.
 rewrite H3; eauto with lngen.
 Qed.
 
