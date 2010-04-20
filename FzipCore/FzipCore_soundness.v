@@ -933,53 +933,21 @@ Case "exists". pick fresh a. destruct (H0 a) as [[? [? [? ?]]] | ?]; clear H0...
        lngen.
         fsetdec.
         (* result proof *)
-        pick fresh d1.
-        rewrite <- close_typ_wrt_typ_open_typ_wrt_typ with (a1 := d1)
-          (t1 := t1'); auto.
-        rewrite <- H21; auto.
-        pick fresh d2.
-        rewrite <- close_term_wrt_typ_rec_open_term_wrt_typ_rec with
-          (n1 := 1) (a1 := d1) (e1 := e'0); auto.
-        rewrite <- close_term_wrt_typ_rec_open_term_wrt_typ_rec with
-        (n1 := 0) (a1 := d2) (e1 := open_term_wrt_typ_rec 1 (typ_var_f d1) e'0).
-        rewrite <- H22; auto.
-        unfold open_term_wrt_typ; simpl.
-        repeat rewrite open_typ_wrt_typ_rec_close_typ_wrt_typ_rec.
-        repeat rewrite open_term_wrt_typ_rec_close_term_wrt_typ_rec.
-        unfold close_typ_wrt_typ. rewrite <- tsubst_typ_spec_rec.
-        rewrite <- tsubst_term_spec_rec.
-
-
-ICI
-
-
-      rewrite tsubst_typ_fresh_eq.
-      assert (ftv_typ (open_typ_wrt_typ_rec 0 (open_typ_wrt_typ_rec 0
-          (typ_var_f a) t2) (open_typ_wrt_typ_rec 1 (typ_var_f a) t3))
-          [<=] ftv_typ (typ_var_f a) ∪ ftv_typ t2 ∪ ftv_typ (typ_var_f
-          a) ∪ ftv_typ t3).
-      transitivity (ftv_typ (open_typ_wrt_typ_rec 0 (typ_var_f a) t2)
-        ∪ ftv_typ (open_typ_wrt_typ_rec 1 (typ_var_f a) t3)); auto with lngen.
-      simpl in H14. clear Fr Fr0 Fr2. fsetdec.
-      replace (open_typ_wrt_typ_rec 0 (open_typ_wrt_typ_rec 0
-          (typ_var_f a) t2) (open_typ_wrt_typ_rec 1 (typ_var_f a) t3))
-          with (tsubst_typ (open_typ_wrt_typ_rec 0 (typ_var_f a) t2)
-          a0 (open_typ_wrt_typ_rec 0 (typ_var_f a0)
-          (open_typ_wrt_typ_rec 1 (typ_var_f a) t3))).
-      
-
-      assert (ftv_typ (tsubst_typ (open_typ_wrt_typ_rec 0 (typ_var_f
-          a) t2) a0 (open_typ_wrt_typ_rec 0 (typ_var_f a0)
-          (open_typ_wrt_typ_rec 1 (typ_var_f a) t3))) [<=] ftv_typ
-          (open_typ_wrt_typ_rec 0 (typ_var_f a) t2) ∪ remove a0
-          (ftv_typ (open_typ_wrt_typ_rec 0 (typ_var_f a0)
-          (open_typ_wrt_typ_rec 1 (typ_var_f a) t3)))) by auto with lngen.
-      assert (a ∉ ftv_typ (open_typ_wrt_typ_rec 0 (typ_var_f a) t2)).
-        auto.
-
-ICI
-
-
+        apply result_red0_Eps_result in He'; auto.
+        inversion He'; subst. inversion H14; try congruence.
+        simpl. rewrite open_typ_wrt_typ_rec_close_typ_wrt_typ_rec.
+        rewrite <- tsubst_term_spec_rec. rewrite tsubst_term_var_self.
+        pick fresh d.
+        replace (open_term_wrt_typ (term_sigma (typ_var_f a) t1' e'0)
+          (typ_var_f a0)) with (tsubst_term (typ_var_f a0) d
+          (open_term_wrt_typ (term_sigma (typ_var_f a) t1' e'0)
+          (typ_var_f d))).
+        apply result_trenaming. auto.
+        rewrite tsubst_term_open_term_wrt_typ; auto. rewrite tvar_tsubst.
+        simpl. assert (a ≠ d) by auto.
+        unfold typvar; destruct (a == d); try congruence.
+        autorewrite with lngen. auto.
+        eauto with clos_refl_trans. eauto.
     SSSSCase "t1 = typ_var_f t0 : we can reduce".
 
 
