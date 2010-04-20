@@ -720,8 +720,8 @@ Case "var". elimtype False. intuition eauto.
 Case "app".
 destruct IHwfterm1 as [[? [? [? ?]]] | ?]... intuition eauto with fzip.
 destruct IHwfterm2 as [[? [? [? ?]]] | ?]... intuition eauto with fzip.
-destruct H2...
-  SCase "e val". destruct H3; subst...
+destruct H2.
+  SCase "e val". destruct H3; subst.
     SSCase "e0 val". destruct H2; subst; eauto 9 with clos_refl_trans;
     try solve [inversion H0].
       SSSCase "e coerce". inversion H0; subst. destruct H4; subst.
@@ -733,6 +733,16 @@ destruct H2...
         SSSSCase "coerce coerce (absurd)". elimtype False. eapply H5; eauto.
         SSSSCase "coerce exists (absurd)". elimtype False.
           inversion H11; subst. eapply wftypeq_arrow_exists_absurd; eauto.
+    SSCase "e0 result".
+    destruct red0_sigma_appR_defined with (t := t) (b := b)
+      (e1 := e) (e2 := e0); auto.
+    pick fresh a. apply result_sigma_exists with (a := a); auto.
+    left; eauto with clos_refl_trans.
+  SCase "e result".
+  destruct red0_sigma_appL_defined with (t := t) (b := b)
+    (e1 := e) (e2 := e2); auto.
+  pick fresh a. apply result_sigma_exists with (a := a); auto.
+  left; eauto with clos_refl_trans.
 Case "abs". pick fresh x.
 assert (lc_typ t1). eapply wftyp_regular. eapply wfenv_wftyp_T3.
   eapply wfterm_wfenv. eauto.
@@ -740,13 +750,29 @@ idtac...
 Case "let". pick fresh x.
 assert (lc_term (term_let e1 e2)). idtac...
 inversion H3; subst.
-destruct IHwfterm as [[? [? [? ?]]] | ?]... intuition eauto with fzip.
-destruct H4...
+destruct IHwfterm as [[? [? [? ?]]] | ?]. intuition eauto with fzip.
+SCase "e1 reduces". left.
+exists (term_let x0 e2). exists (term_let x1 e2). split.
+apply redn_context_letL with (x := x); auto.
+eauto with lngen.
+SCase "e1 result". inversion H4; subst.
+SSCase "e1 val". idtac...
+SSCase "e1 result".
+destruct red0_sigma_letL_defined with (b := b) (t := t) (e1 := e) (e2 := e2); auto.
+left. eauto with clos_refl_trans.
 Case "pair".
 destruct IHwfterm1 as [[? [? [? ?]]] | ?]... intuition eauto with fzip.
 destruct IHwfterm2 as [[? [? [? ?]]] | ?]... intuition eauto with fzip.
-destruct H2...
-  SCase "e val". destruct H3; subst...
+inversion H2; subst.
+  SCase "e1 val". inversion H3; subst; auto.
+    SSCase "e2 result".
+    destruct red0_sigma_pairR_defined
+      with (b := b) (t := t) (e1 := e1) (e2 := e); auto. left.
+    eauto with clos_refl_trans.
+  SCase "e1 result".
+  destruct red0_sigma_pairL_defined
+    with (b := b) (t := t) (e1 := e) (e2 := e2); auto. left.
+  eauto with clos_refl_trans.
 Case "fst". destruct IHwfterm as [[? [? [? ?]]] | ?]... destruct H0; subst...
   SSCase "e val". destruct H0; subst; try solve [inversion H]...
     SSSCase "coerce". inversion H; subst. destruct H1; subst.
@@ -769,7 +795,7 @@ Case "snd". destruct IHwfterm as [[? [? [? ?]]] | ?]... destruct H0; subst...
       SSSSCase "coerce coerce (absurd)". elimtype False. intuition eauto.
       SSSSCase "coerce exists (absurd)". elimtype False.
         inversion H8; subst. eapply wftypeq_prod_exists_absurd; eauto.
-Case "inst". destruct IHwfterm as [[? [? [? ?]]] | ?]... destruct H1; subst...
+Case "inst". destruct IHwfterm as [[? [? [? ?]]] | ?]... destruct H1; subst.
   SCase "e val". destruct H1; subst; try solve [inversion H0]...
     SSCase "coerce". inversion H0; subst. destruct H2; subst...
       SSSCase "abs (absurd)". elimtype False. inversion H9; subst.
@@ -779,6 +805,12 @@ Case "inst". destruct IHwfterm as [[? [? [? ?]]] | ?]... destruct H1; subst...
       SSSCase "coerce (absurd)". elimtype False. intuition eauto.
       SSSCase "exists (absurd)". elimtype False. inversion H9; subst.
         eapply wftypeq_exists_forall_absurd; eauto.
+  SCase "e result".
+  destruct red0_sigma_inst_defined
+    with (b := b) (t := t0) (t' := t) (e := e); auto.
+  eauto with lngen.
+  pick fresh a. apply result_sigma_exists with (a := a); auto.
+  left. eauto with clos_refl_trans.
 Case "gen". pick fresh a...
 Case "exists". pick fresh a. destruct (H0 a) as [[? [? [? ?]]] | ?]; clear H0...
   intros. intro. eapply (Henv x τ). analyze_binds H0.
@@ -1143,9 +1175,13 @@ Case "coerce". destruct IHwfterm as [[? [? [? ?]]] | ?].
   try solve [right; constructor; constructor; auto; intros; congruence].
   SSSCase "e coerce". left...
   SSCase "e result". left.
-  destruct red0_sigma_coerce_defined. (* missing reduction rule *)
-
-  
-
-
+(*
+  destruct red0_sigma_coerce_defined
+    with (b := b) (t := t0) (e := e0) (t' := t).
+  (* missing reduction rule and associated lemma *)
+*)
+  admit.
 Qed.
+
+Print Assumptions subject_reduction.
+Print Assumptions progress.
