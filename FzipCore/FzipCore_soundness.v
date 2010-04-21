@@ -54,21 +54,36 @@ rewrite <- tsubst_typ_open_typ_wrt_typ; auto.
 apply wfterm_renameE; auto.
 simpl_env; auto.
 simpl; unfold typvar; destruct (a == a); congruence.
-Case "nu_sigma".
-pick fresh b.
+Case "nu_sigma". pick fresh b.
 assert (wfterm (b ~ E ++ Γ) (open_term_wrt_typ (term_sigma (typ_var_b 0) t e) (typ_var_f b)) τ) by auto.
 assert (uniq (b ~ E ++ Γ)) by eauto with lngen.
-unfold open_term_wrt_typ in H5; simpl in H5; simpl_env in H5.
-inversion H5; subst.
-simpl_env in H8; rewrite_env (nil ++ b ~ E ++ Γ) in H8.
-symmetry in H8; apply uniq_app_inv in H8. destruct H8; subst; simpl_env in *.
+unfold open_term_wrt_typ in H4; simpl in H4; simpl_env in H4.
+inversion H4; subst.
+simpl_env in H7; rewrite_env (nil ++ b ~ E ++ Γ) in H7.
+symmetry in H7; apply uniq_app_inv in H7. destruct H7; subst; simpl_env in *.
 pick fresh a.
-erewrite H4 with (b := b) (a := a)
+erewrite H3 with (b := b) (a := a)
 (e1 := open_term_wrt_typ_rec 1 (typ_var_f b) e); try reflexivity; auto.
-rewrite <- tsubst_typ_fresh_eq with (t1 := open_typ_wrt_typ_rec 0 (typ_var_f b) t) (a1 := a) (t2 := τ); auto.
+rewrite tsubst_term_tsubst_term; auto. rewrite tvar_tsubst.
+rewrite <- tsubst_typ_fresh_eq with
+  (t1 := open_typ_wrt_typ_rec 0 (typ_var_f b) t) (a1 := b) (t2 := τ); auto.
+rewrite_env (env_map (tsubst_typ (open_typ_wrt_typ_rec 0 (typ_var_f b) t) b) nil ++ G1).
+apply wfterm_subst_eq.
+apply wfterm_weakening; intros; auto with fzip.
+rewrite <- tsubst_typ_fresh_eq with
+  (t1 := open_typ_wrt_typ_rec 0 (typ_var_f b) t) (a1 := a) (t2 := τ); auto.
 rewrite_env (env_map (tsubst_typ (open_typ_wrt_typ_rec 0 (typ_var_f b) t) a) nil ++ G1).
 apply wfterm_subst_eq. simpl_env.
-rewrite <- tsubst_typ_fresh_eq with (t1 := typ_var_f a) (a1 := b) (t2 := τ); auto.
+rewrite <- tsubst_typ_fresh_eq with
+  (t1 := typ_var_f a) (a1 := b) (t2 := τ); auto.
+constructor; auto. apply wfenv_wftyp_Eq3 with (x := a).
+  eapply wfterm_wfenv. eauto.
+intro.
+assert (not (binds a0 E
+  (a ~ Eq (open_typ_wrt_typ_rec 0 (typ_var_f b) t) ++ G1))).
+eapply wfterm_Eq_not_E; eauto.
+unfold ftv_env in H7; simpl in H7. clear Fr Fr0. fsetdec.
+intuition eauto.
 solve_uniq.
 Case "coerce_app".
 inversion H9; subst. inversion H14; subst.
@@ -436,7 +451,7 @@ rewrite_env (([(a, Eq t)] ++ G2) ++ [(c, E)] ++ x ++ G0).
 apply wfterm_open. solve_uniq.
 rewrite_env ([(a, Eq t)] ++ (G2 ++ x) ++ G0). apply H10; auto.
 solve_uniq.
-Case "sigma nu".
+Case "sigma exists".
 pick fresh a.
 assert (wfterm ([(a, E)] ++ Γ)
   (open_term_wrt_typ (term_sigma (typ_var_f b) t e) (typ_var_f a))
@@ -480,6 +495,27 @@ simpl in H6. assert (a ≠ c) by auto. assert (a ∉ ftv_term e') by auto.
 clear Fr Fr0 Fr1. fsetdec.
 autorewrite with lngen. auto.
 simpl_env. eauto with lngen.
+Case "sigma coerce". inversion H8; subst.
+pick fresh a and apply wfterm_sigma; auto.
+replace (open_term_wrt_typ (term_coerce e t'') (typ_var_f a))
+with (term_coerce (open_term_wrt_typ e (typ_var_f a)) (open_typ_wrt_typ t'' (typ_var_f a)))
+by reflexivity.
+rewrite H2; auto.
+apply wfterm_coerce with (t' := tsubst_typ (typ_var_f a) b t'0).
+rewrite_env (env_map (tsubst_typ (typ_var_f a) b) nil ++ a ~ Eq t ++ G2 ++ G1).
+apply wftypeq_instantiate. apply wftypeq_renameU; auto.
+apply wftypeq_EU. apply wftypeq_lowerE; auto.
+intro. apply ftv_env_binds in H3. destruct H3 as [? [? [? [? | ?]]]].
+  assert (ftv_typ x0 [<=] dom (G2 ++ G1)).
+    apply wftyp_ftv. apply wfenv_wftyp_T2 with (x := x); auto.
+    apply wfenv_strip with (Γ' := a ~ Eq t). eapply wfterm_wfenv; eauto.
+    clear Fr. fsetdec.
+  assert (ftv_typ x0 [<=] dom (G2 ++ G1)).
+    apply wftyp_ftv. apply wfenv_wftyp_Eq2 with (x := x); auto.
+    apply wfenv_strip with (Γ' := a ~ Eq t). eapply wfterm_wfenv; eauto.
+    clear Fr. fsetdec.
+apply wfenv_wftyp_Eq3 with (x := a). eapply wfterm_wfenv; eauto.
+apply H11; auto.
 Case "sigma sigma".
 assert (uniq (G2 ++ b1 ~ E ++ G1)) by eauto with lngen.
 assert (binds b2 E (G2 ++ G1)).
@@ -1124,19 +1160,15 @@ Case "nu". pick fresh b. destruct (H0 b) as [[? [? [? ?]]] | ?]...
     SSSCase "NoEps reduction". unfold close_term_wrt_typ; simpl.
     unfold typvar; destruct (b == b); try congruence.
     pick fresh a.
-    apply red0_nu_sigma_defined with (b := b) (a := a). auto.
-    rewrite ftv_term_close_term_wrt_typ_rec. auto.
+    apply red0_nu_sigma_defined with (b := b). 
     unfold open_typ_wrt_typ.
-    rewrite <- tsubst_typ_spec_rec. rewrite tsubst_typ_var_self. auto.
-    admit. (* this false, due to an error in the definition of red0 *)
+    rewrite open_typ_wrt_typ_rec_close_typ_wrt_typ_rec; auto.
     apply result_redn_Eps_result in He'0; auto. inversion He'0; subst.
     inversion H; try congruence.
     unfold open_term_wrt_typ; simpl. pick fresh c.
     apply result_sigma_exists with (a := c).
-    unfold close_typ_wrt_typ. rewrite <- tsubst_typ_spec_rec.
-      auto with lngen.
-    rewrite <-  tsubst_term_spec_rec. rewrite tsubst_term_var_self.
-      auto.
+    rewrite <- tsubst_typ_spec_rec. auto with lngen.
+    rewrite <- tsubst_term_spec_rec. rewrite tsubst_term_var_self. auto.
     exists e''. split; auto.
     rewrite <- close_term_wrt_typ_open_term_wrt_typ with (e1 := e) (a1 := b)...
 Case "sigma". pick fresh a. destruct (H1 a) as [[? [? [? ?]]] | ?]; auto.
@@ -1175,10 +1207,7 @@ Case "coerce". destruct IHwfterm as [[? [? [? ?]]] | ?].
   try solve [right; constructor; constructor; auto; intros; congruence].
   SSSCase "e coerce". left...
   SSCase "e result". left.
-(*
   destruct red0_sigma_coerce_defined
-    with (b := b) (t := t0) (e := e0) (t' := t).
-  (* missing reduction rule and associated lemma *)
-*)
-  admit.
+    with (b := b) (t := t0) (e := e0) (t' := t); auto.
+  eauto with clos_refl_trans.
 Qed.
