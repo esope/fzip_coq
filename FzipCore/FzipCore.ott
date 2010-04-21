@@ -378,11 +378,10 @@ snd (e1, e2) -->[noeps] e2
 ----------------------------------- :: open_exists
 open <b> ex a. e -->[noeps]  {b/a}e
 
-         b not in ftv t
-         b not in ftv e
-           e result
------------------------------------------ :: nu_sigma
-nu b. sig <b> (a = t) e -->[noeps] {t/a}e
+                 b not in ftv t
+                   e result
+---------------------------------------------- :: nu_sigma
+nu b. sig <b> (a = t) e -->[noeps] {t/a}{a/b}e
 
                        e2 val
 -------------------------------------------------------------------- :: coerce_app
@@ -453,6 +452,10 @@ open <c> sig <b> (a = t) e -->[noeps] sig <b> (a = t) open <c> e
                          e result
 ---------------------------------------------------------- :: sigma_exists
 ex c. sig <b> (a = t) e -->[noeps] sig <b> (a = t) ex c. e
+
+              sig <b> (a = t) e result
+----------------------------------------------------------------- :: sigma_coerce
+(sig <b> (a = t) e : t') -->[noeps] sig <b> (a = t) (e : {b/a}t')
 
                                       e result
 ----------------------------------------------------------------------------------------------- :: sigma_sigma

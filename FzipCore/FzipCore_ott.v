@@ -520,7 +520,6 @@ Inductive red0 : term -> red_tag -> term -> Prop :=    (* defn red0 *)
  | red0_nu_sigma : forall (L:vars) (t:typ) (e e':term),
    ( forall b , b \notin  L  ->  lc_typ (  ( open_typ_wrt_typ t (typ_var_f b) )  )  )  ->
    ( forall b , b \notin  L  ->  b  `notin` ftv_typ (  ( open_typ_wrt_typ t (typ_var_f b) )  )  )  ->
-   ( forall b a, b \notin  L -> a \notin L \u {{b}} ->  b  `notin` ftv_term (  open_term_wrt_typ_rec 0 (typ_var_f a) ( open_term_wrt_typ_rec 1 (typ_var_f b) e )  )  )  ->
    ( forall b a, b \notin  L -> a \notin   L  \u {{ b }}  ->
      forall t1 e1 e2,
        open_term_wrt_typ (term_sigma (typ_var_b 0) t e) (typ_var_f b)
@@ -532,7 +531,7 @@ Inductive red0 : term -> red_tag -> term -> Prop :=    (* defn red0 *)
        open_term_wrt_typ (term_sigma (typ_var_b 0) t e) (typ_var_f b)
        = term_sigma (typ_var_f b) (open_typ_wrt_typ t (typ_var_f b)) e1 ->
        open_term_wrt_typ e1 (typ_var_f a) = e2 ->
-       e' = tsubst_term (open_typ_wrt_typ t (typ_var_f b)) a e2) ->
+       e' = tsubst_term (open_typ_wrt_typ t (typ_var_f b)) a (tsubst_term (typ_var_f a) b e2)) ->
    red0 (term_nu (term_sigma (typ_var_b 0) t e)) NoEps e'
  | red0_coerce_app : forall (t2':typ) (e1:term) (t2 t1:typ) (e2:term),
      lc_typ t2 ->
@@ -614,6 +613,12 @@ Inductive red0 : term -> red_tag -> term -> Prop :=    (* defn red0 *)
       open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f c) e) (typ_var_f a)
     = open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a) e') (typ_var_f c)) ->
       red0 (term_exists (term_sigma (typ_var_f b) t e)) NoEps (term_sigma (typ_var_f b) t' (term_exists e'))
+ | red0_sigma_coerce : forall (L:vars) (b:typvar) (t:typ) (e:term) (t' t'':typ),
+     lc_typ t' ->
+     result (term_sigma (typ_var_f b) t e) ->
+     (forall a , a \notin  L  -> open_typ_wrt_typ t'' (typ_var_f a) = tsubst_typ (typ_var_f a) b t') ->
+     red0 (term_coerce (term_sigma (typ_var_f b) t e) t') NoEps
+     (term_sigma (typ_var_f b) t  (term_coerce e t''))
  | red0_sigma_sigma : forall (L:vars) (b1:typvar) (t1 t1':typ) (b2:typvar) (t2:typ) (e e':term),
      lc_term (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) ->
       ( forall a1 , a1 \notin  L  ->  ( forall a2 , a2 \notin   L  \u {{ a1 }}  -> result  (open_term_wrt_typ_rec 0 (typ_var_f a1) (open_term_wrt_typ_rec 1 (typ_var_f a2) e) )  )  )  ->

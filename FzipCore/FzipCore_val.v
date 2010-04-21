@@ -44,7 +44,9 @@ SCase "empty context". inversion H1; subst.
 SSCase "sigma pairL". inversion v; subst; congruence.
 SSCase "sigma pairR". inversion v0; subst; congruence.
 Case "coerce". inversion He3; subst; try solve [intuition eauto].
-SCase "empty context". inversion H0; subst. intuition eauto.
+SCase "empty context". inversion H0; subst.
+SSCase "coerce coerce". intuition eauto.
+SSCase "sigma coerce". inversion v; try congruence.
 Case "exists". inversion He3; subst.
 SCase "empty context". inversion H0.
 SCase "exists sigma context".
