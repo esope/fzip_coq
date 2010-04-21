@@ -28,7 +28,7 @@ LNGEN = /opt/bin/lngen
 
 ## Flags to lngen.  Mainly for --coq-admitted.
 
-LNGENFLAGS = --coq-loadpath=../metatheory --coq-admitted
+LNGENFLAGS = --coq-loadpath=../metatheory # --coq-admitted
 
 ## Include directories, one per line.
 
