@@ -2,43 +2,25 @@ Add LoadPath "../metatheory".
 Require Import FzipCore_init.
 Require Import FzipCore_pure.
 Require Import FzipCore_zip.
+Require Import FzipCore_env_typ.
 
-Ltac simpl_close a :=
+Ltac simpl_eq a b :=
+  unfold typvar in *; unfold termvar in *;
+  destruct (a == b); try congruence.
+
+Ltac simpl_close :=
   unfold close_typ_wrt_typ; simpl close_typ_wrt_typ_rec;
   unfold close_term_wrt_typ; simpl close_term_wrt_typ_rec;
-  unfold close_term_wrt_term; simpl close_term_wrt_term_rec;
-  unfold typvar in *; unfold termvar in *;
-    destruct (a == a); try congruence.
+  unfold close_term_wrt_term; simpl close_term_wrt_term_rec.
 
-Ltac simpl_open_typ_wrt_typ :=
-  unfold open_typ_wrt_typ; simpl open_typ_wrt_typ_rec.
-
-Ltac simpl_open_term_wrt_typ :=
-  unfold open_term_wrt_typ; simpl open_term_wrt_typ_rec.
-
-Ltac simpl_open_term_wrt_term :=
-  unfold open_term_wrt_term; simpl open_term_wrt_term_rec.
+Tactic Notation "simpl_close*" := repeat progress simpl_close.
 
 Ltac simpl_open :=
-  simpl_open_typ_wrt_typ; simpl_open_term_wrt_typ; simpl_open_term_wrt_term.
+  unfold open_typ_wrt_typ; simpl open_typ_wrt_typ_rec;
+  unfold open_term_wrt_typ; simpl open_term_wrt_typ_rec;
+  unfold open_term_wrt_term; simpl open_term_wrt_term_rec.
 
-Definition a0: atom. Proof. pick fresh a0. exact a0. Defined.
-Definition a1: atom. Proof. pick fresh a1. exact a1. Defined.
-Definition a2: atom. Proof. pick fresh a2. exact a2. Defined.
-Definition a3: atom. Proof. pick fresh a3. exact a3. Defined.
-Definition a4: atom. Proof. pick fresh a4. exact a4. Defined.
-Definition a5: atom. Proof. pick fresh a5. exact a5. Defined.
-Definition a6: atom. Proof. pick fresh a6. exact a6. Defined.
-Definition a7: atom. Proof. pick fresh a7. exact a7. Defined.
-
-Definition x0: atom. Proof. pick fresh x0. exact x0. Defined.
-Definition x1: atom. Proof. pick fresh x1. exact x1. Defined.
-Definition x2: atom. Proof. pick fresh x2. exact x2. Defined.
-Definition x3: atom. Proof. pick fresh x3. exact x3. Defined.
-Definition x4: atom. Proof. pick fresh x4. exact x4. Defined.
-Definition x5: atom. Proof. pick fresh x5. exact x5. Defined.
-Definition x6: atom. Proof. pick fresh x6. exact x6. Defined.
-Definition x7: atom. Proof. pick fresh x7. exact x7. Defined.
+Tactic Notation "simpl_open*" := repeat progress simpl_open.
 
 Definition Abs x t e := term_abs t (close_term_wrt_term x e).
 Definition App := term_app.
@@ -68,32 +50,182 @@ Ltac unfold_smart_cons :=
 
 Ltac unfold_fzip := repeat progress unfold_smart_cons.
 
-Definition term_identity :=
-  Gen a1 (Abs x1 (typ_var_f a1) (term_var_f x1)).
+Definition term_id a x :=
+  Gen a (Abs x (typ_var_f a) (term_var_f x)).
 
-Definition typ_identity :=
-  Forall a1 (Arrow (typ_var_f a1) (typ_var_f a1)).
-Hint Unfold term_identity typ_identity.
+Definition typ_id t := Arrow t t.
 
-Lemma wfterm_identity :
-  wfterm nil term_identity typ_identity.
+Lemma wfterm_identity : forall x a, x ≠ a →
+  wfterm nil
+  (term_id a x)
+  (Forall a (typ_id (typ_var_f a))).
 Proof.
-unfold typ_identity. unfold term_identity. unfold_fzip.
-simpl_close a1. simpl_close x1.
+intros x a H. unfold term_id. unfold typ_id.
+unfold_fzip. simpl_close. simpl_eq a a.
+simpl_eq x x. simpl_close.
 pick fresh b1 and apply wfterm_gen; auto; simpl_open.
 pick fresh y1 and apply wfterm_abs; auto with fzip; simpl_open.
 auto 7 with fzip.
 Qed.
 
-Definition projL_term :=
-  Gen a1 (Gen a2 (Abs x1 (Prod (typ_var_f a1) (typ_var_f a2))
-    (Fst (term_var_f x1)))).
-Definition projL_typ :=
-  Forall a1 (Forall a2 (Arrow (Prod (typ_var_f a1) (typ_var_f a2))
-    (typ_var_f a1))).
-
-Lemma wfterm_projL : wfterm nil projL_term projL_typ.
+Lemma wfterm_projL : forall a b x, a ≠ b →
+  wfterm nil
+  (Gen a (Gen b (Abs x (Prod (typ_var_f a) (typ_var_f b))
+    (Fst (term_var_f x)))))
+  (Forall a (Forall b (Arrow (Prod (typ_var_f a) (typ_var_f b))
+    (typ_var_f a)))).
 Proof.
-unfold projL_term. unfold projL_typ.
-unfold_fzip. simpl_close x1. simpl_close a2. simpl_close a1.
-destruct (a2 == a1); try congruence.
+intros.
+unfold_fzip. simpl_close. simpl_eq b b. simpl_eq x x. simpl_eq b a.
+simpl_close. simpl_eq a a.
+clear a b x H e e0 n e1.
+pick fresh a and apply wfterm_gen; auto; simpl_open.
+pick fresh b and apply wfterm_gen; auto with fzip; simpl_open.
+pick fresh x and apply wfterm_abs; auto with fzip; simpl_open.
+apply wfterm_fst with (t2 := typ_var_f b).
+auto 9 with fzip.
+Qed.
+
+Lemma wfterm_projR : forall a b x, a ≠ b →
+  wfterm nil
+  (Gen a (Gen b (Abs x (Prod (typ_var_f a) (typ_var_f b))
+    (Snd (term_var_f x)))))
+  (Forall a (Forall b (Arrow (Prod (typ_var_f a) (typ_var_f b))
+    (typ_var_f b)))).
+Proof.
+intros.
+unfold_fzip. simpl_close. simpl_eq b b. simpl_eq x x. simpl_eq b a.
+simpl_close. simpl_eq a a.
+clear a b x H e e0 n e1.
+pick fresh a and apply wfterm_gen; auto; simpl_open.
+pick fresh b and apply wfterm_gen; auto with fzip; simpl_open.
+pick fresh x and apply wfterm_abs; auto with fzip; simpl_open.
+apply wfterm_snd with (t1 := typ_var_f a).
+auto 9 with fzip.
+Qed.
+
+Definition typ_nat a :=
+  Forall a (Arrow (typ_var_f a)
+    (Arrow (typ_id (typ_var_f a)) (typ_var_f a))).
+
+Definition term_zero a x f :=
+  Gen a (Abs x (typ_var_f a) (Abs f (typ_id (typ_var_f a))
+    (term_var_f x))).
+
+Lemma wfterm_zero : forall a x f, x ≠ f →
+  wfterm nil (term_zero a x f) (typ_nat a).
+Proof.
+intros a x f H. unfold term_zero. unfold typ_nat.
+unfold_fzip. simpl_close. simpl_eq a a. simpl_eq f x.
+simpl_close. simpl_eq x x. simpl_close.
+clear a x f H e n e0.
+pick fresh a and apply wfterm_gen; simpl_open; auto.
+pick fresh x and apply wfterm_abs; simpl_open; auto with fzip.
+pick fresh f and apply wfterm_abs; simpl_open; auto with fzip.
+auto 10 with fzip.
+Qed.
+
+Definition term_plus a n x f :=
+  Abs n (typ_nat a)
+  (Gen a
+    (Abs x (typ_var_f a)
+      (Abs f (typ_id (typ_var_f a))
+        (App (term_var_f f)
+          (App
+            (App (Inst (term_var_f n) (typ_var_f a))
+              (term_var_f x))
+            (term_var_f f)))))).
+
+Lemma wfterm_plus : forall a n x f,
+  n ≠ x → n ≠ f → x ≠ f →
+  wfterm nil (term_plus a n x f) (typ_id (typ_nat a)).
+Proof.
+intros a n x f H H0 H1. unfold term_plus. unfold typ_id.
+unfold typ_nat.
+unfold_fzip. simpl_close. simpl_eq f f. simpl_eq a a.
+simpl_eq f n. simpl_eq f x. simpl_close. simpl_eq x n.
+simpl_eq x x. simpl_close. simpl_eq n n.
+clear a n x f H H0 H1 e e0 n0 n1 n2 e1 e2.
+pick fresh n and apply wfterm_abs; simpl_open; auto.
+pick fresh a and apply wfterm_gen; simpl_open; auto with fzip.
+pick fresh x and apply wfterm_abs; simpl_open; auto with fzip.
+pick fresh f and apply wfterm_abs; simpl_open; auto 6 with fzip.
+remember ([(f, T (typ_arrow (typ_var_f a) (typ_var_f a)))] ++
+   [(x, T (typ_var_f a))] ++
+   [(a, U)] ++
+   [(n,
+    T
+      (typ_forall
+         (typ_arrow (typ_var_b 0)
+            (typ_arrow (typ_arrow (typ_var_b 0) (typ_var_b 0)) (typ_var_b 0)))))] ++
+   nil) as Γ.
+assert (wfenv Γ). subst.
+  constructor; auto. constructor; auto.
+  constructor; auto. constructor; auto. constructor; auto.
+  constructor; auto. constructor; auto.
+  pick fresh b and apply wftyp_forall; simpl_open. auto 8.
+  constructor; auto. constructor; auto.
+  constructor; auto. constructor; auto. constructor; auto.
+  pick fresh b and apply wftyp_forall; simpl_open. auto 8.
+assert (lc_env Γ) by auto using wfenv_lc_env.
+assert (pure Γ). subst. auto 7 with fzip.
+assert (zip Γ Γ Γ) by auto using zip_self with lngen.
+apply wfterm_app with (G1 := Γ) (G2 := Γ) (t2 := typ_var_f a).
+auto.
+subst; auto.
+apply wfterm_app with (G1 := Γ) (G2 := Γ)
+  (t2 := typ_id (typ_var_f a)).
+auto.
+apply wfterm_app with (G1 := Γ) (G2 := Γ) (t2 := typ_var_f a).
+auto.
+rewrite <- tsubst_typ_var_self with (a := a).
+rewrite tsubst_typ_spec.
+apply wfterm_inst. constructor; subst; auto 6.
+simpl_close. simpl_eq a a.
+constructor; auto; subst; auto 6.
+constructor; auto; subst; auto.
+constructor; auto; subst; auto.
+Qed.
+
+Lemma wfterm_sigma_pair : forall a b x f,
+  x ≠ f →
+  wfterm (b ~ E)
+  (Pair
+    (Sig b a (typ_nat a) (Coerce (term_zero a x f) (typ_var_f a)))
+    (Inst (term_id a x) (typ_var_f b)))
+  (Prod (typ_var_f b) (typ_id (typ_var_f b))).
+Proof.
+intros. unfold_fzip. simpl_close. simpl_eq a a. simpl_eq f x.
+simpl_close. simpl_eq x x. simpl_close.
+apply wfterm_pair with (G1 := b ~ E ++ nil) (G2 := b ~ U ++ nil).
+simpl_env; auto with fzip.
+rewrite_env (nil ++ b ~ @E typ ++ nil).
+pick fresh c and apply wfterm_sigma; simpl_open; auto.
+autorewrite with lngen.
+apply wfterm_coerce with (t' := typ_nat a).
+apply wftypeq_sym. apply wftypeq_eq; auto. constructor; auto. 
+unfold typ_nat. unfold_fzip. simpl_close. simpl_eq a a.
+pick fresh d and apply wftyp_forall; simpl_open.
+auto 8 with lngen.
+unfold typ_nat. unfold_fzip. simpl_close. simpl_eq a a.
+pick fresh d and apply wfterm_gen; simpl_open; auto with fzip.
+pick fresh y and apply wfterm_abs; simpl_open; auto with fzip.
+pick fresh z and apply wfterm_abs; simpl_open; auto 6 with fzip.
+constructor. auto 7 with fzip.
+constructor; auto. constructor; auto. constructor; auto.
+constructor; auto. constructor; auto. constructor; auto.
+constructor; auto. pick fresh a' and apply wftyp_forall; simpl_open.
+constructor; auto. constructor; auto. constructor; auto.
+constructor; auto. constructor; auto. constructor; auto.
+constructor; auto. constructor; auto.
+pick fresh a' and apply wftyp_forall; simpl_open. auto 8. auto.
+rewrite <- tsubst_typ_var_self with (a := b).
+rewrite tsubst_typ_spec.
+constructor; auto.
+unfold term_id. unfold_fzip. simpl_close. simpl_eq a a.
+simpl_eq b b. simpl_eq x x. simpl_close.
+clear a x f H e n e0 e1 e2 e3.
+pick fresh a and apply wfterm_gen; simpl_open; auto with fzip.
+pick fresh x and apply wfterm_abs; simpl_open; auto with fzip.
+auto 7 with fzip.
+Qed.
