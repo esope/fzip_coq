@@ -6,6 +6,7 @@
 #    doc           - synonym for 'documentation'
 #    documentation - builds all html documentation
 #    clean         - removes generated files
+#    check         - runs coqchk on compiled files
 #
 ############################################################################
 
@@ -52,6 +53,7 @@ FILES = \
 	FzipCore_weakenU \
 	FzipCore_val \
 	FzipCore_red \
+	FzipCore_red_close \
 	FzipCore_zip \
 	FzipCore_pure \
 	FzipCore_env_typ \

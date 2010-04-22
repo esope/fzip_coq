@@ -4,6 +4,7 @@ FzipCore_init.vo: FzipCore_init.v FzipCore_inf.vo
 FzipCore_weakenU.vo: FzipCore_weakenU.v FzipCore_init.vo
 FzipCore_val.vo: FzipCore_val.v FzipCore_init.vo
 FzipCore_red.vo: FzipCore_red.v FzipCore_init.vo FzipCore_val.vo
+FzipCore_red_close.vo: FzipCore_red_close.v FzipCore_init.vo FzipCore_val.vo FzipCore_red.vo
 FzipCore_zip.vo: FzipCore_zip.v FzipCore_init.vo FzipCore_weakenU.vo
 FzipCore_pure.vo: FzipCore_pure.v FzipCore_init.vo FzipCore_zip.vo FzipCore_weakenU.vo
 FzipCore_env_typ.vo: FzipCore_env_typ.v FzipCore_init.vo FzipCore_zip.vo FzipCore_pure.vo FzipCore_weakenU.vo
