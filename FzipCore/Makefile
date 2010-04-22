@@ -104,7 +104,7 @@ force:
 	+make
 
 check:	coq
-	coqchk $(INCFLAGS) $(FILES)
+	coqchk -m -o $(INCFLAGS) $(FILES)
 
 ############################################################################
 
