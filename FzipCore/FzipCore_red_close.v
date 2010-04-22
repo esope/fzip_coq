@@ -1,7 +1,6 @@
 Add LoadPath "../metatheory".
 Require Import FzipCore_init.
 Require Import FzipCore_val.
-Require Import FzipCore_red.
 
 Lemma red0_beta_v_red_close : forall (t:typ) x (e1 e2:term),
   lc_typ t -> lc_term e1 →
