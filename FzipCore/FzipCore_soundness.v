@@ -10,7 +10,7 @@ Require Import FzipCore_term.
 
 (** Soundness *)
 Lemma sr0 :  forall A Γ e e' τ,
-  wfterm Γ e τ → red0 e A e' → wfterm Γ e' τ.
+  Γ ⊢ e ~: τ → red0 e A e' → Γ ⊢ e' ~: τ.
 Proof.
 intros A Γ e e' τ H H0. destruct H0; inversion H; subst.
 Case "beta_v_red".
@@ -55,7 +55,7 @@ apply wfterm_renameE; auto.
 simpl_env; auto.
 simpl; unfold typvar; destruct (a == a); congruence.
 Case "nu_sigma". pick fresh b.
-assert (wfterm (b ~ E ++ Γ) (open_term_wrt_typ (term_sigma (typ_var_b 0) t e) (typ_var_f b)) τ) by auto.
+assert (b ~ E ++ Γ ⊢ open_term_wrt_typ (term_sigma (typ_var_b 0) t e) (typ_var_f b) ~: τ) by auto.
 assert (uniq (b ~ E ++ Γ)) by eauto with lngen.
 unfold open_term_wrt_typ in H4; simpl in H4; simpl_env in H4.
 inversion H4; subst.
@@ -87,8 +87,8 @@ intuition eauto.
 solve_uniq.
 Case "coerce_app".
 inversion H9; subst. inversion H14; subst.
-assert (wftypeq G1 t2' t3) by eauto using wftypeq_arrow_inv1.
-assert (wftypeq G1 t2 τ) by eauto using wftypeq_arrow_inv2.
+assert (G1 ⊢ t2' ≡ t3) by eauto using wftypeq_arrow_inv1.
+assert (G1 ⊢ t2  ≡ τ) by eauto using wftypeq_arrow_inv2.
 apply wfterm_coerce with (t' := t2); auto.
 eauto using wftypeq_zip13.
 apply wfterm_app with (G1 := G1) (G2 := G2) (t2 := t2'); auto.
@@ -97,20 +97,20 @@ eauto using wftypeq_zip12.
 Case "coerce_fst".
 inversion H5; subst.
 inversion H10; subst.
-assert (wftypeq Γ t1 τ) by eauto using wftypeq_prod_inv1.
+assert (Γ ⊢ t1 ≡ τ) by eauto using wftypeq_prod_inv1.
 apply wfterm_coerce with (t' := t1); eauto.
 Case "coerce_snd".
 inversion H5; subst.
 inversion H10; subst.
-assert (wftypeq Γ t2 τ) by eauto using wftypeq_prod_inv2.
+assert (Γ ⊢ t2 ≡ τ) by eauto using wftypeq_prod_inv2.
 apply wfterm_coerce with (t' := t2); eauto.
 Case "coerce_inst".
 inversion H8; subst.
 inversion H10; subst.
 assert (forall a, a ∉ dom Γ →
-  wftypeq (a ~ U ++ Γ)
-  (open_typ_wrt_typ t (typ_var_f a))
-  (open_typ_wrt_typ t' (typ_var_f a))) by eauto using wftypeq_forall_inv.
+  a ~ U ++ Γ ⊢
+  open_typ_wrt_typ t (typ_var_f a) ≡ open_typ_wrt_typ t' (typ_var_f a))
+by eauto using wftypeq_forall_inv.
 apply wfterm_coerce with (t' := open_typ_wrt_typ t t2); auto.
 pick fresh a.
 rewrite tsubst_typ_intro with (a1 := a) (t1 := t); auto.
@@ -121,9 +121,9 @@ Case "coerce_open".
 inversion H7; subst.
 inversion H9; subst.
 assert (forall a, a ∉ dom (G2 ++ G1) →
-  wftypeq (a ~ U ++ G2 ++ G1)
-  (open_typ_wrt_typ t (typ_var_f a))
-  (open_typ_wrt_typ t0 (typ_var_f a))) by eauto using wftypeq_exists_inv.
+  a ~ U ++ G2 ++ G1 ⊢
+  open_typ_wrt_typ t (typ_var_f a) ≡ open_typ_wrt_typ t0 (typ_var_f a))
+by eauto using wftypeq_exists_inv.
 apply wfterm_coerce with (t' := open_typ_wrt_typ t (typ_var_f b)).
 rewrite_env (nil ++ G2 ++ [(b, E)] ++ G1). apply wftypeq_upperE. apply wftypeq_UE. simpl_env; auto.
 pick fresh a.
@@ -453,9 +453,9 @@ rewrite_env ([(a, Eq t)] ++ (G2 ++ x) ++ G0). apply H10; auto.
 solve_uniq.
 Case "sigma exists".
 pick fresh a.
-assert (wfterm ([(a, E)] ++ Γ)
-  (open_term_wrt_typ (term_sigma (typ_var_f b) t e) (typ_var_f a))
-  (open_typ_wrt_typ t0 (typ_var_f a))) by auto.
+assert ([(a, E)] ++ Γ ⊢
+  open_term_wrt_typ (term_sigma (typ_var_f b) t e) (typ_var_f a) ~:
+  open_typ_wrt_typ t0 (typ_var_f a)) by auto.
 unfold open_term_wrt_typ in H5; inversion H5; subst.
 assert (binds b E ((a, E) :: Γ)). rewrite <- H6. auto. analyze_binds H8.
 apply binds_decomp in BindsTac. destruct BindsTac as [? [? ?]]; subst.
@@ -520,9 +520,9 @@ Case "sigma sigma".
 assert (uniq (G2 ++ b1 ~ E ++ G1)) by eauto with lngen.
 assert (binds b2 E (G2 ++ G1)).
   pick fresh a1. pick fresh a2.
-  assert (wfterm (a1 ~ Eq t1 ++ G2 ++ G1)
-  (open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1))
-  (tsubst_typ (typ_var_f a1) b1 τ)) by auto.
+  assert (a1 ~ Eq t1 ++ G2 ++ G1 ⊢
+  open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1) ~:
+  tsubst_typ (typ_var_f a1) b1 τ) by auto.
   unfold open_term_wrt_typ in H5; simpl open_term_wrt_typ_rec in H5;
     inversion H5; subst.
   destruct G3; inversion H6; subst. auto.
@@ -534,16 +534,16 @@ pick fresh a2 and apply wfterm_sigma. solve_uniq.
 unfold open_term_wrt_typ; simpl open_term_wrt_typ_rec.
 rewrite_env ((a2 ~ Eq (open_typ_wrt_typ t2 t1) ++ x ++ x0) ++ [(b1, E)] ++ G1).
 pick fresh a1 and apply wfterm_sigma. solve_uniq.
-assert (wfterm ([(a1, Eq t1)] ++ x ++ [(b2, E)] ++ x0 ++ G1)
-(open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1))
-(tsubst_typ (typ_var_f a1) b1 τ)) by auto.
+assert ([(a1, Eq t1)] ++ x ++ [(b2, E)] ++ x0 ++ G1 ⊢
+open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1) ~:
+tsubst_typ (typ_var_f a1) b1 τ) by auto.
 inversion H5; subst.
 simpl_env in H6. rewrite_env ((a1 ~ Eq t1 ++ x) ++ [(b2, E)] ++ x0 ++ G1) in H6.
 symmetry in H6. apply uniq_app_inv in H6. destruct H6; subst.
-assert (wfterm ([(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
-          ([(a1, Eq t1)] ++ x) ++ x0 ++ G1)
-(open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) e) (typ_var_f a2))
-(tsubst_typ (typ_var_f a2) b2 (tsubst_typ (typ_var_f a1) b1 τ))).
+assert ([(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
+          ([(a1, Eq t1)] ++ x) ++ x0 ++ G1 ⊢
+open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) e) (typ_var_f a2) ~:
+tsubst_typ (typ_var_f a2) b2 (tsubst_typ (typ_var_f a1) b1 τ)).
   pick fresh c.
   rewrite_env (env_map (tsubst_typ (typ_var_f a2) c) nil ++
     [(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
@@ -584,16 +584,16 @@ pick fresh a2 and apply wfterm_sigma. solve_uniq.
 unfold open_term_wrt_typ; simpl open_term_wrt_typ_rec.
 rewrite_env ((a2 ~ Eq (open_typ_wrt_typ t2 t1) ++ G2) ++ [(b1, E)] ++ x ++ x0).
 pick fresh a1 and apply wfterm_sigma. solve_uniq.
-assert (wfterm ([(a1, Eq t1)] ++ G2 ++ x ++ [(b2, E)] ++ x0)
-(open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1))
-(tsubst_typ (typ_var_f a1) b1 τ)) by auto.
+assert ([(a1, Eq t1)] ++ G2 ++ x ++ [(b2, E)] ++ x0 ⊢
+open_term_wrt_typ (term_sigma (typ_var_f b2) t2 e) (typ_var_f a1) ~:
+tsubst_typ (typ_var_f a1) b1 τ) by auto.
 inversion H5; subst.
 simpl_env in H6. rewrite_env ((a1 ~ Eq t1 ++ G2 ++ x) ++ [(b2, E)] ++ x0) in H6.
 symmetry in H6. apply uniq_app_inv in H6. destruct H6; subst.
-assert (wfterm ([(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
-          ([(a1, Eq t1)] ++ G2 ++ x) ++ G1)
-(open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) e) (typ_var_f a2))
-(tsubst_typ (typ_var_f a2) b2 (tsubst_typ (typ_var_f a1) b1 τ))).
+assert ([(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
+          ([(a1, Eq t1)] ++ G2 ++ x) ++ G1 ⊢
+open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f a1) e) (typ_var_f a2) ~:
+tsubst_typ (typ_var_f a2) b2 (tsubst_typ (typ_var_f a1) b1 τ)).
   pick fresh c.
   rewrite_env (env_map (tsubst_typ (typ_var_f a2) c) nil ++
     [(a2, Eq (open_typ_wrt_typ_rec 0 (typ_var_f a1) t2))] ++
@@ -630,7 +630,7 @@ simpl_env. solve_uniq.
 Qed.
 
 Theorem subject_reduction : forall A Γ e e' τ,
-  wfterm Γ e τ → e ⇝[A] e' → wfterm Γ e' τ.
+  Γ ⊢ e ~: τ → e ⇝[A] e' → Γ ⊢ e' ~: τ.
 Proof.
 intros A Γ e e' τ H. generalize dependent e'.
 induction H; intros e' Hred; inversion Hred; subst; eauto;
@@ -641,7 +641,7 @@ Case "sigma". pick fresh a and apply wfterm_sigma; eauto.
 Qed.
 
 Lemma result_redn_Eps : forall Γ₁ Γ₂ b e τ,
-  result e → wfterm (Γ₁ ++ b ~ E ++ Γ₂) e τ →
+  result e → Γ₁ ++ b ~ E ++ Γ₂ ⊢ e ~: τ →
   exists τ', exists e',
     e ⇝⋆[Eps] (term_sigma (typ_var_f b) τ' e') ∧ b ∉ ftv_typ τ'.
 Proof.
@@ -657,9 +657,9 @@ exists t. exists e. split. auto with clos_refl_trans.
 intros. inversion H2; subst.
 symmetry in H3. simpl_env in H3. apply uniq_app_inv in H3.
 destruct H3; subst. pick fresh c.
-assert (wfterm ([(c, Eq t)] ++ G2 ++ G1)
-  (open_term_wrt_typ e (typ_var_f c))
-  (tsubst_typ (typ_var_f c) b τ)) by auto.
+assert ([(c, Eq t)] ++ G2 ++ G1 ⊢
+  open_term_wrt_typ e (typ_var_f c) ~:
+  tsubst_typ (typ_var_f c) b τ) by auto.
 apply wfterm_wfenv in H3. apply wfenv_wftyp_Eq3 in H3.
 apply wftyp_ftv in H3. clear Fr. fsetdec.
 eauto with lngen.
@@ -694,8 +694,8 @@ exists (term_sigma (typ_var_f b0) t1' e'0). split.
 eauto with clos_refl_trans.
 unfold open_typ_wrt_typ. rewrite <- tsubst_typ_spec_rec.
 assert (b ∉ ftv_typ t).
-  assert (wfterm ([(a, Eq t)] ++ Γ₁ ++ [(b, E)] ++ x0 ++ G1)
-(open_term_wrt_typ e (typ_var_f a)) (tsubst_typ (typ_var_f a) b0 τ))
+  assert ([(a, Eq t)] ++ Γ₁ ++ [(b, E)] ++ x0 ++ G1 ⊢
+open_term_wrt_typ e (typ_var_f a) ~: tsubst_typ (typ_var_f a) b0 τ)
 by auto.
   intro.
   apply wfterm_Eq_not_E with (a := a) (b := b) (τ₁ := t) in H6.
@@ -734,8 +734,8 @@ exists (term_sigma (typ_var_f b0) t1' e'0).
 split. eauto with clos_refl_trans.
 unfold open_typ_wrt_typ. rewrite <- tsubst_typ_spec_rec.
 assert (b ∉ ftv_typ t).
-  assert (wfterm ([(a, Eq t)] ++ G2 ++ x ++ [(b, E)] ++ Γ₂)
-(open_term_wrt_typ e (typ_var_f a)) (tsubst_typ (typ_var_f a) b0 τ))
+  assert ([(a, Eq t)] ++ G2 ++ x ++ [(b, E)] ++ Γ₂ ⊢
+open_term_wrt_typ e (typ_var_f a) ~: tsubst_typ (typ_var_f a) b0 τ)
 by auto.
   intro.
   apply wfterm_Eq_not_E with (a := a) (b := b) (τ₁ := t) in H6.
@@ -748,7 +748,7 @@ Qed.
 
 Theorem progress : forall Γ e τ,
   (forall x τ, not (binds x (T τ) Γ)) →
-  wfterm Γ e τ →
+  Γ ⊢ e ~: τ →
   (exists e', exists e'', e ⇝⋆[Eps] e' ∧ e' ⇝[NoEps] e'') ∨ result e.
 Proof with eauto 9 with lngen clos_refl_trans redn_context.
 intros Γ e τ Henv H. induction H; simpl.
@@ -863,8 +863,8 @@ Case "exists". pick fresh a. destruct (H0 a) as [[? [? [? ?]]] | ?]; clear H0...
     SSCase "e result".
     unfold open_term_wrt_typ in H0; destruct e; inversion H0; subst.
     assert (uniq (a ~ E ++ G)) by eauto with lngen.
-    assert (wfterm ([(a, E)] ++ G) (open_term_wrt_typ (term_sigma t1
-         t2 e) (typ_var_f a)) (open_typ_wrt_typ t (typ_var_f a))) by
+    assert ([(a, E)] ++ G ⊢ open_term_wrt_typ (term_sigma t1
+         t2 e) (typ_var_f a) ~: open_typ_wrt_typ t (typ_var_f a)) by
          auto. clear H.
     unfold open_term_wrt_typ in H6; simpl in H6. inversion H6; subst. clear H6.
     assert (b0 = b) by congruence. subst.
