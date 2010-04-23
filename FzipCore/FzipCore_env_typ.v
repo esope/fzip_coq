@@ -833,6 +833,7 @@ rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ E +
 Case "exists". apply wftyp_exists with (L := L ∪ {{a}} ∪ {{b}}); intros.
 rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ E ++ Γ₂). rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
 Qed.
+(** end hide *)
 
 Lemma wfenv_renameE:
   forall Γ₁ Γ₂ a b,
@@ -1522,6 +1523,7 @@ unfold ftv_env at 1; simpl; fsetdec.
 Case "wftype_Eq".
 rewrite_env ((Γ ++ [(a, Eq t)]) ++ G1); apply IHzip2; simpl_env; auto.
 Qed.
+(** end hide *)
 
 Lemma wfenv_zip21 : forall Γ₁ Γ₂ Γ₃,
   zip Γ₁ Γ₂ Γ₃ →
