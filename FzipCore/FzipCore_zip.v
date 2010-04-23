@@ -2,7 +2,7 @@ Add LoadPath "../metatheory".
 Require Import FzipCore_init.
 Require Import FzipCore_weakenU.
 
-(** Lemmas about [zip] *)
+(** Lemmas about [lc] *)
 Lemma zip_lc1 : forall Γ₁ Γ₂ Γ₃,
   zip Γ₁ Γ₂ Γ₃ → lc_env Γ₁.
 Proof.
@@ -22,28 +22,30 @@ intros Γ₁ Γ₂ Γ₃ H. induction H; auto with lngen.
 Qed.
 Hint Resolve zip_lc1 zip_lc2 zip_lc3: lngen.
 
+(** Lemmas about [dom] *)
 Lemma zip_dom1 :
-  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ →
   dom Γ₁ [<=] dom Γ₃.
 Proof.
 intros Γ₁ Γ₂ Γ₃ H. induction H; simpl in *; fsetdec.
 Qed.
 
 Lemma zip_dom2 :
-  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ →
   dom Γ₂ [=] dom Γ₃.
 Proof.
 intros Γ₁ Γ₂ Γ₃ H. induction H; simpl in *; fsetdec.
 Qed.
 
 Lemma zip_dom3 :
-  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ ->
+  forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ →
   dom Γ₁ [<=] dom Γ₂.
 Proof.
 intros Γ₁ Γ₂ Γ₃ H. rewrite (zip_dom2 Γ₁ Γ₂ Γ₃); auto. eapply zip_dom1; eauto.
 Qed.
 Hint Resolve zip_dom1 zip_dom2 zip_dom3: fzip.
 
+(** Lemmas about [uniq] *)
 Lemma zip_uniq1 : forall Γ₁ Γ₂ Γ₃,
   zip Γ₁ Γ₂ Γ₃ → uniq Γ₁.
 Proof.
@@ -68,6 +70,7 @@ assert (a ∉ dom G). erewrite <- zip_dom2; eauto. auto.
 Qed.
 Hint Resolve zip_uniq1 zip_uniq2 zip_uniq3: lngen.
 
+(** Lemmas about [binds] *)
 Lemma zip_binds_T12 :
   forall Γ₁ Γ₂ Γ₃ x τ, zip Γ₁ Γ₂ Γ₃ →
     binds x (T τ) Γ₁ → binds x (T τ) Γ₂.
@@ -254,6 +257,7 @@ generalize dependent Γ₄. induction H; intros Γ₄ H3; inversion H3; subst;
 f_equal; auto.
 Qed.
 
+(** Basic lemmas about [zip] *)
 Lemma zip_nil : forall Γ Γ',
   zip nil Γ Γ' → Γ = Γ'.
 Proof.
@@ -287,7 +291,7 @@ intros a. rewrite_env (a ~ (@E typ) ++ nil).  auto.
 Qed.
 Hint Resolve zip_T zip_Eq zip_U zip_EU zip_E: fzip.
 
-
+(** Lemmas about [ftv_env] *)
 Lemma zip_ftv_env1 : forall Γ₁ Γ₂ Γ₃,
   zip Γ₁ Γ₂ Γ₃ → ftv_env Γ₁ [=] ftv_env Γ₃.
 Proof.
@@ -312,6 +316,7 @@ repeat rewrite ftv_env_app. fsetdec.
 repeat rewrite ftv_env_app. fsetdec.
 Qed.
 
+(** Lemmas about concatenation of environments *)
 Lemma zip_app_inv : forall Γ₁ Γ₂ Γ₃' Γ₃'',
   zip Γ₁ Γ₂ (Γ₃' ++ Γ₃'') →
   exists Γ₁', exists Γ₁'', exists Γ₂', exists Γ₂'',
@@ -367,6 +372,7 @@ exists (a ~ Eq t ++ x); exists x0; exists (a ~ Eq t ++ x1); exists x2.
 intuition auto.
 Qed.
 
+(** Weakening *)
 Lemma zip_app_weakening_strong : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ₁'' Γ₂'' Γ₃'',
   zip (Γ₁ ++ Γ₁') (Γ₂ ++ Γ₂') (Γ₃ ++ Γ₃') →
   zip Γ₁ Γ₂ Γ₃ →
@@ -405,6 +411,7 @@ Case "Eq". constructor; simpl_env; my_auto.
 apply IHzip; my_auto. apply zip_app; my_auto.
 Qed.
 
+(** Removing elements *)
 Lemma zip_remove_U : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a,
   zip (Γ₁ ++ a ~ U ++ Γ₁') (Γ₂ ++ a ~ U ++ Γ₂') (Γ₃ ++ a ~ U ++ Γ₃') →
   zip (Γ₁ ++ Γ₁') (Γ₂ ++ Γ₂') (Γ₃ ++ Γ₃').
@@ -496,6 +503,7 @@ destruct H4; destruct H3; subst.
 apply zip_app; my_auto.
 Qed.
 
+(** Stability under substitution *)
 Lemma zip_stable_tsubst : forall Γ₁ Γ₂ Γ₃ a τ,
   lc_typ τ →
    zip Γ₁ Γ₂ Γ₃ →
@@ -507,6 +515,7 @@ intros Γ₁ Γ₂ Γ₃ a τ Hlc H. induction H; simpl; simpl_env; auto;
 constructor; solve [auto with lngen | unfold env_map; auto with lngen].
 Qed.
 
+(** Instantiation with an equation *)
 Lemma zip_instantiate : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ,
   lc_typ τ →
   zip (Γ₁ ++ a ~ U ++ Γ₁') (Γ₂ ++ a ~ U ++ Γ₂') (Γ₃ ++ a ~ U ++ Γ₃') →
@@ -524,6 +533,7 @@ destruct H4; destruct H3; subst.
 apply zip_app; my_auto.
 Qed.
 
+(** Unfolding an equation *)
 Lemma zip_subst_eq : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ,
   zip (Γ₁ ++ a ~ Eq τ ++ Γ₁') (Γ₂ ++ a ~ Eq τ ++ Γ₂') (Γ₃ ++ a ~ Eq τ ++ Γ₃') →
   zip (env_map (tsubst_typ τ a) Γ₁ ++ Γ₁')
@@ -554,6 +564,7 @@ intros Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a τ Hlc H.
 auto using zip_subst_eq, zip_instantiate.
 Qed.
 
+(** Inversion lemmas wrt concatenation *)
 Lemma zip_app_T_inv : forall Γ₁ Γ₂ Γ₃' x τ Γ₃'',
   zip Γ₁ Γ₂ (Γ₃' ++ x ~ T τ ++ Γ₃'') →
   exists Γ₁', exists Γ₁'', exists Γ₂', exists Γ₂'',
@@ -632,6 +643,7 @@ destruct (IHzip Γ₃' a0 Γ₃'') as [? [? [? [? [? ?]]]]]. simpl_env; auto.
 subst. exists (a ~ Eq t ++ x); exists x0; exists (a ~ Eq t ++ x1); exists x2; split; auto.
 Qed.
 
+(** Renaming lemmas *)
 Lemma zip_renameU : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' a b,
   b ∉ dom (Γ₁ ++ Γ₁') ∪ dom (Γ₂ ++ Γ₂') ∪ dom (Γ₃ ++ Γ₃') →
   zip (Γ₁ ++ a ~ U ++ Γ₁') (Γ₂ ++ a ~ U ++ Γ₂') (Γ₃ ++ a ~ U ++ Γ₃') →
@@ -750,6 +762,7 @@ apply zip_tsubst; auto.
 simpl_env. apply zip_app; my_auto.
 Qed.
 
+(** Lemmas resulting from the combination of removal and inversion *)
 Lemma zip_remove_T1 : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' x τ,
   zip (Γ₁ ++ x ~ T τ ++ Γ₁') (Γ₂ ++ x ~ T τ ++ Γ₂') (Γ₃ ++ x ~ T τ ++ Γ₃') →
   zip Γ₁ Γ₂ Γ₃.
@@ -846,6 +859,7 @@ destruct H4; destruct H3; subst.
 auto.
 Qed.
 
+(** Other inversion lemmas wrt concatenation *)
 Lemma zip_app_inv_strong : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ₁'' Γ₂'' Γ₃'',
   zip Γ₁ Γ₂ Γ₃ →
   zip (Γ₁' ++ Γ₁ ++ Γ₁'') (Γ₂' ++ Γ₂ ++ Γ₂'') (Γ₃' ++ Γ₃ ++ Γ₃'') →
@@ -885,6 +899,7 @@ apply zip_app_inv_strong in H0; auto.
 simpl_env in H0; auto.
 Qed.
 
+(** Lemmas about swapping of elements within environements *)
 Lemma zip_upperU : forall Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' Γ₁'' Γ₂'' Γ₃'' a,
   zip (Γ₁ ++ a ~ U ++ Γ₁' ++ Γ₁'')
       (Γ₂ ++ a ~ U ++ Γ₂' ++ Γ₂'')
@@ -1070,6 +1085,7 @@ destruct H3; destruct H4; subst. inversion H6; inversion H3; subst.
 apply zip_app; my_auto.
 Qed.
 
+(** Distributivity of zip *)
 Lemma zip_distrib : forall Γ₁ Γ₂ Γ₃ Γ₂₃ Γ₁₂₃,
   zip Γ₁ Γ₂₃ Γ₁₂₃ → zip Γ₂ Γ₃ Γ₂₃ → pure Γ₁ →
   exists Γ₁₂, exists Γ₁', exists Γ₁₃,
@@ -1158,6 +1174,7 @@ constructor; auto.  assert (dom x0 [<=] dom x1) by eauto with fzip.
   assert (dom G [=] dom G4) by eauto with fzip. fsetdec.
 Qed.
 
+(** Lemma about [weakenU] *)
 Lemma zip_weakenU_inv : forall Γ₁ Γ₂ Γ₃ Γ₃',
   zip Γ₁ Γ₂ Γ₃ → weakenU Γ₃' Γ₃ →
   exists Γ₁', exists Γ₂', zip Γ₁' Γ₂' Γ₃' ∧
