@@ -2,6 +2,7 @@ Add LoadPath "../metatheory".
 Require Import FzipCore_init.
 Require Import FzipCore_val.
 
+(** Lemmas about [lc] *)
 Lemma red0_regular1 : forall e A e', red0 e A e' → lc_term e.
 Proof.
 intros e A e' H. destruct H; auto with lngen.
@@ -179,6 +180,7 @@ intros e A e' H; induction H; eauto with lngen.
 Qed.
 Hint Resolve red1_regular1 red1_regular2: lngen.
 
+(** Lemmas about free variables *)
 Lemma red0_ftv : forall A e e', red0 e A e' →
   ftv_term e' [<=] ftv_term e.
 Proof.
@@ -373,6 +375,7 @@ Proof.
 intros A e e' H. induction H; try fsetdec. eauto using red1_ftv.
 Qed.
 
+(* Renaming lemmas *)
 Lemma red0_trenaming : forall A a b e e',
   b ∉ ftv_term e →
   red0 e A e' →
@@ -812,6 +815,7 @@ assert (ftv_term y [<=] ftv_term x) by eauto using redn_ftv.
 eauto 7 using rt_trans.
 Qed.
 
+(** [red0] is well defined *)
 Lemma red0_nu_sigma_defined: forall t e b,
    b ∉ ftv_typ (open_typ_wrt_typ t (typ_var_f b)) →
    result (open_term_wrt_typ (term_sigma (typ_var_b 0) t e) (typ_var_f b)) →
@@ -824,10 +828,6 @@ pick fresh a.
 exists (open_term_wrt_typ
      (open_term_wrt_typ_rec 1 (open_typ_wrt_typ t (typ_var_f b)) e)
      (open_typ_wrt_typ t (typ_var_f b))).
-(*
-exists (tsubst_term (open_typ_wrt_typ t (typ_var_f b)) a (tsubst_term
-(typ_var_f a) b (open_term_wrt_typ (open_term_wrt_typ_rec 1 (typ_var_f
-b) e) (typ_var_f a)))). *)
 pick fresh c and apply red0_nu_sigma; intros; auto.
 apply result_regular in H0. unfold open_term_wrt_typ in H0; inversion H0; subst.
 apply tsubst_typ_lc_typ_inv with (a1 := c) (t1 := typ_var_f b); auto.
@@ -845,7 +845,6 @@ unfold open_term_wrt_typ in H4; inversion H4; subst.
 apply result_trenaming_inv with (a := b0) (b := b).
 rewrite tsubst_term_open_term_wrt_typ; auto.
 rewrite tsubst_term_open_term_wrt_typ_rec; auto. autorewrite with lngen. auto.
-
 unfold open_term_wrt_typ in H4; inversion H4; subst.
 repeat rewrite tsubst_term_open_term_wrt_typ; auto.
 rewrite <- tsubst_term_intro_rec with (a1 := b0); auto.
@@ -1090,6 +1089,7 @@ simpl in H6. clear H3. assert (a1 ≠ a2) by auto. clear Fr0.
 fsetdec.
 Qed.
 
+(** [redn] reduction is contextually closed *)
 Lemma redn_context_letL : forall A e1 e1' e2 x,
   lc_term (open_term_wrt_term e2 (term_var_f x)) →
   e1 ⇝⋆[A] e1' →
@@ -1207,6 +1207,7 @@ redn_context_snd redn_context_inst redn_context_exists
 redn_context_open redn_context_nu redn_context_sigma
 redn_context_coerce : redn_context.
 
+(** Eps-reduction preserves results *)
 Lemma result_red0_Eps_result : forall e e',
   result e → red0 e Eps e' → result e'.
 Proof.
