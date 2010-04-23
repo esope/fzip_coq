@@ -5,10 +5,7 @@ Require Export Utf8.
 Require Export Coq.Program.Equality.
 
 (** Notations *)
-(*
-Notation "[ e2 / x ] e1" := (subst_term e2 x e1) (at level 67).
-Notation "[ y → x ] e" := (subst_term (term_var_f y) x e) (at level 67).
-*)
+
 Notation "e1 ^^ e2" := (open_term_wrt_term e1 e2) (at level 67).
 Notation "e ^ x" := (e ^^ (term_var_f x)).
 Notation "e1 '⇝[' A ']' e2" := (red1 e1 A e2) (at level 68).
@@ -16,7 +13,7 @@ Notation "e1 '⇝⋆[' A ']' e2" :=
   (clos_refl_trans _ (fun x y => red1 x A y) e1 e2) (at level 68).
 Notation "G '⊢' t 'ok'" := (wftyp G t) (at level 67).
 Notation "G '⊢' 'ok'" := (wfenv G) (at level 67).
-Notation "G '⊢' e ':' t" := (wfterm G e t) (at level 67).
+Notation "G '⊢' e ':' t" := (wfterm G e t) (at level 67, e at level 67).
 Notation "x '∉' L" := (x `notin` L) (at level 70).
 Notation "x '∈' L" := (x `in` L) (at level 70) : set_hs_scope.
 Notation "E '∪' F" := (E `union` F) (at level 65, right associativity, format "E '∪' '/' F") : set_hs_scope.
@@ -29,7 +26,7 @@ Ltac size_absurd size t :=
   assert (1 <= size t) by auto with lngen; absurdity with omega.
 Ltac size_term_absurd t := size_absurd size_term t.
 
-(** env_map *)
+(** [env_map] *)
 Definition tag_map {A B : Type} (f : A → B) (t : @tag A) :=
   match t with
     | U => U
@@ -86,6 +83,7 @@ destruct a0; destruct t; analyze_binds H.
 Qed.
 Hint Resolve binds_E_tsubst_inv binds_U_tsubst_inv: lngen.
 
+(** [env_fold] *)
 Definition binding_fold {A B : Type} (f : B → A → B)  (acc : B) (b : atom * @tag A) :=
   match b with
     | (_, U) => acc
@@ -99,6 +97,7 @@ Definition env_fold {A : Type} (f : A → typ → A) (env : typing_env) (acc : A
   fold_left (binding_fold f) env acc.
 Hint Unfold env_fold.
 
+(** [ftv_env] *)
 Definition ftv_env (G : typing_env) :=
   env_fold (fun acc t => ftv_typ t ∪ acc) G {}.
 Hint Unfold ftv_env.
@@ -162,6 +161,7 @@ assert (a ∈ ftv_typ t ∨ a ∈ ftv_env Γ) as [? | ?] by fsetdec; eauto 7.
 destruct IHΓ as [x [τ [? [? | ?]]]]; eauto 6.
 Qed.
 
+(** [lc_env] *)
 Definition lc_env Γ :=
   (forall x τ, binds x (T τ) Γ → lc_typ τ) ∧
   (forall a τ, binds a (Eq τ) Γ → lc_typ τ).
@@ -284,21 +284,19 @@ Qed.
 Lemma tsubst_typ_var_self : forall τ a,
   tsubst_typ (typ_var_f a) a τ = τ.
 Proof.
-intros τ a. induction τ; simpl; try congruence.
-destruct (t == a); subst; auto.
+intros τ a. rewrite tsubst_typ_spec. autorewrite with lngen. auto.
 Qed.
 
 Lemma tsubst_term_var_self : forall e a,
   tsubst_term (typ_var_f a) a e = e.
 Proof.
-intros e a. induction e; simpl; f_equal; try congruence; auto using tsubst_typ_var_self.
+intros e a. rewrite tsubst_term_spec. autorewrite with lngen. auto.
 Qed.
 
 Lemma subst_term_var_self : forall e x,
   subst_term (term_var_f x) x e = e.
 Proof.
-intros e x. induction e; simpl; try congruence.
-destruct (t == x); subst; auto.
+intros e x. rewrite subst_term_spec. autorewrite with lngen. auto.
 Qed.
 
 Lemma tsubst_env_var_self : forall Γ a,
