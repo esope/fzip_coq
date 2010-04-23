@@ -17,7 +17,7 @@ induction H; eauto.
 Qed.
 Hint Resolve wftyp_regular : lngen.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_aux :
   (forall Γ, Γ ⊢ ok → forall Γ₁ x b τ, Γ = x ~ b ++ Γ₁ →
     (b = T τ ∨ b = Eq τ) → Γ₁ ⊢ τ ok) ∧
@@ -32,7 +32,7 @@ inversion H0; destruct H1; congruence.
 pick fresh a; assert (a ~ U ++ G ⊢ ok) by auto; inversion H0; subst; auto.
 pick fresh a; assert (a ~ U ++ G ⊢ ok) by auto; inversion H0; subst; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 (** Lemmas about regularity *)
 Lemma wfenv_wftyp_T :
@@ -62,7 +62,7 @@ destruct wfenv_wftyp_aux; auto.
 Qed.
 Hint Resolve wftyp_wfenv: fzip.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_uniq_aux :
   (forall Γ, Γ ⊢ ok → uniq Γ) ∧ (forall Γ τ, Γ ⊢ τ ok → uniq Γ).
 Proof.
@@ -70,7 +70,7 @@ apply wfenv_wftyp_mut_ind; intros; auto.
 pick fresh a. assert (uniq (a ~ U ++ G)) by auto. destruct_uniq; auto.
 pick fresh a. assert (uniq (a ~ U ++ G)) by auto. destruct_uniq; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 (** Lemmas about [uniq] *)
 Lemma wfenv_uniq : forall Γ, Γ ⊢ ok → uniq Γ.
@@ -86,7 +86,7 @@ Qed.
 Hint Resolve wftyp_uniq: lngen.
 
 (** Weakening *)
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_weakening :
 (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ Γ₃, Γ = Γ₁ ++ Γ₃ →
   Γ₂ ++ Γ₃ ⊢ ok → disjoint Γ₁ Γ₂ → Γ₁ ++ Γ₂ ++ Γ₃ ⊢ ok)
@@ -143,7 +143,7 @@ Case "wftyp_exists".
 subst G; apply wftyp_exists with (L := L ∪ dom Γ₂); intros.
 rewrite_env ((a~U ++ Γ₁) ++ Γ₂ ++ Γ₃); apply H; eauto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_weakening :
 forall Γ₁ Γ₂ Γ₃, Γ₁ ++ Γ₃ ⊢ ok → Γ₂ ++ Γ₃ ⊢ ok →
@@ -163,7 +163,7 @@ Qed.
 Hint Resolve wfenv_weakening wftyp_weakening: fzip.
 
 (** Lemmas about weakenU *)
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_weakenU :
 (forall Γ, Γ ⊢ ok → forall Γ', weakenU Γ' Γ → Γ' ⊢ ok)
 ∧
@@ -185,7 +185,7 @@ destruct H2; eauto with fzip.
 Case "forall". pick fresh a and apply wftyp_forall. auto.
 Case "exists". pick fresh a and apply wftyp_exists. auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_weakenU : forall Γ Γ',
   Γ ⊢ ok → weakenU Γ' Γ → Γ' ⊢ ok.
@@ -318,7 +318,7 @@ Qed.
 Hint Resolve wftyp_regular_T2 wftyp_regular_Eq2: lngen.
 
 (** Operations on contexts *)
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_subst :
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ x τ, Γ = Γ₁ ++ x ~ (T τ) ++ Γ₂ →
     Γ₁ ++ Γ₂ ⊢ ok) ∧
@@ -364,7 +364,7 @@ Case "wftyp_exists".
 subst G. econstructor; intros.
 rewrite_env (([(a, U)] ++ Γ₁) ++ Γ₂). eapply H; simpl_env; eauto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_subst :
 forall Γ₁ Γ₂ x τ, Γ₁ ++ x ~ (T τ) ++ Γ₂ ⊢ ok → Γ₁ ++ Γ₂ ⊢ ok.
@@ -381,7 +381,7 @@ intros. eapply H2; eauto.
 Qed.
 Hint Resolve wfenv_subst wftyp_subst: fzip.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_instantiate :
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ a τ, Γ = Γ₁ ++ a ~ U ++ Γ₂ →
     Γ₂ ⊢ τ ok → Γ₁ ++ a ~ Eq τ ++ Γ₂ ⊢ ok) ∧
@@ -429,7 +429,7 @@ Case "wftyp_exists".
 subst G. apply wftyp_exists with (L := L ∪ {{a}}); intros.
 rewrite_env (([(a0, U)] ++ Γ₁) ++ a ~ Eq τ' ++ Γ₂); auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_instantiate :
   forall Γ₁ Γ₂ a τ, Γ₁ ++ a ~ U ++ Γ₂ ⊢ ok → Γ₂ ⊢ τ ok →
@@ -459,7 +459,7 @@ eauto using wftyp_wfenv.
 eauto using wftyp_wfenv.
 Qed.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_subst_eq :
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ a τ, Γ = Γ₁ ++ a ~ Eq τ ++ Γ₂ →
     (env_map (tsubst_typ τ a) Γ₁) ++ Γ₂ ⊢ ok) ∧
@@ -532,7 +532,7 @@ rewrite <- tsubst_typ_open_typ_wrt_typ.
 eapply H; simpl_env; eauto. eauto with lngen fzip.
 autorewrite with lngen; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_subst_eq :
   forall Γ₁ Γ₂ a τ, Γ₁ ++ a ~ Eq τ ++ Γ₂ ⊢ ok →
@@ -607,7 +607,7 @@ Qed.
 Hint Resolve wftyp_T_not_ftv.
 
 (** Operations on contexts *)
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_UE_aux :
   (forall Γ, Γ ⊢ ok →
     forall Γ₁ a Γ₂, Γ = Γ₁ ++ a ~ U ++ Γ₂ →
@@ -689,7 +689,7 @@ Case "forall". apply wftyp_forall with (L := L ∪ {{a}}); intros.
 Case "exists". apply wftyp_exists with (L := L ∪ {{a}}); intros.
   rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ U ++ Γ₂). eapply H; simpl_env; eauto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_UE :
   forall Γ₁ a Γ₂, Γ₁ ++ a ~ U ++ Γ₂ ⊢ ok → Γ₁ ++ a ~ E ++ Γ₂ ⊢ ok.
@@ -730,7 +730,7 @@ Qed.
 Hint Resolve wfenv_UE wfenv_EU wfenv_EqU wftyp_UE wftyp_EU wftyp_EqU: fzip.
 
 (** Renaming lemmas *)
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_renameU_aux:
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ a b,
     Γ = Γ₁ ++ a ~ U ++ Γ₂ →
@@ -771,7 +771,7 @@ rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ U +
 Case "exists". apply wftyp_exists with (L := L ∪ {{a}} ∪ {{b}}); intros.
 rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ U ++ Γ₂). rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_renameU:
   forall Γ₁ Γ₂ a b,
@@ -792,7 +792,7 @@ Proof.
 destruct wfenv_wftyp_renameU_aux as [_ H]. intros. eapply H; eauto.
 Qed.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_renameE_aux:
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ a b,
     Γ = Γ₁ ++ a ~ E ++ Γ₂ →
@@ -833,7 +833,7 @@ rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ E +
 Case "exists". apply wftyp_exists with (L := L ∪ {{a}} ∪ {{b}}); intros.
 rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ E ++ Γ₂). rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_renameE:
   forall Γ₁ Γ₂ a b,
@@ -854,7 +854,7 @@ Proof.
 destruct wfenv_wftyp_renameE_aux as [_ H]. intros. eapply H; eauto.
 Qed.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_renameEq_aux:
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ a b τ,
     Γ = Γ₁ ++ a ~ Eq τ ++ Γ₂ →
@@ -895,7 +895,7 @@ rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ Eq 
 Case "exists". apply wftyp_exists with (L := L ∪ {{a}} ∪ {{b}}); intros.
 rewrite_env ((env_map (tsubst_typ (typ_var_f b) a) (a0 ~ U ++ Γ₁)) ++ b ~ Eq τ' ++ Γ₂). rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_renameEq:
   forall Γ₁ Γ₂ a b τ,
@@ -917,7 +917,7 @@ destruct wfenv_wftyp_renameEq_aux as [_ H]. intros. eapply H; eauto.
 Qed.
 
 (** Swapping in the context *)
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_upperE_aux:
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ Γ₃ a,
     Γ = Γ₁ ++ a ~ E ++ Γ₂ ++ Γ₃ →
@@ -1012,7 +1012,7 @@ rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ E ++ Γ₂ ++ Γ₃). eauto.
 Case "exists". apply wftyp_exists with (L := L ∪ {{a}}); intros.
 rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ E ++ Γ₂ ++ Γ₃). eauto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_upperE: forall Γ₁ Γ₂ Γ₃ a,
   Γ₁ ++ a ~ E ++ Γ₂ ++ Γ₃ ⊢ ok →
@@ -1042,7 +1042,7 @@ Proof.
 destruct wfenv_wftyp_lowerE_aux as [_ H]; intros; eapply H; eauto.
 Qed.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_upperU_aux:
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ Γ₃ a,
     Γ = Γ₁ ++ a ~ U ++ Γ₂ ++ Γ₃ →
@@ -1069,7 +1069,7 @@ rewrite_env ((a0 ~ U ++ Γ₁) ++ Γ₂ ++ a ~ U ++ Γ₃). eauto.
 Case "exists". apply wftyp_exists with (L := L ∪ {{a}}); intros.
 rewrite_env ((a0 ~ U ++ Γ₁) ++ Γ₂ ++ a ~ U ++ Γ₃). eauto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_upperU: forall Γ₁ Γ₂ Γ₃ a,
   Γ₁ ++ a ~ U ++ Γ₂ ++ Γ₃ ⊢ ok →
@@ -1085,7 +1085,7 @@ Proof.
 destruct wfenv_wftyp_upperU_aux as [_ H]; intros; eapply H; eauto.
 Qed.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_lowerU_aux:
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ Γ₃ a,
     Γ = Γ₁ ++ Γ₂ ++ a ~ U ++ Γ₃ → a ∉ ftv_env Γ₂ →
@@ -1153,7 +1153,7 @@ rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ U ++ Γ₂ ++ Γ₃). eauto.
 Case "exists". apply wftyp_exists with (L := L ∪ {{a}}); intros.
 rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ U ++ Γ₂ ++ Γ₃). eauto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_lowerU: forall Γ₁ Γ₂ Γ₃ a,
   Γ₁ ++ Γ₂ ++ a ~ U ++ Γ₃ ⊢ ok → a ∉ ftv_env Γ₂ →
@@ -1170,7 +1170,7 @@ destruct wfenv_wftyp_lowerU_aux as [_ H]; intros; eapply H; eauto.
 Qed.
 
 (** Swapping equations *)
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_swap_Eq:
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ a₁ a₂ τ₁ τ₂,
     Γ = Γ₁ ++ a₁ ~ Eq τ₁ ++ a₂ ~ Eq τ₂ ++ Γ₂ →
@@ -1202,7 +1202,7 @@ Case "exists". apply wftyp_exists with (L := L ∪ {{a₁}} ∪ {{a₂}}); intro
 rewrite_env ((a ~ U ++ Γ₁) ++ [(a₂, Eq τ₂)] ++
   [(a₁, Eq (tsubst_typ τ₂ a₂ τ₁))] ++ Γ₂). eauto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_swap_Eq: forall Γ₁ Γ₂ a₁ a₂ τ₁ τ₂,
   Γ₁ ++ a₁ ~ Eq τ₁ ++ a₂ ~ Eq τ₂ ++ Γ₂ ⊢ ok →
@@ -1219,7 +1219,7 @@ intros. edestruct wfenv_wftyp_swap_Eq. eauto.
 Qed.
 
 (** Lemmas about [zip] *)
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_zip_aux :
   forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ →
   (Γ₁ ⊢ ok → Γ₂ ⊢ ok → Γ₃ ⊢ ok)
@@ -1262,7 +1262,7 @@ constructor; auto.
 Case "wftype_Eq".
 rewrite_env ((Γ ++ [(a, Eq t)]) ++ G); apply IHzip2; simpl_env; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_zip:
   forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ →
@@ -1336,7 +1336,7 @@ eapply H0 with (Γ₁ := a ~ U ++ Γ₁); auto.
 Qed.
 Hint Resolve wftyp_zip12 wftyp_zip13 wftyp_zip23: fzip.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_zip13_aux :
   forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ →
     (Γ₁ ⊢ ok → Γ₃ ⊢ ok)
@@ -1436,7 +1436,7 @@ Case "wftype_Eq".
 rewrite_env ((Γ ++ [(a, Eq t)]) ++ G2); apply IHzip2; simpl_env; auto.
 solve_uniq.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_zip13 : forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ →
   Γ₁ ⊢ ok → Γ₃ ⊢ ok.
@@ -1466,7 +1466,7 @@ rewrite_env (nil ++ Γ₂). rewrite_env (nil ++ Γ₁) in H1.
 edestruct wfenv_wftyp_zip12_aux; eauto.
 Qed.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_zip21_aux : forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ →
   (Γ₂ ⊢ ok →
     (forall a, a ∈ ftv_env Γ₂ → not (binds a E Γ₂)) → Γ₁ ⊢ ok)
@@ -1523,7 +1523,7 @@ unfold ftv_env at 1; simpl; fsetdec.
 Case "wftype_Eq".
 rewrite_env ((Γ ++ [(a, Eq t)]) ++ G1); apply IHzip2; simpl_env; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_zip21 : forall Γ₁ Γ₂ Γ₃,
   zip Γ₁ Γ₂ Γ₃ →
@@ -1544,7 +1544,7 @@ rewrite_env (nil ++ Γ₂) in H1.
 edestruct wfenv_wftyp_zip21_aux; eauto.
 Qed.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_zip31_aux : forall Γ₁ Γ₂ Γ₃, zip Γ₁ Γ₂ Γ₃ →
   (Γ₃ ⊢ ok →
     (forall a, a ∈ ftv_env Γ₃ → not (binds a E Γ₃)) → Γ₁ ⊢ ok)
@@ -1600,7 +1600,7 @@ unfold ftv_env at 1; simpl; fsetdec.
 Case "wftype_Eq".
 rewrite_env ((Γ ++ [(a, Eq t)]) ++ G1); apply IHzip2; simpl_env; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_zip31 : forall Γ₁ Γ₂ Γ₃,
   zip Γ₁ Γ₂ Γ₃ →
@@ -1621,7 +1621,7 @@ rewrite_env (nil ++ Γ₃) in H1.
 edestruct wfenv_wftyp_zip31_aux; eauto.
 Qed.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_zip_inv_aux :
   (forall Γ, Γ ⊢ ok →
     (forall a, a ∈ ftv_env Γ → not (binds a E Γ)) →
@@ -1757,7 +1757,7 @@ ftv_typ (typ_var_f a) ∪ ftv_typ t) by auto with lngen.
   analyze_binds H4.
   simpl_env. auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_zip_inv1 : forall Γ' Γ'', Γ'' ++ Γ' ⊢ ok →
   (forall a, a ∈ ftv_env (Γ'' ++ Γ') → not (binds a E (Γ'' ++ Γ'))) →

@@ -384,7 +384,7 @@ Qed.
 Hint Resolve wfterm_fv wfterm_ftv: fzip.
 
 (** Uniqueness of types *)
-(** begin hide *)
+(* begin hide *)
 Lemma wfterm_uniqueness_aux : forall Γ Γ' e τ τ',
   Γ ⊢ e ~: τ → Γ' ⊢ e ~: τ' →
   (forall x τ₀, binds x (T τ₀) Γ → binds x (T τ₀) Γ') →
@@ -451,7 +451,7 @@ rewrite tsubst_typ_var_twice in H3; eauto with lngen fzip.
 apply tsubst_typ_lc_typ_inv with (t1 := typ_var_f a) (a1 := b); auto.
 eauto with lngen.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfterm_uniqueness : forall Γ e τ τ',
   Γ ⊢ e ~: τ → Γ ⊢ e ~: τ' → τ = τ'.

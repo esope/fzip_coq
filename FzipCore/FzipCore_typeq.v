@@ -183,7 +183,7 @@ rewrite_env ((a ~ U ++ Γ₁) ++ Γ₂).
 Qed.
 Hint Resolve wftypeq_subst.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_wftypeq_T_aux :
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ x τ₁ τ₂,
     Γ = Γ₁ ++ x ~ T τ₁ ++ Γ₂ →
@@ -210,7 +210,7 @@ rewrite_env ((a ~ U ++ Γ₁) ++ x ~ T τ₂ ++ Γ₂). eapply H; simpl_env; aut
 Case "exists". apply wftyp_exists with (L := L); intros.
 rewrite_env ((a ~ U ++ Γ₁) ++ x ~ T τ₂ ++ Γ₂). eapply H; simpl_env; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_wftypeq_T :
   forall Γ₁ Γ₂ x τ₁ τ₂, Γ₁ ++ x ~ T τ₁ ++ Γ₂ ⊢ ok →
@@ -227,7 +227,7 @@ destruct wfenv_wftyp_wftypeq_T_aux as [_ H]; intros; eapply H; eauto.
 Qed.
 Hint Resolve wfenv_wftypeq_T wftyp_wftypeq_T: fzip.
 
-(** begin hide *)
+(* begin hide *)
 Lemma wfenv_wftyp_wftypeq_Eq_aux :
   (forall Γ, Γ ⊢ ok → forall Γ₁ Γ₂ a τ₁ τ₂,
     Γ = Γ₁ ++ a ~ Eq τ₁ ++ Γ₂ →
@@ -254,7 +254,7 @@ rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ₂ ++ Γ₂). eapply H; simpl_env; a
 Case "exists". apply wftyp_exists with (L := L); intros.
 rewrite_env ((a0 ~ U ++ Γ₁) ++ a ~ Eq τ₂ ++ Γ₂). eapply H; simpl_env; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma wfenv_wftypeq_Eq :
   forall Γ₁ Γ₂ a τ₁ τ₂, Γ₁ ++ a ~ Eq τ₁ ++ Γ₂ ⊢ ok →
@@ -767,7 +767,7 @@ rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (c ~ U ++ Γ₁) ++ [(b, U)] +
 repeat rewrite tsubst_typ_open_typ_wrt_typ_var; auto.
 Qed.
 
-(** begin hide *)
+(* begin hide *)
 Lemma typeq_unfold_defined_aux :
   (forall Γ, Γ ⊢ ok → forall Γ₁ a τ Γ₂,
     Γ = Γ₁ ++ a ~ Eq τ ++ Γ₂ → exists τ', typeq_unfold Γ₂ τ τ')
@@ -830,7 +830,7 @@ rewrite tsubst_typ_open_typ_wrt_typ; auto. simpl.
 unfold typvar; destruct (b == b); try congruence.
 rewrite tsubst_typ_fresh_eq; auto.
 Qed.
-(** end hide *)
+(* end hide *)
 
 Lemma typeq_unfold_defined : forall Γ τ,
   Γ ⊢ τ ok → exists τ', typeq_unfold Γ τ τ'.
