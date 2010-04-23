@@ -2,9 +2,11 @@ Add LoadPath "../metatheory".
 Require Import FzipCore_init.
 Require Import FzipCore_val.
 
+(** Versions of red0 rules using [close], i.e. closer to the pencil
+    and paper definitions *)
 Lemma red0_beta_v_red_close : forall (t:typ) x (e1 e2:term),
-  lc_typ t -> lc_term e1 →
-  val e2 ->
+  lc_typ t → lc_term e1 →
+  val e2 →
   red0 (term_app (term_abs t (close_term_wrt_term x e1)) e2) NoEps
   (term_let e2 (close_term_wrt_term x e1)).
 Proof.
@@ -13,7 +15,7 @@ Qed.
 
 Lemma red0_beta_v_let_close : forall (e1 e2:term) x,
   lc_term e1 → lc_term e2 →
-  val e1 ->
+  val e1 →
   red0 (term_let e1 (close_term_wrt_term x e2)) NoEps
   (subst_term e1 x e2).
 Proof.
@@ -22,8 +24,8 @@ constructor; auto with lngen.
 Qed.
 
 Lemma red0_beta_t_close : forall (e:term) (t:typ) a,
-     lc_term e ->
-     lc_typ t ->
+     lc_term e →
+     lc_typ t →
      red0 (term_inst (term_gen (close_term_wrt_typ a e)) t) NoEps
      (tsubst_term t a e).
 Proof.
@@ -102,7 +104,7 @@ Qed.
 
 Lemma red0_sigma_appL_close : forall (b a:typvar) (t:typ) (e1 e2:term),
   lc_typ t → a ∉ ftv_term e2 → result e1 →
-  result e2 ->
+  result e2 →
   red0
   (term_app (term_sigma (typ_var_f b) t (close_term_wrt_typ a e1)) e2)
   NoEps
@@ -124,7 +126,7 @@ Qed.
 
 Lemma red0_sigma_appR_close : forall (b a:typvar) (t:typ) (e1 e2:term),
   lc_typ t → a ∉ ftv_term e1 → val e1 →
-  result e2 ->
+  result e2 →
   red0
   (term_app e1 (term_sigma (typ_var_f b) t (close_term_wrt_typ a e2)))
   NoEps
@@ -146,7 +148,7 @@ Qed.
 
 Lemma red0_sigma_letL_close : forall (b a x:typvar) (t:typ) (e1 e2:term),
   lc_typ t → a ∉ ftv_term e2 → result e1 →
-  lc_term e2 ->
+  lc_term e2 →
   red0
   (term_let (term_sigma (typ_var_f b) t (close_term_wrt_typ a e1))
     (close_term_wrt_term x e2))
@@ -174,7 +176,7 @@ Qed.
 
 Lemma red0_sigma_pairL_close : forall (b a:typvar) (t:typ) (e1 e2:term),
   lc_typ t → a ∉ ftv_term e2 → result e1 →
-  result e2 ->
+  result e2 →
   red0
   (term_pair (term_sigma (typ_var_f b) t (close_term_wrt_typ a e1)) e2)
   NoEps
@@ -195,7 +197,7 @@ Qed.
 
 Lemma red0_sigma_pairR_close : forall (b a:typvar) (t:typ) (e1 e2:term),
   lc_typ t → a ∉ ftv_term e1 → val e1 →
-  result e2 ->
+  result e2 →
   red0
   (term_pair e1 (term_sigma (typ_var_f b) t (close_term_wrt_typ a e2)))
   NoEps
@@ -215,7 +217,7 @@ rewrite tsubst_term_fresh_eq with (a1 := a); auto.
 Qed.
 
 Lemma red0_sigma_inst_close : forall (b a:typvar) (t:typ) (e:term) (t':typ),
-  lc_typ t' -> lc_typ t → result e →
+  lc_typ t' → lc_typ t → result e →
   a ∉ ftv_typ t' →
   red0 (term_inst (term_sigma (typ_var_f b) t (close_term_wrt_typ a e)) t')
   NoEps
@@ -274,7 +276,7 @@ autorewrite with lngen. auto.
 Qed.
 
 Lemma red0_sigma_coerce_close : forall (b a:typvar) (t:typ) (e:term) (t':typ),
-  lc_typ t' -> lc_typ t → result e →
+  lc_typ t' → lc_typ t → result e →
   a ∉ ftv_typ t' →
   red0 (term_coerce (term_sigma (typ_var_f b) t (close_term_wrt_typ a e)) t')
   NoEps
