@@ -97,7 +97,7 @@ documentation: $(DOCDIR) $(VOFILES)
 	cp -f custom.css $(DOCDIR)/coqdoc.css
 
 clean:
-	rm -f *.vo *.glob *.cmi *.cmx *.o
+	rm -f *.vo *.glob *.cmi *.cmx *.o *.dot
 	rm -rf $(DOCDIR)
 
 force:
@@ -122,6 +122,17 @@ check:	coq
 $(DOCDIR):
 	mkdir -p $(DOCDIR)
 
+deps.dot: .depend
+	ocamldot .depend > deps.dot
+
+view_deps: deps.dot
+	dot -Txlib deps.dot &
+
+fulldeps.dot: .depend
+	ocamldot -fullgraph .depend > fulldeps.dot
+
+view_fulldeps: fulldeps.dot
+	dot -Txlib fulldeps.dot &
 ############################################################################
 
 .depend: $(VFILES) Makefile
