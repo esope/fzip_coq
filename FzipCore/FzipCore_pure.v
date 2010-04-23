@@ -3,7 +3,7 @@ Require Import FzipCore_init.
 Require Import FzipCore_zip.
 Require Import FzipCore_weakenU.
 
-(** Lemmas about [pure] *)
+(** Basic lemmas about [pure] *)
 Lemma pure_T (A: Type) : forall x t, pure (x ~ @T A t).
 Proof.
 intros A x t y H; analyze_binds H.
@@ -20,6 +20,7 @@ intros A x t y H; analyze_binds H.
 Qed.
 Hint Resolve pure_T pure_U pure_Eq: fzip.
 
+(** Lemmas about concatenation of environments *)
 Lemma pure_app : forall (Γ₁ Γ₂: typing_env),
   pure Γ₁ → pure Γ₂ → pure (Γ₂ ++ Γ₁).
 Proof.
@@ -48,7 +49,7 @@ intros x H1; eapply (H x); analyze_binds H1.
 Qed.
 Hint Resolve pure_app pure_app_inv1 pure_app_inv2: fzip.
 
-
+(** Lemmas about [zip] *)
 Lemma pure_zip : forall Γ₁ Γ₂ Γ₃,
   zip Γ₁ Γ₂ Γ₃ → pure Γ₁ → pure Γ₂ → pure Γ₃.
 Proof.
@@ -113,43 +114,6 @@ assert (dom Γ₂' [=] dom Γ₃') by eauto with fzip.
   solve_uniq.
 Qed.
 
-Lemma pure_subst : forall Γ₁ Γ₂ x (τ: typ),
-  pure (Γ₁ ++ x ~ T τ ++ Γ₂) →
-  pure (Γ₁ ++ Γ₂).
-Proof.
-intros Γ₁ Γ₂ x τ H.
-intros a H0. eapply (H a). analyze_binds H0.
-Qed.
-
-Lemma pure_instantiate : forall Γ₁ Γ₂ a τ,
-  lc_typ τ →
-  pure (Γ₁ ++ a ~ U ++ Γ₂) →
-  pure (Γ₁ ++ a ~ Eq τ ++ Γ₂).
-Proof.
-intros Γ₁ Γ₂ a τ Hlc H.
-intros a0 H0. eapply (H a0). analyze_binds H0.
-Qed.
-
-Lemma pure_subst_eq : forall Γ₁ Γ₂ a τ,
-  pure (Γ₁ ++ a ~ Eq τ ++ Γ₂) →
-  pure (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂).
-Proof.
-intros Γ₁ Γ₂ a τ H.
-unfold env_map.
-intros a0 H0.
-replace (@E typ) with (tag_map (tsubst_typ τ a) E) in H0 by reflexivity.
-eapply (H a0). analyze_binds H0; eauto with lngen.
-Qed.
-
-Lemma pure_tsubst : forall Γ₁ Γ₂ a τ,
-  lc_typ τ →
-  pure (Γ₁ ++ a ~ U ++ Γ₂) →
-  pure (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂).
-Proof.
-intros Γ₁ Γ₂ a τ H H0.
-auto using pure_instantiate, pure_subst_eq.
-Qed.
-
 Lemma zip_pure_inv1 : forall Γ₁ Γ₂ Γ₃,
   zip Γ₁ Γ₂ Γ₃ → pure Γ₃ → Γ₁ = Γ₃.
 Proof.
@@ -194,6 +158,45 @@ Case "E". elimtype False. eapply (H0 a); auto.
 Case "Eq". f_equal. apply IHzip. intros b Hb. eapply (H0 b); auto.
 Qed.
 
+(** Operation on environments *)
+Lemma pure_subst : forall Γ₁ Γ₂ x (τ: typ),
+  pure (Γ₁ ++ x ~ T τ ++ Γ₂) →
+  pure (Γ₁ ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ x τ H.
+intros a H0. eapply (H a). analyze_binds H0.
+Qed.
+
+Lemma pure_instantiate : forall Γ₁ Γ₂ a τ,
+  lc_typ τ →
+  pure (Γ₁ ++ a ~ U ++ Γ₂) →
+  pure (Γ₁ ++ a ~ Eq τ ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ a τ Hlc H.
+intros a0 H0. eapply (H a0). analyze_binds H0.
+Qed.
+
+Lemma pure_subst_eq : forall Γ₁ Γ₂ a τ,
+  pure (Γ₁ ++ a ~ Eq τ ++ Γ₂) →
+  pure (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ a τ H.
+unfold env_map.
+intros a0 H0.
+replace (@E typ) with (tag_map (tsubst_typ τ a) E) in H0 by reflexivity.
+eapply (H a0). analyze_binds H0; eauto with lngen.
+Qed.
+
+Lemma pure_tsubst : forall Γ₁ Γ₂ a τ,
+  lc_typ τ →
+  pure (Γ₁ ++ a ~ U ++ Γ₂) →
+  pure (env_map (tsubst_typ τ a) Γ₁ ++ Γ₂).
+Proof.
+intros Γ₁ Γ₂ a τ H H0.
+auto using pure_instantiate, pure_subst_eq.
+Qed.
+
+(** Renaming lemmas *)
 Lemma pure_renameU : forall Γ₁ Γ₂ a b,
   pure (Γ₁ ++ a ~ U ++ Γ₂) →
   pure (env_map (tsubst_typ (typ_var_f b) a) Γ₁ ++ b ~ U ++ Γ₂).
@@ -220,6 +223,7 @@ simpl in *. analyze_binds BindsTac0.
 simpl in *. analyze_binds BindsTac0.
 Qed.
 
+(** Lemmas about [weakenU] *)
 Lemma pure_weakenU : forall Γ Γ',
   pure Γ → weakenU Γ' Γ → pure Γ'.
 Proof.

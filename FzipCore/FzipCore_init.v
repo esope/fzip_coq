@@ -128,7 +128,7 @@ Hint Rewrite ftv_env_nil ftv_env_app : lngen.
 
 Lemma tsubst_env_fresh_eq :
 forall G t a,
-  a ∉ ftv_env G ->
+  a ∉ ftv_env G →
   env_map (tsubst_typ t a) G = G.
 Proof.
 intros G t a H.

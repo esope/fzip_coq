@@ -921,8 +921,8 @@ rewrite tsubst_term_fresh_eq with (e1 := e2); auto.
 Qed.
 
 Lemma red0_sigma_inst_defined: forall e t' t b,
-  lc_typ t' ->
-  result (term_sigma (typ_var_f b) t e) ->
+  lc_typ t' →
+  result (term_sigma (typ_var_f b) t e) →
   exists e',
     red0 (term_inst (term_sigma (typ_var_f b) t e) t') NoEps e'.
 Proof.
@@ -1025,8 +1025,8 @@ assert (a ∉ ftv_term e) by auto. clear H5 H6. simpl in H7. fsetdec.
 Qed.
 
 Lemma red0_sigma_coerce_defined: forall e t' t b,
-  lc_typ t' ->
-  result (term_sigma (typ_var_f b) t e) ->
+  lc_typ t' →
+  result (term_sigma (typ_var_f b) t e) →
   exists e',
     red0 (term_coerce (term_sigma (typ_var_f b) t e) t') NoEps e'.
 Proof.
@@ -1045,7 +1045,7 @@ Qed.
 
 Lemma red0_sigma_sigma_defined: forall e b1 b2 t1 t2,
   result
-  (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) ->
+  (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e)) →
   exists e',
     red0
     (term_sigma (typ_var_f b1) t1 (term_sigma (typ_var_f b2) t2 e))
