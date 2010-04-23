@@ -77,8 +77,8 @@ INCFLAGS = $(foreach i, $(INCDIRS), -I $(i))
 
 ############################################################################
 
-.PHONY: all clean coq dist doc documentation force
-.SUFFIXES: .v .vo
+.PHONY: all clean coq dist doc documentation force check view_deps view_fulldeps
+.SUFFIXES: .v .vo .dot
 
 all: coq
 
