@@ -279,7 +279,7 @@ defn
 pure G
 G |- ok
 x:t in G
----------- :: val
+---------- :: var
 G |- x : t
 
 G1 zip G2 = G

@@ -436,7 +436,7 @@ Inductive wftypeq : typing_env -> typ -> typ -> Prop :=    (* defn wftypeq *)
 
 (* defns Jwfterm *)
 Inductive wfterm : typing_env -> term -> typ -> Prop :=    (* defn wfterm *)
- | wfterm_val : forall (G:typing_env) (x:termvar) (t:typ),
+ | wfterm_var : forall (G:typing_env) (x:termvar) (t:typ),
       (pure ( G ))  ->
      wfenv G ->
       binds ( x ) (T ( t )) ( G )  ->
