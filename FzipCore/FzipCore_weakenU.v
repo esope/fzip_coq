@@ -1,6 +1,7 @@
 Add LoadPath "../metatheory".
 Require Import FzipCore_init.
 
+(** Definition of [weakenU]: weakening with universal variables only *)
 Inductive weakenU : typing_env → typing_env → Prop :=
 | wUnil : weakenU nil nil
 | wUT : forall G1 G2 x t, lc_typ t → x ∉ dom G1 → weakenU G1 G2 →
@@ -15,30 +16,32 @@ Inductive weakenU : typing_env → typing_env → Prop :=
     a ∉ dom G1 → weakenU G1 G2 → weakenU (a ~ U ++ G1) G2.
 Hint Constructors weakenU.
 
-Lemma dom_weakenU : forall Γ₁ Γ₂, weakenU Γ₁ Γ₂ → dom Γ₂ [<=] dom Γ₁.
+(** Lemmas about [dom] *)
+Lemma weakenU_dom : forall Γ₁ Γ₂, weakenU Γ₁ Γ₂ → dom Γ₂ [<=] dom Γ₁.
 Proof.
 intros Γ₁ Γ₂ H. induction H; simpl_env; fsetdec.
 Qed.
 
-Lemma dom_uniq1 : forall Γ₁ Γ₂, weakenU Γ₁ Γ₂ → uniq Γ₁.
+Lemma weakenU_uniq1 : forall Γ₁ Γ₂, weakenU Γ₁ Γ₂ → uniq Γ₁.
 Proof.
 intros Γ₁ Γ₂ H. induction H; solve_uniq.
 Qed.
 
-Lemma dom_uniq2 : forall Γ₁ Γ₂, weakenU Γ₁ Γ₂ → uniq Γ₂.
+Lemma weakenU_uniq2 : forall Γ₁ Γ₂, weakenU Γ₁ Γ₂ → uniq Γ₂.
 Proof.
 intros Γ₁ Γ₂ H. induction H; auto.
-assert (dom G2 [<=] dom G1) by eauto using dom_weakenU.
+assert (dom G2 [<=] dom G1) by eauto using weakenU_dom.
   assert (x ∉ dom G2) by solve_notin. solve_uniq.
-assert (dom G2 [<=] dom G1) by eauto using dom_weakenU.
+assert (dom G2 [<=] dom G1) by eauto using weakenU_dom.
   assert (a ∉ dom G2) by solve_notin. solve_uniq.
-assert (dom G2 [<=] dom G1) by eauto using dom_weakenU.
+assert (dom G2 [<=] dom G1) by eauto using weakenU_dom.
   assert (a ∉ dom G2) by solve_notin. solve_uniq.
-assert (dom G2 [<=] dom G1) by eauto using dom_weakenU.
+assert (dom G2 [<=] dom G1) by eauto using weakenU_dom.
   assert (a ∉ dom G2) by solve_notin. solve_uniq.
 Qed.
-Hint Resolve dom_uniq1 dom_uniq2 : lngen.
+Hint Resolve weakenU_uniq1 weakenU_uniq2 : lngen.
 
+(** Lemmas about [binds] *)
 Lemma bindsT_weakenU1 : forall Γ₁ Γ₂ x τ,
   weakenU Γ₁ Γ₂ → binds x (T τ) Γ₁ → binds x (T τ) Γ₂.
 Proof.
@@ -91,7 +94,7 @@ assert (binds a U G2); auto. apply IHweakenU; auto.
   assert (a ≠ a0). intro; subst. eauto with lngen.
   simpl_env in *; fsetdec.
 assert (a0 ∉ dom G2); try contradiction.
-  assert (dom G2 [<=] dom G1) by eauto using dom_weakenU. solve_notin.
+  assert (dom G2 [<=] dom G1) by eauto using weakenU_dom. solve_notin.
 Qed.
 
 Lemma bindsU_weakenU2 : forall Γ₁ Γ₂ a,
@@ -102,6 +105,7 @@ Qed.
 Hint Resolve bindsT_weakenU1 bindsT_weakenU2 bindsEq_weakenU1 bindsEq_weakenU2
 bindsE_weakenU1 bindsE_weakenU2 bindsU_weakenU1 bindsU_weakenU2 : fzip.
 
+(** [weakenU] is reflexive and transitive *)
 Lemma weakenU_refl : forall Γ, uniq Γ → lc_env Γ →
   weakenU Γ Γ.
 Proof.
@@ -128,6 +132,7 @@ inversion H1; subst; auto.
 inversion H2; subst; auto.
 Qed.
 
+(** Lemmas about concatenation of environments *)
 Lemma weakenU_app : forall Γ₁ Γ₂ Γ₁' Γ₂',
   weakenU Γ₁' Γ₁ → weakenU Γ₂' Γ₂ →
   disjoint Γ₁' Γ₂' → weakenU (Γ₁' ++ Γ₂') (Γ₁ ++ Γ₂).
@@ -149,7 +154,7 @@ destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
 Case "E". destruct Γ₁'; inversion H1; subst; simpl_env in *; auto.
 destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
 assert (a0 ∈ dom Γ₂').
-  assert (dom (Γ₁ ++ a0 ~ E ++ Γ₂) [<=] dom Γ₂') by eauto using dom_weakenU.
+  assert (dom (Γ₁ ++ a0 ~ E ++ Γ₂) [<=] dom Γ₂') by eauto using weakenU_dom.
   simpl_env in *. auto.
 contradiction.
 destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
@@ -172,7 +177,7 @@ destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
 Case "E". destruct Γ₁'; inversion H1; subst; simpl_env in *; auto.
 destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
 assert (a0 ∈ dom Γ₂').
-  assert (dom (Γ₁ ++ a0 ~ E ++ Γ₂) [<=] dom Γ₂') by eauto using dom_weakenU.
+  assert (dom (Γ₁ ++ a0 ~ E ++ Γ₂) [<=] dom Γ₂') by eauto using weakenU_dom.
   simpl_env in *. auto.
 contradiction.
 destruct Γ₁; inversion H2; subst; simpl_env in *; eauto.
