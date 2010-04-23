@@ -3,6 +3,8 @@ Require Import FzipCore_init.
 Require Import FzipCore_pure.
 Require Import FzipCore_zip.
 Require Import FzipCore_env_typ.
+Require Import FzipCore_typeq.
+Require Import FzipCore_term.
 
 Ltac simpl_eq a b :=
   unfold typvar in *; unfold termvar in *;
@@ -68,6 +70,12 @@ pick fresh y1 and apply wfterm_abs; auto with fzip; simpl_open.
 auto 7 with fzip.
 Qed.
 
+Lemma wftyp_poly_typ_id : forall a, wftyp nil (Forall a (typ_id (typ_var_f a))).
+Proof.
+intros a. pick fresh x.
+eapply wfterm_wftyp. eauto using wfterm_identity.
+Qed.
+
 Lemma wfterm_projL : forall a b x, a ≠ b →
   wfterm nil
   (Gen a (Gen b (Abs x (Prod (typ_var_f a) (typ_var_f b))
@@ -77,8 +85,7 @@ Lemma wfterm_projL : forall a b x, a ≠ b →
 Proof.
 intros.
 unfold_fzip. simpl_close. simpl_eq b b. simpl_eq x x. simpl_eq b a.
-simpl_close. simpl_eq a a.
-clear a b x H e e0 n e1.
+simpl_close. simpl_eq a a. clear.
 pick fresh a and apply wfterm_gen; auto; simpl_open.
 pick fresh b and apply wfterm_gen; auto with fzip; simpl_open.
 pick fresh x and apply wfterm_abs; auto with fzip; simpl_open.
@@ -95,8 +102,7 @@ Lemma wfterm_projR : forall a b x, a ≠ b →
 Proof.
 intros.
 unfold_fzip. simpl_close. simpl_eq b b. simpl_eq x x. simpl_eq b a.
-simpl_close. simpl_eq a a.
-clear a b x H e e0 n e1.
+simpl_close. simpl_eq a a. clear.
 pick fresh a and apply wfterm_gen; auto; simpl_open.
 pick fresh b and apply wfterm_gen; auto with fzip; simpl_open.
 pick fresh x and apply wfterm_abs; auto with fzip; simpl_open.
@@ -112,17 +118,22 @@ Definition term_zero a x f :=
   Gen a (Abs x (typ_var_f a) (Abs f (typ_id (typ_var_f a))
     (term_var_f x))).
 
-Lemma wfterm_zero : forall a x f, x ≠ f →
-  wfterm nil (term_zero a x f) (typ_nat a).
+Lemma wfterm_zero : forall a b x f, x ≠ f →
+  wfterm nil (term_zero a x f) (typ_nat b).
 Proof.
-intros a x f H. unfold term_zero. unfold typ_nat.
-unfold_fzip. simpl_close. simpl_eq a a. simpl_eq f x.
-simpl_close. simpl_eq x x. simpl_close.
-clear a x f H e n e0.
+intros a b x f H. unfold term_zero. unfold typ_nat.
+unfold_fzip. simpl_close. simpl_eq a a. simpl_eq f x. simpl_eq b b.
+simpl_close. simpl_eq x x. simpl_close. clear.
 pick fresh a and apply wfterm_gen; simpl_open; auto.
 pick fresh x and apply wfterm_abs; simpl_open; auto with fzip.
 pick fresh f and apply wfterm_abs; simpl_open; auto with fzip.
 auto 10 with fzip.
+Qed.
+
+Lemma wftyp_nat : forall a, wftyp nil (typ_nat a).
+Proof.
+intros a. pick fresh b. pick fresh x. pick fresh f.
+eapply wfterm_wftyp. apply (wfterm_zero b a x f). auto.
 Qed.
 
 Definition term_plus a n x f :=
@@ -144,8 +155,7 @@ intros a n x f H H0 H1. unfold term_plus. unfold typ_id.
 unfold typ_nat.
 unfold_fzip. simpl_close. simpl_eq f f. simpl_eq a a.
 simpl_eq f n. simpl_eq f x. simpl_close. simpl_eq x n.
-simpl_eq x x. simpl_close. simpl_eq n n.
-clear a n x f H H0 H1 e e0 n0 n1 n2 e1 e2.
+simpl_eq x x. simpl_close. simpl_eq n n. clear.
 pick fresh n and apply wfterm_abs; simpl_open; auto.
 pick fresh a and apply wfterm_gen; simpl_open; auto with fzip.
 pick fresh x and apply wfterm_abs; simpl_open; auto with fzip.
@@ -188,7 +198,7 @@ constructor; auto; subst; auto.
 Qed.
 
 Lemma wfterm_sigma_pair : forall a b x f,
-  x ≠ f →
+  x ≠ f → x ≠ a →
   wfterm (b ~ E)
   (Pair
     (Sig b a (typ_nat a) (Coerce (term_zero a x f) (typ_var_f a)))
@@ -203,29 +213,56 @@ rewrite_env (nil ++ b ~ @E typ ++ nil).
 pick fresh c and apply wfterm_sigma; simpl_open; auto.
 autorewrite with lngen.
 apply wfterm_coerce with (t' := typ_nat a).
-apply wftypeq_sym. apply wftypeq_eq; auto. constructor; auto. 
-unfold typ_nat. unfold_fzip. simpl_close. simpl_eq a a.
-pick fresh d and apply wftyp_forall; simpl_open.
-auto 8 with lngen.
-unfold typ_nat. unfold_fzip. simpl_close. simpl_eq a a.
+apply wftypeq_sym. apply wftypeq_eq; auto. constructor; auto using wftyp_nat.
 pick fresh d and apply wfterm_gen; simpl_open; auto with fzip.
+simpl_eq a a. simpl_open.
 pick fresh y and apply wfterm_abs; simpl_open; auto with fzip.
 pick fresh z and apply wfterm_abs; simpl_open; auto 6 with fzip.
 constructor. auto 7 with fzip.
-constructor; auto. constructor; auto. constructor; auto.
-constructor; auto. constructor; auto. constructor; auto.
-constructor; auto. pick fresh a' and apply wftyp_forall; simpl_open.
-constructor; auto. constructor; auto. constructor; auto.
-constructor; auto. constructor; auto. constructor; auto.
-constructor; auto. constructor; auto.
-pick fresh a' and apply wftyp_forall; simpl_open. auto 8. auto.
-rewrite <- tsubst_typ_var_self with (a := b).
-rewrite tsubst_typ_spec.
+auto 9 using wftyp_nat.
+auto.
+rewrite <- tsubst_typ_var_self with (a := b). rewrite tsubst_typ_spec.
 constructor; auto.
-unfold term_id. unfold_fzip. simpl_close. simpl_eq a a.
-simpl_eq b b. simpl_eq x x. simpl_close.
-clear a x f H e n e0 e1 e2 e3.
-pick fresh a and apply wfterm_gen; simpl_open; auto with fzip.
-pick fresh x and apply wfterm_abs; simpl_open; auto with fzip.
-auto 7 with fzip.
+simpl_close. simpl_eq b b.
+replace (typ_forall (typ_arrow (typ_var_b 0) (typ_var_b 0))) with
+  (Forall a (typ_id (typ_var_f a))).
+rewrite_env (nil ++ b ~ @U typ ++ nil).
+apply wfterm_weakening; auto using wfterm_identity with fzip.
+unfold_fzip. simpl_close. simpl_eq a a.
+Qed.
+
+Lemma wfterm_open_exists_sigma_zero : forall a b c d e x f,
+  a ≠ b → a ≠ c → a ≠ d → a ≠ e → a ≠ x → a ≠ f →
+  b ≠ c → b ≠ d → b ≠ e → b ≠ x → b ≠ f →
+  c ≠ d → c ≠ e → c ≠ x → c ≠ f →
+  d ≠ e → d ≠ x → d ≠ f →
+  e ≠ x → e ≠ f →
+  x ≠ f →
+  wfterm (b ~ E)
+  (Open b (Ex c (Sig c a (typ_nat d)
+    (Coerce (term_zero e x f) (typ_var_f a)))))
+  (typ_var_f b).
+Proof.
+intros a b c d e x f H H0 H1 H2 H3 H4 H5 H6 H7 H8 H9 H10
+  H11 H12 H13 H14 H15 H16 H17. intros H18 H19.
+rewrite_env (nil ++ b ~ @E typ ++ nil).
+Opaque typ_nat. Opaque term_zero.
+unfold_fzip. simpl_close. simpl_eq c c. simpl_eq a a. simpl_close.
+replace (typ_var_f b) with (open_typ_wrt_typ (typ_var_b 0) (typ_var_f b))
+  by reflexivity.
+apply wfterm_open; auto. pick fresh a' and apply wfterm_exists.
+simpl_open. rewrite <- tsubst_typ_spec_rec. rewrite tsubst_typ_fresh_eq.
+rewrite <- tsubst_term_spec_rec. rewrite tsubst_term_fresh_eq.
+rewrite_env (nil ++ a' ~ @E typ ++ nil).
+pick fresh b' and apply wfterm_sigma; simpl_open; auto.
+rewrite <- tsubst_term_spec_rec. rewrite tsubst_term_fresh_eq.
+simpl tsubst_typ. simpl_eq a' a'.
+apply wfterm_coerce with (t' := typ_nat d). auto using wftyp_nat.
+rewrite_env (nil ++ b' ~ Eq (typ_nat d) ++ nil).
+apply wfterm_weakening; auto using wfterm_zero, wftyp_nat with fzip.
+Transparent term_zero. simpl. simpl_eq e e. simpl_close. simpl_eq f x.
+simpl_close. simpl_eq x x. simpl_close. auto.
+Transparent term_zero. simpl. simpl_eq e e. simpl_close. simpl_eq f x.
+simpl_close. simpl_eq x x. simpl_close. auto.
+Transparent typ_nat. simpl. simpl_eq d d. auto.
 Qed.
