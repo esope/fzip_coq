@@ -14,6 +14,7 @@ Notation "e1 '⇝⋆[' A ']' e2" :=
 Notation "G '⊢' t 'ok'" := (wftyp G t) (at level 70).
 Notation "G '⊢' 'ok'" := (wfenv G) (at level 70).
 Notation "G '⊢' e '~:' t" := (wfterm G e t) (at level 70).
+Notation "G ⊢ t ≡ u" := (wftypeq G t u) (at level 70).
 Notation "x '∉' L" := (x `notin` L) (at level 70).
 Notation "x '∈' L" := (x `in` L) (at level 70) : set_hs_scope.
 Notation "E '∪' F" := (E `union` F) (at level 65, right associativity, format "E '∪' '/' F") : set_hs_scope.
