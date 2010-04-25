@@ -2317,7 +2317,7 @@ apply IHwfterm1; auto.
       assert (binds x0 (T x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by eauto.
       eapply (wfterm_T_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_app e1 e2) t1 x0 x2 _ _ a0); auto.
       Existential 1 := HEx1. Existential 1 := HEx2.
-      assert (Γ₁ ++ [(a, U)] ++ Γ₂ ⊢ term_app e1 e2 t1) as HEx1 by eauto.
+      assert (Γ₁ ++ [(a, U)] ++ Γ₂ ⊢ term_app e1 e2 ~: t1) as HEx1 by eauto.
       assert (binds x0 (Eq x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by auto.
       eapply (wfterm_Eq_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_app e1 e2) t1 x0 x2 _ _ a0); auto.
       Existential 1 := HEx1. Existential 1 := HEx2.
@@ -2328,7 +2328,7 @@ apply IHwfterm2; auto.
   intros a0 H4 H5. simpl_env in *.
     assert (a0 ∈ ftv_env Γ₂ ∨ a0 ∈ ftv_typ τ₂) as [? | ?] by fsetdec.
       apply ftv_env_binds in H9. destruct H9 as [? [? [? [? | ?]]]].
-      assert (Γ₁ ++ [(a, U)] ++ Γ₂ ⊢ term_app e1 e2 t1) as HEx1 by eauto.
+      assert (Γ₁ ++ [(a, U)] ++ Γ₂ ⊢ term_app e1 e2 ~: t1) as HEx1 by eauto.
       assert (binds x0 (T x2) (Γ₁ ++ [(a, U)] ++ Γ₂)) as HEx2 by eauto.
       eapply (wfterm_T_not_E (Γ₁ ++ a ~ U ++ Γ₂) (term_app e1 e2) t1 x0 x2 _ _ a0); auto.
       Existential 1 := HEx1. Existential 1 := HEx2.
