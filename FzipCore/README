@@ -1,0 +1,20 @@
+Author: Benoît Montagu <benoit.montagu@inria.fr> -- April 2010
+License: GPL v3.0 or above
+
+This a a coq development for the syntactic soundness proof of System Fzip Core.
+Details can be found at http://gallium.inria.fr/~remy/modules/
+
+Definitions and infrastructure lemmas wre generated using ott 0.10.17 and
+LNgen 0.3. Generated files are already included. To generate them again,
+use 'make force'.
+Known to compile with coq 8.2pl1.
+
+To compile:
+  make all
+
+To generate documentation:
+  make doc
+
+To generate FzipCore_ott.v and FzipCore_inf.v from scratch:
+  make force
+  (necessitates ott 0.10.17 with LNgen's patch and LNgen 0.3)
