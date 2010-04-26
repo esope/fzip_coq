@@ -1,4 +1,5 @@
 (* ocamldot.mll, July 1999, Trevor Jim *)
+(* modified, April 2010, Benoît Montagu *)
 
 {
 module StringSet =
@@ -146,14 +147,27 @@ let isEdge graph source target =
     StringSet.mem target sourceTargets
   with Not_found -> false
 
+(*******************************************)
+(* Computes the nodes present in the graph *)
+(*******************************************)
+let nodesOfGraph graph =
+  List.fold_left
+    (fun nodes (source,targets) ->
+      StringSet.add source (StringSet.union targets nodes))
+    StringSet.empty
+    graph
+
 (*****************)
 (* Print a graph *)
 (*****************)
-let printGraph graph =
+let printGraph ~urls graph =
+  let printNode node =
+    Printf.printf " \"%s\" [URL=\"%s.html\"] ;\n" node node in
   let printEdges(source,targets) =
     StringSet.iter
       (fun t -> Printf.printf "  \"%s\" -> \"%s\" ;\n" source t)
       targets in
+  if urls then StringSet.iter printNode (nodesOfGraph graph);
   List.iter printEdges graph
 
 (********************************)
@@ -263,9 +277,9 @@ let tk dag =
 (* Print the dependencies *)
 (**************************)
 let doKernel = ref true
-let printDepend graph =
-  if (!doKernel) then printGraph (tk graph)
-  else printGraph graph
+let printDepend ~urls graph =
+  if (!doKernel) then printGraph ~urls (tk graph)
+  else printGraph ~urls graph
 
 let calledOnFile = ref false
 let getDependFromFile file =
@@ -292,6 +306,7 @@ let usage = "Usage: ocamldot [options] <files>"
 
 let leftToRight = ref false
 let landscape = ref false
+let urls = ref false
 let roots = ref []
 ;;
 
@@ -306,6 +321,9 @@ Arg.parse
     ("-lr",
      Arg.Set leftToRight,
      "         draw graph from left to right (default is top to bottom)");
+    ("-urls",
+     Arg.Set urls,
+     "       inserts URL's of nodes");
     ("-r",
      Arg.String(fun s -> roots := s::!roots),
      "<r>       use <r> as a root in the graph; nodes reachable from <r>\n               will be shown")
@@ -321,7 +339,7 @@ else print_string "  rankdir = TB ;\n";
 let graph = graphOfEdges(!dependencies) in
 begin
   match !roots with
-    [] -> printDepend graph
+    [] -> printDepend ~urls:(!urls) graph
   | roots ->
     (* Set up the graph so that the roots are printed at the same level *)
     print_string "  { rank=same ;\n";
@@ -346,7 +364,7 @@ begin
              then [(source,targets)]
              else [])
            graph) in
-    printDepend reachableFromRoots
+    printDepend ~urls:(!urls) reachableFromRoots
 end;
 print_string "}\n";
 exit 0
