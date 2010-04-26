@@ -12,3 +12,7 @@ _build
 *.byte
 *.native
 xcodec/xcodec
+ocamldot/*.cmi
+ocamldot/*.cmo
+ocamldot/ocamldot.ml
+ocamldot/ocamldot
