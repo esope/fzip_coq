@@ -58,9 +58,7 @@ Definition term_id a x :=
 Definition typ_id t := Arrow t t.
 
 Lemma wfterm_identity : forall x a, x ≠ a →
-  wfterm nil
-  (term_id a x)
-  (Forall a (typ_id (typ_var_f a))).
+  nil ⊢ term_id a x ~: Forall a (typ_id (typ_var_f a)).
 Proof.
 intros x a H. unfold term_id. unfold typ_id.
 unfold_fzip. simpl_close. simpl_eq a a.
@@ -70,18 +68,18 @@ pick fresh y1 and apply wfterm_abs; auto with fzip; simpl_open.
 auto 7 with fzip.
 Qed.
 
-Lemma wftyp_poly_typ_id : forall a, wftyp nil (Forall a (typ_id (typ_var_f a))).
+Lemma wftyp_poly_typ_id : forall a, nil ⊢ Forall a (typ_id (typ_var_f a)) ok.
 Proof.
 intros a. pick fresh x.
 eapply wfterm_wftyp. eauto using wfterm_identity.
 Qed.
 
 Lemma wfterm_projL : forall a b x, a ≠ b →
-  wfterm nil
-  (Gen a (Gen b (Abs x (Prod (typ_var_f a) (typ_var_f b))
-    (Fst (term_var_f x)))))
-  (Forall a (Forall b (Arrow (Prod (typ_var_f a) (typ_var_f b))
-    (typ_var_f a)))).
+  nil ⊢
+  Gen a (Gen b (Abs x (Prod (typ_var_f a) (typ_var_f b))
+    (Fst (term_var_f x)))) ~:
+  Forall a (Forall b (Arrow (Prod (typ_var_f a) (typ_var_f b))
+    (typ_var_f a))).
 Proof.
 intros.
 unfold_fzip. simpl_close. simpl_eq b b. simpl_eq x x. simpl_eq b a.
@@ -94,11 +92,11 @@ auto 9 with fzip.
 Qed.
 
 Lemma wfterm_projR : forall a b x, a ≠ b →
-  wfterm nil
-  (Gen a (Gen b (Abs x (Prod (typ_var_f a) (typ_var_f b))
-    (Snd (term_var_f x)))))
-  (Forall a (Forall b (Arrow (Prod (typ_var_f a) (typ_var_f b))
-    (typ_var_f b)))).
+  nil ⊢
+  Gen a (Gen b (Abs x (Prod (typ_var_f a) (typ_var_f b))
+    (Snd (term_var_f x)))) ~:
+  Forall a (Forall b (Arrow (Prod (typ_var_f a) (typ_var_f b))
+    (typ_var_f b))).
 Proof.
 intros.
 unfold_fzip. simpl_close. simpl_eq b b. simpl_eq x x. simpl_eq b a.
@@ -119,7 +117,7 @@ Definition term_zero a x f :=
     (term_var_f x))).
 
 Lemma wfterm_zero : forall a b x f, x ≠ f →
-  wfterm nil (term_zero a x f) (typ_nat b).
+  nil ⊢ term_zero a x f ~: typ_nat b.
 Proof.
 intros a b x f H. unfold term_zero. unfold typ_nat.
 unfold_fzip. simpl_close. simpl_eq a a. simpl_eq f x. simpl_eq b b.
@@ -130,7 +128,7 @@ pick fresh f and apply wfterm_abs; simpl_open; auto with fzip.
 auto 10 with fzip.
 Qed.
 
-Lemma wftyp_nat : forall a, wftyp nil (typ_nat a).
+Lemma wftyp_nat : forall a, nil ⊢ typ_nat a ok.
 Proof.
 intros a. pick fresh b. pick fresh x. pick fresh f.
 eapply wfterm_wftyp. apply (wfterm_zero b a x f). auto.
@@ -149,7 +147,7 @@ Definition term_plus a n x f :=
 
 Lemma wfterm_plus : forall a n x f,
   n ≠ x → n ≠ f → x ≠ f →
-  wfterm nil (term_plus a n x f) (typ_id (typ_nat a)).
+  nil ⊢ term_plus a n x f ~: typ_id (typ_nat a).
 Proof.
 intros a n x f H H0 H1. unfold term_plus. unfold typ_id.
 unfold typ_nat.
@@ -169,7 +167,7 @@ remember ([(f, T (typ_arrow (typ_var_f a) (typ_var_f a)))] ++
          (typ_arrow (typ_var_b 0)
             (typ_arrow (typ_arrow (typ_var_b 0) (typ_var_b 0)) (typ_var_b 0)))))] ++
    nil) as Γ.
-assert (wfenv Γ). subst.
+assert (Γ ⊢ ok). subst.
   constructor; auto. constructor; auto.
   constructor; auto. constructor; auto. constructor; auto.
   constructor; auto. constructor; auto.
@@ -199,11 +197,11 @@ Qed.
 
 Lemma wfterm_sigma_pair : forall a b x f,
   x ≠ f → x ≠ a →
-  wfterm (b ~ E)
-  (Pair
+  b ~ E ⊢
+  Pair
     (Sig b a (typ_nat a) (Coerce (term_zero a x f) (typ_var_f a)))
-    (Inst (term_id a x) (typ_var_f b)))
-  (Prod (typ_var_f b) (typ_id (typ_var_f b))).
+    (Inst (term_id a x) (typ_var_f b)) ~:
+  Prod (typ_var_f b) (typ_id (typ_var_f b)).
 Proof.
 intros. unfold_fzip. simpl_close. simpl_eq a a. simpl_eq f x.
 simpl_close. simpl_eq x x. simpl_close.
@@ -238,10 +236,10 @@ Lemma wfterm_open_exists_sigma_zero : forall a b c d e x f,
   d ≠ e → d ≠ x → d ≠ f →
   e ≠ x → e ≠ f →
   x ≠ f →
-  wfterm (b ~ E)
-  (Open b (Ex c (Sig c a (typ_nat d)
-    (Coerce (term_zero e x f) (typ_var_f a)))))
-  (typ_var_f b).
+  b ~ E ⊢
+  Open b (Ex c (Sig c a (typ_nat d)
+    (Coerce (term_zero e x f) (typ_var_f a)))) ~:
+  typ_var_f b.
 Proof.
 intros a b c d e x f H H0 H1 H2 H3 H4 H5 H6 H7 H8 H9 H10
   H11 H12 H13 H14 H15 H16 H17. intros H18 H19.
