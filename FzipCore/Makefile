@@ -99,8 +99,8 @@ documentation: $(DOCDIR) $(VOFILES) deps.dot
 	$(foreach i, $(VFILESBASE), $(COQDOC) -o $(DOCDIR)/tmp_$(i).html $(DOCDIR)/$(i).v; )
 	rm -f $(foreach i, $(VFILES), $(DOCDIR)/$(i)) $(DOCDIR)/*.glob
 	$(foreach i, $(VFILESBASE), $(XDECODE) < $(DOCDIR)/tmp_$(i).html > $(DOCDIR)/$(i).html && rm $(DOCDIR)/tmp_$(i).html; )
-	ln -s ../../../doc/metatheory/Metatheory.html $(DOCDIR)
-	ln -s ../../../doc/metatheory/LibLNgen.html $(DOCDIR)
+	ln -sf ../../../doc/metatheory/Metatheory.html $(DOCDIR)
+	ln -sf ../../../doc/metatheory/LibLNgen.html $(DOCDIR)
 	dot -Tsvg -o$(DOCDIR)/index.svg deps.dot
 	cp -f custom.css $(DOCDIR)/coqdoc.css
 
