@@ -5,6 +5,7 @@ Scheme val_mut_ind_aux  := Induction for val  Sort Prop
 with   result_mut_ind_aux := Induction for result Sort Prop.
 Combined Scheme val_result_mut_ind from val_mut_ind_aux, result_mut_ind_aux.
 
+(* begin hide *)
 Lemma val_result_regular :
   (forall v, val v → lc_term v)
   ∧ (forall p, result p → lc_term p).
@@ -19,6 +20,7 @@ Case "val_exists".
     apply l; auto.
   eapply (H b a); auto; reflexivity.
 Qed.
+(* end hide *)
 
 Lemma val_regular : forall v, val v → lc_term v.
 Proof.
@@ -32,6 +34,7 @@ Qed.
 Hint Resolve val_regular result_regular: lngen.
 
 (** Lemmas about values *)
+(* begin hide *)
 Lemma val_result_is_normal_aux :
   (forall v, val v → forall A, ~ exists e, v ⇝[A] e) ∧
   (forall r, result r → ~ exists e, r ⇝[NoEps] e).
@@ -70,6 +73,7 @@ Case "result sigma". inversion He3; subst.
 SCase "sigma sigma in empty context". inversion H0; subst.
 SCase "reduction in sigma context". pick fresh a. eapply (H a); eauto.
 Qed.
+(* end hide *)
 
 Lemma val_is_normal : forall v, val v → forall A, ~ exists e, v ⇝[A] e.
 Proof.
@@ -82,6 +86,7 @@ destruct val_result_is_normal_aux. intuition auto.
 Qed.
 
 (** Renaming lemmas *)
+(* begin hide *)
 Lemma val_result_trenaming : forall a b,
   (forall v, val v → val (tsubst_term (typ_var_f b) a v)) ∧
   (forall r, result r → result (tsubst_term (typ_var_f b) a r)).
@@ -124,6 +129,7 @@ replace (typ_var_f a0) with (tsubst_typ (typ_var_f b) a (typ_var_f a0)).
 rewrite <- tsubst_term_open_term_wrt_typ; auto.
 autorewrite with lngen; auto.
 Qed.
+(* end hide *)
 
 Lemma val_trenaming : forall a b v,
   val v → val (tsubst_term (typ_var_f b) a v).
@@ -137,6 +143,7 @@ Proof.
 intros. edestruct val_result_trenaming; eauto.
 Qed.
 
+(* begin hdie *)
 Lemma val_result_trenaming_inv : forall a b,
   (forall v, val v →
     forall v', v = tsubst_term (typ_var_f b) a v' → val v') ∧
@@ -188,6 +195,7 @@ pick fresh c and apply result_sigma.
   rewrite tsubst_term_open_term_wrt_typ; auto.
   autorewrite with lngen. auto.
 Qed.
+(* end hide *)
 
 Lemma val_trenaming_inv : forall a b v,
   val (tsubst_term (typ_var_f b) a v) → val v.
