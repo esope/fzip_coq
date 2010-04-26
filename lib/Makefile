@@ -6,10 +6,7 @@
 #    doc           - synonym for 'documentation'
 #    documentation - builds all html documentation
 #    clean         - removes generated files
-#
-#  Other targets (intended to be used by the developers of this library):
-#    gens          - builds generated .v files on demand
-#    dist          - builds a zip file for distribution
+#    check         - runs coqchk on compiled files
 #
 ############################################################################
 
@@ -18,10 +15,13 @@ XCODEC = ../xcodec/xcodec
 XENCODE = $(XCODEC) encode
 XDECODE = $(XCODEC) decode
 
+## path to ocamldot to draw the dependency graph
+OCAMLDOT = ../ocamldot/ocamldot -urls
+
 ## Paths to executables. Do not include options here.
 ## Modify these to suit your Coq installation, if necessary.
 
-COQC = coqc
+COQC = coqc -dont-load-proofs
 COQDEP = coqdep
 COQDOC = coqdoc --utf8 --light --quiet --noindex --html
 
@@ -50,8 +50,8 @@ INCFLAGS = $(foreach i, $(INCDIRS), -I $(i))
 
 ############################################################################
 
-.PHONY: all clean coq dist doc documentation force
-.SUFFIXES: .v .vo
+.PHONY: all clean coq dist doc documentation force check view_deps view_fulldeps
+.SUFFIXES: .v .vo .dot
 
 all: coq
 
@@ -60,17 +60,18 @@ coq: $(VOFILES)
 doc:
 	+make documentation
 
-documentation: $(DOCDIR) $(VOFILES)
+documentation: $(DOCDIR) $(VOFILES) deps.dot
 	mkdir -p $(DOCDIR)
 	cp *.glob $(DOCDIR)
 	$(foreach i, $(VFILES), $(XENCODE) < $(i) > $(DOCDIR)/$(i); )
 	$(foreach i, $(FILES), $(COQDOC) -o $(DOCDIR)/tmp_$(i).html $(DOCDIR)/$(i).v; )
 	rm -f $(foreach i, $(VFILES), $(DOCDIR)/$(i)) $(DOCDIR)/*.glob
 	$(foreach i, $(FILES), $(XDECODE) < $(DOCDIR)/tmp_$(i).html > $(DOCDIR)/$(i).html && rm $(DOCDIR)/tmp_$(i).html; )
+	dot -Tsvg -o$(DOCDIR)/index.svg deps.dot
 	cp -f custom.css $(DOCDIR)/coqdoc.css
 
 clean:
-	rm -f *.vo *.glob *.cmi *.cmx *.o
+	rm -f *.vo *.glob *.cmi *.cmx *.o *.dot
 	rm -rf $(DOCDIR)
 
 force:
@@ -78,7 +79,7 @@ force:
 	+make
 
 check:	coq
-	coqchk $(INCFLAGS) $(FILES)
+	coqchk -m -o $(INCFLAGS) $(FILES)
 
 ############################################################################
 
@@ -88,6 +89,17 @@ check:	coq
 $(DOCDIR):
 	mkdir -p $(DOCDIR)
 
+deps.dot: .depend
+	$(OCAMLDOT) .depend > deps.dot
+
+view_deps: deps.dot
+	dot -Txlib deps.dot &
+
+fulldeps.dot: .depend
+	$(OCAMLDOT) -fullgraph .depend > fulldeps.dot
+
+view_fulldeps: fulldeps.dot
+	dot -Txlib fulldeps.dot &
 ############################################################################
 
 .depend: $(VFILES) Makefile
