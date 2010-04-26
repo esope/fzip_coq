@@ -15,6 +15,9 @@ XCODEC = ../xcodec/xcodec
 XENCODE = $(XCODEC) encode
 XDECODE = $(XCODEC) decode
 
+## path to ocamldot to draw the dependency graph
+OCAMLDOT = ../ocamldot/ocamldot -urls
+
 ## Paths to executables. Do not include options here.
 ## Modify these to suit your Coq installation, if necessary.
 
@@ -67,9 +70,11 @@ FILES = \
 
 ## Lists calculated from the above.
 
-VFILES = \
-	$(foreach i, $(LNGEN_FILES), $(i)_inf.v $(i)_ott.v) \
-	$(foreach i, $(FILES), $(i).v) \
+VFILESBASE = \
+	$(foreach i, $(LNGEN_FILES), $(i)_inf $(i)_ott) \
+	$(FILES) \
+
+VFILES = $(foreach i, $(VFILESBASE), $(i).v) \
 
 VOFILES  = $(VFILES:.v=.vo)
 
@@ -87,13 +92,16 @@ coq: $(VOFILES)
 doc:
 	+make documentation
 
-documentation: $(DOCDIR) $(VOFILES)
+documentation: $(DOCDIR) $(VOFILES) deps.dot
 	mkdir -p $(DOCDIR)
 	cp *.glob $(DOCDIR)
 	$(foreach i, $(VFILES), $(XENCODE) < $(i) > $(DOCDIR)/$(i); )
-	$(foreach i, $(FILES), $(COQDOC) -o $(DOCDIR)/tmp_$(i).html $(DOCDIR)/$(i).v; )
+	$(foreach i, $(VFILESBASE), $(COQDOC) -o $(DOCDIR)/tmp_$(i).html $(DOCDIR)/$(i).v; )
 	rm -f $(foreach i, $(VFILES), $(DOCDIR)/$(i)) $(DOCDIR)/*.glob
-	$(foreach i, $(FILES), $(XDECODE) < $(DOCDIR)/tmp_$(i).html > $(DOCDIR)/$(i).html && rm $(DOCDIR)/tmp_$(i).html; )
+	$(foreach i, $(VFILESBASE), $(XDECODE) < $(DOCDIR)/tmp_$(i).html > $(DOCDIR)/$(i).html && rm $(DOCDIR)/tmp_$(i).html; )
+	ln -s ../../../doc/metatheory/Metatheory.html $(DOCDIR)
+	ln -s ../../../doc/metatheory/LibLNgen.html $(DOCDIR)
+	dot -Tsvg -o$(DOCDIR)/index.svg deps.dot
 	cp -f custom.css $(DOCDIR)/coqdoc.css
 
 clean:
@@ -123,13 +131,13 @@ $(DOCDIR):
 	mkdir -p $(DOCDIR)
 
 deps.dot: .depend
-	ocamldot .depend > deps.dot
+	$(OCAMLDOT) .depend > deps.dot
 
 view_deps: deps.dot
 	dot -Txlib deps.dot &
 
 fulldeps.dot: .depend
-	ocamldot -fullgraph .depend > fulldeps.dot
+	$(OCAMLDOT) -fullgraph .depend > fulldeps.dot
 
 view_fulldeps: fulldeps.dot
 	dot -Txlib fulldeps.dot &
