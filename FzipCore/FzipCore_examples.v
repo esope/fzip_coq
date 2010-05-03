@@ -5,6 +5,7 @@ Require Import FzipCore_zip.
 Require Import FzipCore_env_typ.
 Require Import FzipCore_typeq.
 Require Import FzipCore_term.
+Require Import FzipCore_renameT.
 
 Ltac simpl_eq a b :=
   unfold typvar in *; unfold termvar in *;
@@ -41,7 +42,7 @@ Definition Coerce := term_coerce.
 Definition Arrow := typ_arrow.
 Definition Prod := typ_prod.
 Definition Forall a t := typ_forall (close_typ_wrt_typ a t).
-Definition Exists a t := typ_forall (close_typ_wrt_typ a t).
+Definition Exists a t := typ_exists (close_typ_wrt_typ a t).
 
 Ltac unfold_smart_cons :=
   unfold Abs; unfold App; unfold Let;
@@ -370,7 +371,7 @@ intro. subst. analyze_binds H12. apply (H4 a0); auto.
 Qed.
 
 Lemma wfterm_F_unpack : forall Γ M M' τ τ' a b x,
-  a ≠ b → a ≠ x → x ≠ b → b ∉ dom Γ ∪ ftv_typ τ → x ∉ dom Γ →
+  a ≠ b → x ≠ b → b ∉ dom Γ ∪ ftv_typ τ → x ∉ dom Γ →
   pure Γ →
   Γ ⊢ M ~: F_exists a τ b →
   x ~ T τ ++ a ~ U ++ Γ ⊢ M' ~: τ' →
@@ -378,15 +379,16 @@ Lemma wfterm_F_unpack : forall Γ M M' τ τ' a b x,
   Γ ⊢ F_unpack M a x τ M' τ' ~: τ'.
 Proof.
 unfold F_exists. unfold F_unpack. unfold_fzip. simpl_close.
-intros Γ M M' τ τ' a b x H H0 H1 H2 H3 H4 H5 H6 H7.
-simpl_eq a b. simpl_eq b b. simpl in H5. simpl_eq b b.
-assert (b ∉ ftv_typ τ'). apply wfterm_wftyp in H6. apply wftyp_ftv in H6.
-  simpl_env in H6. fsetdec.
-assert (b ∉ ftv_term M). apply wfterm_ftv in H5. fsetdec.
-assert (a ∉ ftv_term M). apply wfterm_ftv in H5.
-  assert (uniq (x ~ T τ ++ a ~ U ++ Γ)) by eauto with lngen. destruct_uniq.
-  fsetdec.
-assert (b ∉ ftv_term M'). apply wfterm_ftv in H6. simpl_env in H6. fsetdec.
+intros Γ M M' τ τ' a b x H H0 H1 H2 H3 H4 H5 H6.
+simpl_eq a b. simpl_eq b b. simpl in H4. simpl_eq b b.
+assert (a ≠ x). assert (uniq (x ~ T τ ++ a ~ U ++ Γ)) by eauto with lngen.
+  solve_uniq.
+assert (b ∉ ftv_typ τ'). apply wfterm_wftyp in H5. apply wftyp_ftv in H5.
+  simpl_env in H5. fsetdec.
+assert (b ∉ ftv_term M). apply wfterm_ftv in H4. fsetdec.
+assert (a ∉ ftv_term M). apply wfterm_ftv in H4.
+  assert (uniq (x ~ T τ ++ a ~ U ++ Γ)) by eauto with lngen. solve_uniq.
+assert (b ∉ ftv_term M'). apply wfterm_ftv in H5. simpl_env in H5. fsetdec.
 apply wfterm_app with (G1 := Γ) (G2 := Γ)
   (t2 := tsubst_typ τ' b
       (typ_forall
@@ -394,7 +396,7 @@ apply wfterm_app with (G1 := Γ) (G2 := Γ)
           (close_typ_wrt_typ_rec 0 a τ)
           (typ_var_f b)))).
 apply zip_self; auto with fzip.
-  apply wfterm_wfenv in H5. apply wfenv_lc_env in H5. auto.
+  apply wfterm_wfenv in H4. apply wfenv_lc_env in H4. auto.
   eauto with lngen.
 replace (typ_arrow
   (tsubst_typ τ' b
@@ -405,18 +407,254 @@ replace (typ_arrow
     (typ_forall (typ_arrow (close_typ_wrt_typ_rec 0 a τ) (typ_var_f b)))
      (typ_var_f b))).
 rewrite tsubst_typ_spec. apply wfterm_inst; auto.
-apply wfterm_wftyp in H6.
-apply wftyp_tsubst with (τ' := (typ_forall (typ_var_b 0))) in H6.
-rewrite tsubst_typ_fresh_eq in H6; auto.
+apply wfterm_wftyp in H5.
+apply wftyp_tsubst with (τ' := (typ_forall (typ_var_b 0))) in H5.
+rewrite tsubst_typ_fresh_eq in H5; auto.
 rewrite_env (nil ++
-  env_map (tsubst_typ (typ_forall (typ_var_b 0)) a) [(x, T τ)] ++ Γ) in H6.
-unfold env_map in H6. simpl map in H6.
-apply wftyp_subst in H6. auto.
+  env_map (tsubst_typ (typ_forall (typ_var_b 0)) a) [(x, T τ)] ++ Γ) in H5.
+unfold env_map in H5. simpl map in H5.
+apply wftyp_subst in H5. auto.
 pick fresh c and apply wftyp_forall. simpl_open. constructor; auto.
   constructor; auto. eapply wfterm_wfenv; eauto.
 simpl_close. simpl_eq b b.
 simpl. simpl_eq b b.
 simpl. simpl_eq b b. pick fresh c and apply wfterm_gen; auto. simpl_open.
-rewrite tsubst_typ_close_typ_wrt_typ_rec; auto.
+rewrite tsubst_typ_close_typ_wrt_typ_rec; eauto with lngen.
 rewrite <- tsubst_term_spec_rec. repeat rewrite <- tsubst_typ_spec_rec.
-rewrite open_typ_wrt_typ_rec_lc_typ.
+replace (open_typ_wrt_typ_rec 0 (typ_var_f c) τ') with
+  (open_typ_wrt_typ τ' (typ_var_f c)) by reflexivity.
+rewrite open_typ_wrt_typ_lc_typ; eauto with lngen.
+unsimpl
+(tsubst_term (typ_var_f c) a (term_abs τ (close_term_wrt_term_rec 0 x M'))).
+rewrite tsubst_typ_fresh_eq with (a1 := b); auto.
+rewrite <- tsubst_typ_fresh_eq with (a1 := a)
+  (t1 := (typ_var_f c)) (t2 := τ'); auto.
+unsimpl (tsubst_typ (typ_var_f c) a (typ_arrow τ τ')).
+rewrite_env (env_map (tsubst_typ (typ_var_f c) a) nil ++ c ~ U ++ Γ).
+apply wfterm_renameU; auto.
+simpl_env. pick fresh y and apply wfterm_abs; auto with fzip.
+simpl_open; rewrite <- subst_term_spec_rec.
+rewrite_env (nil ++ y ~ T τ ++ a ~ U ++ Γ).
+apply wfterm_renameT; auto.
+Qed.
+
+Lemma wfterm_Fzip_pack : forall Γ M a τ₀ τ,
+  pure Γ →
+  Γ ⊢ τ₀ ok → a ~ U ++ Γ ⊢ τ ok →
+  Γ ⊢ M ~: tsubst_typ τ₀ a τ →
+  Γ ⊢ Fzip_pack τ₀ M a τ ~: Exists a τ.
+Proof.
+intros Γ M a τ₀ τ H H0 H1 H2.
+assert (a ∉ dom Γ). assert (uniq (a ~ U ++ Γ)) by eauto with lngen. solve_uniq.
+assert (a ∉ ftv_term M). apply wfterm_ftv in H2. fsetdec.
+assert (a ∉ ftv_typ τ₀). apply wftyp_ftv in H0; fsetdec.
+assert (a ∉ ftv_typ (tsubst_typ τ₀ a τ)).
+  apply wfterm_wftyp in H2. apply wftyp_ftv in H2. fsetdec.
+unfold Fzip_pack; unfold_fzip; simpl_close.
+simpl_eq a a. pick fresh b and apply wfterm_exists. simpl_open.
+repeat rewrite <- tsubst_typ_spec_rec.
+rewrite <- tsubst_term_spec_rec.
+rewrite tsubst_typ_fresh_eq with (t2 := τ₀); auto.
+rewrite tsubst_typ_fresh_eq with (t2 := (close_typ_wrt_typ_rec 0 a τ)); auto.
+rewrite tsubst_term_fresh_eq; auto.
+rewrite_env (nil ++ b ~ E ++ Γ). pick fresh c and apply wfterm_sigma; auto.
+simpl_open. rewrite <- tsubst_term_spec_rec. rewrite <- tsubst_typ_spec_rec.
+unsimpl (tsubst_term (typ_var_f c) a (term_coerce M τ)).
+rewrite tsubst_typ_tsubst_typ; auto.
+rewrite tvar_tsubst. rewrite tsubst_typ_fresh_eq with (a1 := b); auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f c) a) nil ++ c ~ Eq τ₀ ++ Γ).
+apply wfterm_renameEq; auto.
+apply wfterm_coerce with (t' := tsubst_typ τ₀ a τ).
+apply wftypeq_sym. apply wftypeq_unfold_eq; auto using wftyp_instantiate.
+apply wfterm_weakening; auto with fzip.
+rewrite ftv_term_close_term_wrt_typ_rec; auto.
+rewrite ftv_typ_close_typ_wrt_typ_rec; auto.
+Qed.
+
+Lemma wfterm_Fzip_unpack : forall Γ M M' τ τ' a x,
+  a ≠ x → pure Γ →
+  Γ ⊢ M ~: Exists a τ →
+  x ~ T τ ++ a ~ U ++ Γ ⊢ M' ~: τ' →
+  a ∉ ftv_typ τ' →
+  Γ ⊢ Fzip_unpack M a x M' ~: τ'.
+Proof.
+intros Γ M M' τ τ' a x H H0 H1 H2 H3.
+assert (x ∉ dom Γ). assert (uniq (x ~ T τ ++ a ~ U ++ Γ)) by eauto with lngen.
+  solve_uniq.
+assert (a ∉ dom Γ). assert (uniq (x ~ T τ ++ a ~ U ++ Γ)) by eauto with lngen.
+  solve_uniq.
+assert (x ∉ fv_term M). apply wfterm_fv in H1. fsetdec.
+assert (a ∉ ftv_term M). apply wfterm_ftv in H1. fsetdec.
+unfold Fzip_unpack; unfold_fzip; simpl_close. simpl_eq a a.
+pick fresh b and apply wfterm_nu. simpl_open.
+repeat rewrite <- tsubst_term_spec_rec.
+rewrite tsubst_term_fresh_eq; auto.
+rewrite tsubst_term_close_term_wrt_term_rec; auto.
+apply wfterm_let with
+  (L := {{ b }} ∪ {{ a }} ∪ {{ x }} ∪ dom Γ)
+  (G1 := b ~ E ++ Γ) (G2 := b ~ U ++ Γ)
+  (t1 := tsubst_typ (typ_var_f b) a τ); intros.
+apply zip_app; auto with fzip.
+  apply wfterm_wfenv in H1.
+  apply zip_self; eauto using wfenv_lc_env with lngen.
+rewrite_env (nil ++ b ~ E ++ Γ). rewrite tsubst_typ_spec. auto.
+simpl_open; rewrite <- subst_term_spec_rec.
+rewrite_env (nil ++ [(x0, T (tsubst_typ (typ_var_f b) a τ))] ++ [(b, U)] ++ Γ).
+apply wfterm_renameT; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f b) a) (x ~ T τ) ++ [(b, U)] ++ Γ).
+rewrite <- tsubst_typ_fresh_eq with (t2 := τ') (a1 := a) (t1 := typ_var_f b);
+auto.
+apply wfterm_renameU; auto.
+Qed.
+
+Lemma exists_iso1 : forall Γ a b τ x y f,
+  a ≠ b → a ≠ x → a ≠ y → a ≠ f →
+  b ≠ x → b ≠ y → b ≠ f →
+  x ≠ y → x ≠ f →
+  y ≠ f →
+  y ∉ dom Γ →
+  a ∉ dom Γ →
+  b ∉ dom Γ →
+  x ∉ dom Γ →
+  y ∉ dom Γ →
+  f ∉ dom Γ →
+  pure Γ → Γ ⊢ Exists a τ ok →
+  Γ ⊢
+  Abs x (Exists a τ)
+  (Fzip_unpack (term_var_f x) a y
+    (F_pack (typ_var_f a) (term_var_f y) a τ b f))
+  ~: Arrow (Exists a τ) (F_exists a τ b).
+Proof.
+intros Γ a b τ x y f H H0 H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16.
+pick fresh z and apply wfterm_abs; auto.
+rewrite <- subst_term_spec.
+rewrite_env (nil ++ z ~ T (Exists a τ) ++ Γ).
+apply wfterm_renameT; auto.
+apply wfterm_Fzip_unpack with (τ := τ); simpl_env; auto with fzip.
+unfold Exists in H16. inversion H16; subst.
+pick fresh c. replace (F_pack (typ_var_f a) (term_var_f y) a τ b f)
+with (F_pack (typ_var_f a) (term_var_f y) c
+  (tsubst_typ (typ_var_f c) a τ) b f).
+replace (F_exists a τ b) with
+(F_exists c (tsubst_typ (typ_var_f c) a τ) b).
+assert (lc_typ τ).
+  apply wftyp_regular in H16.
+  rewrite <- open_typ_wrt_typ_close_typ_wrt_typ with (a1 := a). auto with lngen.
+assert (a ~ U ++ Γ ⊢ τ ok).
+  rewrite_env (env_map (tsubst_typ (typ_var_f a) c) nil ++ a ~ U ++ Γ).
+  rewrite <- tsubst_typ_var_twice with (a := c) (b := a); auto.
+  apply wftyp_renameU; auto.
+  rewrite tsubst_typ_spec; simpl_env; auto.
+apply wfterm_F_pack; auto with fzip.
+constructor; auto.
+constructor; auto. apply wftyp_weakening; auto.
+apply wftyp_weakening; auto. apply wftyp_weakening; auto.
+apply wftyp_weakening; auto. rewrite tsubst_typ_spec; auto.
+constructor; auto. apply wftyp_weakening; auto.
+rewrite tsubst_typ_var_twice; auto.
+constructor; auto with fzip.
+unfold F_exists. f_equal. f_equal. unfold_fzip; simpl_close. f_equal. f_equal.
+rewrite tsubst_typ_spec. simpl_open.
+rewrite close_typ_wrt_typ_rec_open_typ_wrt_typ_rec. auto.
+rewrite ftv_typ_close_typ_wrt_typ; auto.
+assert (c ≠ b) by auto. simpl_eq c b. simpl_eq a b.
+unfold F_pack. f_equal. f_equal. unfold_fzip. simpl_close. f_equal. f_equal.
+rewrite tsubst_typ_spec. simpl_open.
+rewrite close_typ_wrt_typ_rec_open_typ_wrt_typ_rec. auto.
+rewrite ftv_typ_close_typ_wrt_typ; auto.
+assert (c ≠ b) by auto. simpl_eq c b. simpl_eq a b.
+unfold F_exists. unfold_fzip. simpl.
+repeat rewrite ftv_typ_close_typ_wrt_typ_rec. simpl_eq a b. simpl_eq b b. simpl.
+clear Fr. auto.
+Qed.
+
+Lemma exists_iso2 : forall Γ a b τ x y f,
+  a ≠ b → a ≠ x → a ≠ y → a ≠ f →
+  b ≠ x → b ≠ y → b ≠ f →
+  x ≠ y → x ≠ f →
+  y ≠ f →
+  y ∉ dom Γ →
+  a ∉ dom Γ →
+  b ∉ dom Γ →
+  x ∉ dom Γ →
+  y ∉ dom Γ →
+  f ∉ dom Γ →
+  b ∉ ftv_typ τ →
+  pure Γ → Γ ⊢ F_exists a τ b ok →
+  Γ ⊢
+  Abs x (F_exists a τ b)
+  (F_unpack (term_var_f x) a y τ
+    (Fzip_pack (typ_var_f a) (term_var_f y) a τ) (* <– *)
+    (Exists a τ))
+  ~: Arrow (F_exists a τ b) (Exists a τ).
+Proof.
+intros Γ a b τ x y f H H0 H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17.
+assert (lc_typ τ).
+  apply wftyp_regular in H17. inversion H17; subst.
+  pose (H19 b). rewrite open_typ_wrt_typ_close_typ_wrt_typ in l.
+  inversion l; subst. inversion H21; subst.
+  pose (H20 a). rewrite open_typ_wrt_typ_close_typ_wrt_typ in l0.
+  inversion l0; subst. auto.
+assert (a ~ U ++ Γ ⊢ τ ok).
+  inversion H17; subst. pick fresh c.
+  assert ([(c, U)] ++ Γ
+          ⊢ open_typ_wrt_typ
+              (close_typ_wrt_typ b
+                 (Arrow (Forall a (Arrow τ (typ_var_f b))) (typ_var_f b)))
+              (typ_var_f c) ok) by auto. clear H21.
+
+  rewrite <- tsubst_typ_spec in H19. simpl in H19.
+  simpl_eq a b. simpl_eq b b. inversion H19; subst. clear H19.
+  inversion H23; subst. clear H23. pick fresh c0.
+  assert ([(c0, U)] ++ (c, U) :: Γ
+          ⊢ open_typ_wrt_typ
+              (typ_arrow
+                 (tsubst_typ (typ_var_f c) b (close_typ_wrt_typ_rec 0 a τ))
+                 (if b == b then typ_var_f c else typ_var_f b))
+              (typ_var_f c0) ok) by auto. clear H21 H24.
+  unfold open_typ_wrt_typ in H19; simpl in H19. inversion H19; subst. clear H19.
+  clear H24.
+  rewrite tsubst_typ_close_typ_wrt_typ_rec in H23; auto.
+  rewrite <- tsubst_typ_spec_rec in H23; auto.
+  rewrite tsubst_typ_fresh_eq with (a1 := b) in H23; auto.
+  simpl_env in H23.
+  rewrite <- tsubst_typ_var_twice with (a := c0) (b := a); auto.
+  rewrite_env (env_map (tsubst_typ (typ_var_f a) c0) nil ++ a ~ U ++ Γ).
+  apply wftyp_renameU; auto.
+  rewrite <- tsubst_typ_fresh_eq with (a1 := c)
+    (t1 := typ_forall (typ_var_b 0)).
+  rewrite_env (env_map (tsubst_typ (typ_forall (typ_var_b 0)) c) (c0 ~ U)
+    ++ Γ).
+  apply wftyp_tsubst; auto.
+  pick fresh d and apply wftyp_forall; simpl_open; auto.
+  constructor; auto. constructor; eauto with fzip.
+  assert (ftv_typ (tsubst_typ (typ_var_f c0) a τ)
+    [<=] ftv_typ (typ_var_f c0) ∪ remove a (ftv_typ τ)) by auto with lngen.
+  assert (c0 ≠ c) by auto. clear Fr0. simpl in H19. fsetdec.
+pick fresh z and apply wfterm_abs; auto.
+rewrite <- subst_term_spec. rewrite_env (nil ++ z ~ T (F_exists a τ b) ++ Γ).
+apply wfterm_renameT; auto. apply wfterm_F_unpack with (b := b); auto with fzip.
+constructor; auto with fzip. constructor; auto.
+pick fresh c.
+replace (Fzip_pack (typ_var_f a) (term_var_f y) a τ) with
+  (Fzip_pack (typ_var_f a) (term_var_f y) c (tsubst_typ (typ_var_f c) a τ)).
+replace (Exists a τ) with (Exists c (tsubst_typ (typ_var_f c) a τ)).
+apply wfterm_Fzip_pack.
+auto 7 with fzip.
+simpl_env. constructor; auto. constructor; auto.  apply wftyp_weakening; auto.
+simpl_env. apply wftyp_weakening; auto. apply wftyp_weakening; auto. 
+apply wftyp_weakening; auto.
+rewrite_env (env_map (tsubst_typ (typ_var_f c) a) nil ++ c ~ U ++ Γ).
+apply wftyp_renameU; auto. constructor; auto. apply wftyp_weakening; auto.
+rewrite tsubst_typ_var_twice; auto. constructor; auto.
+auto 7 with fzip.
+simpl_env. constructor; auto.  apply wftyp_weakening; auto.
+unfold Exists; simpl_close. f_equal.
+rewrite tsubst_typ_spec. simpl_open.
+rewrite close_typ_wrt_typ_rec_open_typ_wrt_typ_rec; auto.
+rewrite ftv_typ_close_typ_wrt_typ; auto.
+unfold Fzip_pack; unfold_fzip; simpl_close. simpl_eq c c. simpl_eq a a.
+assert (c ≠ a) by auto. simpl_eq c a.
+
+
+
