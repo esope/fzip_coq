@@ -11,4 +11,5 @@ FzipCore_env_typ.vo: FzipCore_env_typ.v FzipCore_init.vo FzipCore_zip.vo FzipCor
 FzipCore_typeq.vo: FzipCore_typeq.v FzipCore_init.vo FzipCore_zip.vo FzipCore_pure.vo FzipCore_env_typ.vo FzipCore_weakenU.vo
 FzipCore_term.vo: FzipCore_term.v FzipCore_init.vo FzipCore_zip.vo FzipCore_pure.vo FzipCore_env_typ.vo FzipCore_typeq.vo FzipCore_weakenU.vo
 FzipCore_soundness.vo: FzipCore_soundness.v FzipCore_init.vo FzipCore_val.vo FzipCore_red.vo FzipCore_zip.vo FzipCore_pure.vo FzipCore_env_typ.vo FzipCore_typeq.vo FzipCore_term.vo
-FzipCore_examples.vo: FzipCore_examples.v FzipCore_init.vo FzipCore_pure.vo FzipCore_zip.vo FzipCore_env_typ.vo FzipCore_typeq.vo FzipCore_term.vo
+FzipCore_renameT.vo: FzipCore_renameT.v FzipCore_init.vo FzipCore_pure.vo FzipCore_zip.vo FzipCore_env_typ.vo FzipCore_term.vo
+FzipCore_examples.vo: FzipCore_examples.v FzipCore_init.vo FzipCore_pure.vo FzipCore_zip.vo FzipCore_env_typ.vo FzipCore_typeq.vo FzipCore_term.vo FzipCore_renameT.vo

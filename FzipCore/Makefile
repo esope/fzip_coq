@@ -63,6 +63,7 @@ FILES = \
 	FzipCore_typeq \
 	FzipCore_term \
 	FzipCore_soundness \
+	FzipCore_renameT \
 	FzipCore_examples \
 #	FzipCore_dec \
 #	FzipCore_sim \
